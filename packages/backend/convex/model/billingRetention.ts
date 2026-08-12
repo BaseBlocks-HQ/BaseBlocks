@@ -6,46 +6,33 @@ type MutationCtx = Pick<GenericMutationCtx<DataModel>, "db">;
 
 /**
  * Organization deletion remains Workspace-owned. This provider-neutral guard
- * prevents deleting a tenant while paid service or unsettled AI usage exists.
- * Billing orders, subscriptions, webhooks, lots, reservations, generations,
- * and ledger rows are deliberately retained as the financial audit trail.
+ * prevents deleting a tenant while paid service exists. Billing orders,
+ * subscriptions, webhooks, credit lots, and ledger rows are deliberately
+ * retained as the financial audit trail.
  */
 export async function getBillingDeletionState(
   ctx: QueryCtx,
   organizationId: string,
 ) {
-  const [subscriptions, reservations] = await Promise.all([
-    ctx.db
-      .query("billingSubscriptions")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", organizationId),
-      )
-      .collect(),
-    ctx.db
-      .query("aiCreditReservations")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", organizationId).eq("status", "reserved"),
-      )
-      .collect(),
-  ]);
+  const subscriptions = await ctx.db
+    .query("billingSubscriptions")
+    .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+    .collect();
   const activeSubscriptions = subscriptions.filter((subscription) =>
     ["pending", "entitled", "grace"].includes(subscription.normalizedStatus),
   );
   return {
-    canDelete: activeSubscriptions.length === 0 && reservations.length === 0,
+    canDelete: activeSubscriptions.length === 0,
     activeSubscriptionIds: activeSubscriptions.map(
       (subscription) => subscription.providerSubscriptionId,
     ),
-    unsettledReservationCount: reservations.length,
     retainedAuditFamilies: [
       "billingCustomers",
       "billingSubscriptions",
       "billingOrders",
       "billingWebhookEvents",
       "aiCreditLots",
-      "aiCreditReservations",
       "aiCreditLedgerEntries",
-      "aiGatewayGenerations",
       "storageUsageEvents",
     ] as const,
   };
@@ -57,9 +44,7 @@ export async function cleanupBillingDerivedData(
 ) {
   const state = await getBillingDeletionState(ctx, organizationId);
   if (!state.canDelete) {
-    throw new Error(
-      "Organization billing must be terminated and AI reservations settled before deletion",
-    );
+    throw new Error("Organization billing must be terminated before deletion");
   }
   const [entitlement, storageUsage] = await Promise.all([
     ctx.db

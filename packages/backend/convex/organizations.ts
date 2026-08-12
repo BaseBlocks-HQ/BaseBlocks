@@ -25,10 +25,7 @@ import {
   hasReachedOwnedOrganizationLimit,
 } from "./authComponent/organizationPolicy";
 import { deleteSiteData, readSiteDeletionManifest } from "./model/siteDeletion";
-import {
-  cleanupBillingDerivedData,
-  getBillingDeletionState,
-} from "./model/billingRetention";
+import { cleanupBillingDerivedData } from "./model/billingRetention";
 import {
   deleteWorkspaceFoundationData,
   findProfile,
@@ -279,15 +276,6 @@ export const getDeletionManifest = query({
         );
       }
     }
-    const billingDeletionState = await getBillingDeletionState(
-      ctx,
-      organizationId,
-    );
-    if (billingDeletionState.unsettledReservationCount > 0) {
-      throw new Error(
-        "Wait for active AI work to finish before deleting this workspace",
-      );
-    }
     const sites = await ctx.db
       .query("sites")
       .withIndex("by_organization", (q) =>
@@ -457,14 +445,6 @@ export const deleteOwned = mutation({
       for (const row of [...states, ...resources]) await ctx.db.delete(row._id);
       await ctx.db.delete(connection._id);
     }
-    const legacyEntitlement = await ctx.db
-      .query("aiOrganizationEntitlements")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", organizationId),
-      )
-      .unique();
-    if (legacyEntitlement) await ctx.db.delete(legacyEntitlement._id);
-
     await cleanupBillingDerivedData(ctx, organizationId);
 
     await deleteWorkspaceFoundationData(ctx as never, organizationId);

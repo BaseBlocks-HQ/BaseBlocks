@@ -8,14 +8,11 @@
  * @module
  */
 
-import type * as aiChangesets from "../aiChangesets.js";
-import type * as aiConversations from "../aiConversations.js";
 import type * as aiCredits from "../aiCredits.js";
-import type * as aiEntitlements from "../aiEntitlements.js";
-import type * as aiRuns from "../aiRuns.js";
 import type * as aiWorkspaces from "../aiWorkspaces.js";
 import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
+import type * as billing_checkoutIntent from "../billing/checkoutIntent.js";
 import type * as billing_polar from "../billing/polar.js";
 import type * as billingModel from "../billingModel.js";
 import type * as billingRetention from "../billingRetention.js";
@@ -36,12 +33,7 @@ import type * as integrationWebhookSignature from "../integrationWebhookSignatur
 import type * as integrationWebhooks from "../integrationWebhooks.js";
 import type * as integrations from "../integrations.js";
 import type * as libraries from "../libraries.js";
-import type * as model_aiChangesetAudit from "../model/aiChangesetAudit.js";
-import type * as model_aiChangesetPlan from "../model/aiChangesetPlan.js";
-import type * as model_aiChangesetReferences from "../model/aiChangesetReferences.js";
-import type * as model_aiChangesetRevert from "../model/aiChangesetRevert.js";
 import type * as model_aiCredits from "../model/aiCredits.js";
-import type * as model_aiRunPolicy from "../model/aiRunPolicy.js";
 import type * as model_aiWorkspaceBounds from "../model/aiWorkspaceBounds.js";
 import type * as model_aiWorkspaceFingerprint from "../model/aiWorkspaceFingerprint.js";
 import type * as model_billingEventOrdering from "../model/billingEventOrdering.js";
@@ -79,6 +71,7 @@ import type * as schema_storageTelemetry from "../schema/storageTelemetry.js";
 import type * as schema_workspaces from "../schema/workspaces.js";
 import type * as search from "../search.js";
 import type * as sharing from "../sharing.js";
+import type * as siteAssistantRuns from "../siteAssistantRuns.js";
 import type * as siteDomains from "../siteDomains.js";
 import type * as sites from "../sites.js";
 import type * as storageTelemetry from "../storageTelemetry.js";
@@ -98,14 +91,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  aiChangesets: typeof aiChangesets;
-  aiConversations: typeof aiConversations;
   aiCredits: typeof aiCredits;
-  aiEntitlements: typeof aiEntitlements;
-  aiRuns: typeof aiRuns;
   aiWorkspaces: typeof aiWorkspaces;
   auth: typeof auth;
   billing: typeof billing;
+  "billing/checkoutIntent": typeof billing_checkoutIntent;
   "billing/polar": typeof billing_polar;
   billingModel: typeof billingModel;
   billingRetention: typeof billingRetention;
@@ -126,12 +116,7 @@ declare const fullApi: ApiFromModules<{
   integrationWebhooks: typeof integrationWebhooks;
   integrations: typeof integrations;
   libraries: typeof libraries;
-  "model/aiChangesetAudit": typeof model_aiChangesetAudit;
-  "model/aiChangesetPlan": typeof model_aiChangesetPlan;
-  "model/aiChangesetReferences": typeof model_aiChangesetReferences;
-  "model/aiChangesetRevert": typeof model_aiChangesetRevert;
   "model/aiCredits": typeof model_aiCredits;
-  "model/aiRunPolicy": typeof model_aiRunPolicy;
   "model/aiWorkspaceBounds": typeof model_aiWorkspaceBounds;
   "model/aiWorkspaceFingerprint": typeof model_aiWorkspaceFingerprint;
   "model/billingEventOrdering": typeof model_billingEventOrdering;
@@ -169,6 +154,7 @@ declare const fullApi: ApiFromModules<{
   "schema/workspaces": typeof schema_workspaces;
   search: typeof search;
   sharing: typeof sharing;
+  siteAssistantRuns: typeof siteAssistantRuns;
   siteDomains: typeof siteDomains;
   sites: typeof sites;
   storageTelemetry: typeof storageTelemetry;

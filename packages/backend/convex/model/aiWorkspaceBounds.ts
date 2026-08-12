@@ -1,14 +1,14 @@
 import { getConvexSize } from "convex/values";
-import { SLUG_PATTERN } from "@baseblocks/domain";
-import {
-  AiChangesetValidationError,
-  MAX_AI_CHANGESET_CONTENT_BYTES,
-  MAX_AI_FINGERPRINT_LENGTH,
-  MAX_AI_PAGE_ICON_LENGTH,
-  MAX_AI_PAGE_REFERENCE_LENGTH,
-  MAX_AI_PAGE_SLUG_LENGTH,
-  MAX_AI_PAGE_TITLE_LENGTH,
-} from "./aiChangesetPlan";
+import { MAX_PAGE_TITLE_LENGTH, SLUG_PATTERN } from "@baseblocks/domain";
+
+export class AiWorkspaceValidationError extends Error {}
+export const MAX_AI_CHANGESET_CONTENT_BYTES = 8_000_000;
+export const MAX_AI_SITE_PAGES = 500;
+export const MAX_AI_PAGE_TITLE_LENGTH = MAX_PAGE_TITLE_LENGTH;
+export const MAX_AI_PAGE_SLUG_LENGTH = 200;
+export const MAX_AI_PAGE_ICON_LENGTH = 500;
+export const MAX_AI_PAGE_REFERENCE_LENGTH = 200;
+export const MAX_AI_FINGERPRINT_LENGTH = 300;
 
 export const MAX_AI_REFERENCE_LIBRARIES = 500;
 export const MAX_AI_REFERENCE_FILES = 2_000;
@@ -19,7 +19,7 @@ const MAX_AI_PAGE_CONTENT_BYTES = 900_000;
 const pageSlugPattern = new RegExp(`^${SLUG_PATTERN}$`);
 
 function fail(message: string): never {
-  throw new AiChangesetValidationError(message);
+  throw new AiWorkspaceValidationError(message);
 }
 
 export function aiSiteNameChanged(

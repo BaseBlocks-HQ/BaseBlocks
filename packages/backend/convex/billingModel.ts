@@ -1,5 +1,11 @@
 import { ConvexError, v } from "convex/values";
 import {
+  boundedCheckoutRetryAt,
+  CHECKOUT_ATTEMPT_LEASE_MS,
+  checkoutAttemptCanAcquire,
+  checkoutAttemptShouldReplay,
+} from "./billing/checkoutIntent";
+import {
   aiTopUpAmountToCreditUnits,
   moneyAmountMinorToCreditUnits,
 } from "@baseblocks/domain";
@@ -160,21 +166,23 @@ export const getActiveSubscription = internalQuery({
     providerEnvironment: v.union(v.literal("sandbox"), v.literal("production")),
   },
   handler: async (ctx, args) => {
-    const subscriptions = await ctx.db
-      .query("billingSubscriptions")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId),
-      )
-      .collect();
+    const subscriptions = await Promise.all(
+      (["entitled", "grace", "pending"] as const).map((status) =>
+        ctx.db
+          .query("billingSubscriptions")
+          .withIndex("by_organization_environment_status_updated", (q) =>
+            q
+              .eq("organizationId", args.organizationId)
+              .eq("providerEnvironment", args.providerEnvironment)
+              .eq("normalizedStatus", status),
+          )
+          .order("desc")
+          .first(),
+      ),
+    );
     return (
       subscriptions
-        .filter(
-          (subscription) =>
-            subscription.providerEnvironment === args.providerEnvironment &&
-            (subscription.normalizedStatus === "entitled" ||
-              subscription.normalizedStatus === "grace" ||
-              subscription.normalizedStatus === "pending"),
-        )
+        .flatMap((subscription) => (subscription ? [subscription] : []))
         .sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null
     );
   },
@@ -313,6 +321,7 @@ export const createCheckoutIntent = internalMutation({
     requestedSeats: v.optional(v.number()),
     requestedAmountMinor: v.optional(v.int64()),
     idempotencyKey: v.string(),
+    attemptId: v.string(),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -337,12 +346,33 @@ export const createCheckoutIntent = internalMutation({
           message: "Checkout key was already used for another operation",
         });
       }
-      return existing;
+      const now = Date.now();
+      if (!checkoutAttemptCanAcquire(existing, args.attemptId, now)) {
+        return existing;
+      }
+      const shouldReplay = checkoutAttemptShouldReplay(existing, now);
+      await ctx.db.patch(existing._id, {
+        status: "pending",
+        providerCheckoutId: shouldReplay
+          ? existing.providerCheckoutId
+          : undefined,
+        expiresAt: shouldReplay ? existing.expiresAt : undefined,
+        failureCode: undefined,
+        nextAttemptAt: undefined,
+        activeAttemptId: args.attemptId,
+        leaseExpiresAt: now + CHECKOUT_ATTEMPT_LEASE_MS,
+        attemptCount: (existing.attemptCount ?? 0) + 1,
+        updatedAt: now,
+      });
+      return await ctx.db.get(existing._id);
     }
     const now = Date.now();
     const id = await ctx.db.insert("billingCheckoutIntents", {
       ...args,
       status: "pending",
+      attemptCount: 1,
+      activeAttemptId: args.attemptId,
+      leaseExpiresAt: now + CHECKOUT_ATTEMPT_LEASE_MS,
       createdAt: now,
       updatedAt: now,
     });
@@ -355,10 +385,20 @@ export const recordCheckoutCreated = internalMutation({
     intentId: v.id("billingCheckoutIntents"),
     providerCheckoutId: v.string(),
     expiresAt: v.number(),
+    attemptId: v.string(),
   },
   handler: async (ctx, args) => {
     const intent = await ctx.db.get(args.intentId);
     if (!intent) throw new Error("Billing checkout intent not found");
+    if (
+      intent.status !== "pending" ||
+      intent.activeAttemptId !== args.attemptId
+    ) {
+      throw new ConvexError({
+        code: "BILLING_ATTEMPT_SUPERSEDED",
+        message: "Checkout attempt is no longer active",
+      });
+    }
     if (
       intent.providerCheckoutId &&
       intent.providerCheckoutId !== args.providerCheckoutId
@@ -372,6 +412,10 @@ export const recordCheckoutCreated = internalMutation({
       providerCheckoutId: args.providerCheckoutId,
       status: "created",
       expiresAt: args.expiresAt,
+      activeAttemptId: undefined,
+      leaseExpiresAt: undefined,
+      nextAttemptAt: undefined,
+      failureCode: undefined,
       updatedAt: Date.now(),
     });
     return null;
@@ -382,14 +426,27 @@ export const recordCheckoutFailed = internalMutation({
   args: {
     intentId: v.id("billingCheckoutIntents"),
     failureCode: v.string(),
+    attemptId: v.string(),
+    retryable: v.boolean(),
+    retryAfterMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const intent = await ctx.db.get(args.intentId);
-    if (intent && intent.status === "pending") {
+    if (
+      intent &&
+      intent.status === "pending" &&
+      intent.activeAttemptId === args.attemptId
+    ) {
+      const now = Date.now();
       await ctx.db.patch(intent._id, {
-        status: "failed",
+        status: args.retryable ? "retryable" : "failed",
         failureCode: args.failureCode.slice(0, 100),
-        updatedAt: Date.now(),
+        activeAttemptId: undefined,
+        leaseExpiresAt: undefined,
+        nextAttemptAt: args.retryable
+          ? boundedCheckoutRetryAt(now, args.retryAfterMs)
+          : undefined,
+        updatedAt: now,
       });
     }
     return null;
@@ -1030,6 +1087,11 @@ export const processWebhook = internalMutation({
             : "Unknown error",
         updatedAt: Date.now(),
       });
+      await ctx.scheduler.runAfter(
+        retryDelay,
+        internal.billingModel.processWebhook,
+        { eventId: event._id },
+      );
     }
     return null;
   },

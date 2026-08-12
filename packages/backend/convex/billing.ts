@@ -16,7 +16,11 @@ import {
 import {
   billingOperationMetadata,
   createPolarBillingProvider,
-  createPolarConfig,
+  executePolarCheckout,
+  PolarApiError,
+  polarConfigFromEnvironment,
+  polarEnvironmentFromEnvironment,
+  resolvePolarOrganizationCustomer,
   type PolarBillingProvider,
 } from "./billing/polar";
 import {
@@ -70,6 +74,7 @@ const createCheckoutIntent = makeFunctionReference<
     requestedSeats?: number;
     requestedAmountMinor?: bigint;
     idempotencyKey: string;
+    attemptId: string;
   },
   Doc<"billingCheckoutIntents"> | null
 >("billingModel:createCheckoutIntent");
@@ -79,12 +84,19 @@ const recordCheckoutCreated = makeFunctionReference<
     intentId: Id<"billingCheckoutIntents">;
     providerCheckoutId: string;
     expiresAt: number;
+    attemptId: string;
   },
   null
 >("billingModel:recordCheckoutCreated");
 const recordCheckoutFailed = makeFunctionReference<
   "mutation",
-  { intentId: Id<"billingCheckoutIntents">; failureCode: string },
+  {
+    intentId: Id<"billingCheckoutIntents">;
+    failureCode: string;
+    attemptId: string;
+    retryable: boolean;
+    retryAfterMs?: number;
+  },
   null
 >("billingModel:recordCheckoutFailed");
 const recordCustomer = makeFunctionReference<
@@ -144,25 +156,18 @@ const terminateSubscriptionForWorkspaceDeletion = makeFunctionReference<
 >("billingModel:terminateSubscriptionForWorkspaceDeletion");
 
 function billingEnvironment(): ProviderEnvironment {
-  const value = process.env.BASEBLOCKS_BILLING_ENVIRONMENT;
-  if (value !== "sandbox" && value !== "production") {
+  try {
+    return polarEnvironmentFromEnvironment();
+  } catch {
     throw new ConvexError({
       code: "BILLING_NOT_CONFIGURED",
       message: "Billing environment is not explicitly configured",
     });
   }
-  return value;
 }
 
 function provider(): PolarBillingProvider {
-  return createPolarBillingProvider(
-    createPolarConfig({
-      environment: billingEnvironment(),
-      accessToken: process.env.POLAR_ACCESS_TOKEN,
-      webhookSecret: process.env.POLAR_WEBHOOK_SECRET,
-      allowProduction: process.env.POLAR_ALLOW_PRODUCTION === "true",
-    }),
-  );
+  return createPolarBillingProvider(polarConfigFromEnvironment());
 }
 
 function validateOperationKey(value: string): string {
@@ -195,15 +200,21 @@ async function ensureCustomer(
   organizationId: string,
   auth: ServerAuthContext,
 ) {
+  // The portal represents the workspace billing account. Application
+  // authorization decides which workspace admins may request this owner session.
+  const ownerExternalId = organizationId;
   const existing = await ctx.runQuery(getCustomer, {
     organizationId,
     providerEnvironment: environment,
   });
   if (existing) {
-    return {
-      providerCustomerId: existing.providerCustomerId,
-      externalCustomerId: existing.externalCustomerId,
-    };
+    if (existing.externalCustomerId === organizationId) {
+      return {
+        providerCustomerId: existing.providerCustomerId,
+        externalCustomerId: organizationId,
+        ownerExternalId,
+      };
+    }
   }
   if (!auth.email) {
     throw new ConvexError({
@@ -211,52 +222,87 @@ async function ensureCustomer(
       message: "A verified account email is required to manage billing",
     });
   }
-  let customer: Awaited<ReturnType<PolarBillingProvider["createCustomer"]>>;
-  try {
-    customer = await polar.getCustomerByExternalId(organizationId);
-  } catch (error) {
-    if (
-      !(error instanceof Error) ||
-      !("status" in error) ||
-      error.status !== 404
-    ) {
-      throw error;
-    }
-    const payerExternalId = auth.userId;
-    try {
-      customer = await polar.getCustomerByExternalId(payerExternalId);
-    } catch (payerError) {
-      if (
-        !(payerError instanceof Error) ||
-        !("status" in payerError) ||
-        payerError.status !== 404
-      ) {
-        throw payerError;
-      }
-      customer =
-        (await polar.getCustomerByEmail(auth.email)) ??
-        (await polar.createCustomer({
-          externalCustomerId: payerExternalId,
-          email: auth.email,
-          name: auth.name,
-          metadata: billingOperationMetadata({
-            workspaceId: organizationId,
-            operationKey: `customer:${organizationId}`,
-            purpose: "plus_subscription",
-          }),
-        }));
-    }
-  }
+  const customer = await resolvePolarOrganizationCustomer(polar, {
+    externalCustomerId: organizationId,
+    email: auth.email,
+    ownerExternalId,
+    name: auth.name,
+    metadata: billingOperationMetadata({
+      workspaceId: organizationId,
+      operationKey: `customer:${organizationId}`,
+      purpose: "plus_subscription",
+    }),
+  });
   await ctx.runMutation(recordCustomer, {
     organizationId,
     providerEnvironment: environment,
     providerCustomerId: customer.id,
-    externalCustomerId: customer.externalId ?? auth.userId,
+    externalCustomerId: organizationId,
   });
   return {
     providerCustomerId: customer.id,
-    externalCustomerId: customer.externalId ?? auth.userId,
+    externalCustomerId: organizationId,
+    ownerExternalId,
   };
+}
+
+type BillingFailure = Readonly<{
+  code: string;
+  retryable: boolean;
+  retryAfterMs?: number;
+}>;
+
+function classifyBillingFailure(error: unknown): BillingFailure {
+  if (error instanceof PolarApiError) {
+    if (error.status === 401 || error.status === 403) {
+      return {
+        code: "PROVIDER_AUTHENTICATION",
+        retryable: true,
+        retryAfterMs: 1_000,
+      };
+    }
+    if (error.status === 429) {
+      return {
+        code: "PROVIDER_RATE_LIMITED",
+        retryable: true,
+        retryAfterMs: 15_000,
+      };
+    }
+    if (error.status >= 500 || error.status === 408) {
+      return {
+        code: "PROVIDER_UNAVAILABLE",
+        retryable: true,
+        retryAfterMs: 5_000,
+      };
+    }
+    return { code: "PROVIDER_REJECTED", retryable: false };
+  }
+  return {
+    code: "BILLING_OPERATION_FAILED",
+    retryable: true,
+    retryAfterMs: 5_000,
+  };
+}
+
+function publicBillingError(failure: BillingFailure): ConvexError<{
+  code: string;
+  message: string;
+}> {
+  if (failure.code === "PROVIDER_AUTHENTICATION") {
+    return new ConvexError({
+      code: "BILLING_PROVIDER_UNAVAILABLE",
+      message:
+        "Billing provider authentication is unavailable. Try again after configuration is repaired.",
+    });
+  }
+  return new ConvexError({
+    code: failure.retryable
+      ? "BILLING_TEMPORARILY_UNAVAILABLE"
+      : "BILLING_REQUEST_REJECTED",
+    message: failure.retryable
+      ? "Billing is temporarily unavailable. Please try again."
+      : "The billing provider rejected this request.",
+  });
 }
 
 export const getWorkspaceEntitlements = query({
@@ -291,8 +337,7 @@ export const getWorkspaceEntitlements = query({
       billableSeatCount: entitlement?.billableSeatCount ?? 1,
       paidSeatCapacity: entitlement?.paidSeatCapacity ?? 0,
       plusEnabled: entitlement?.plusEnabled ?? false,
-      aiAdmissionAvailable:
-        creditAccount?.status === "active" && availableUnits > 0n,
+      aiAdmissionAvailable: availableUnits > 0n,
       availableAiCreditUnits: availableUnits,
       effectiveThrough: entitlement?.effectiveThrough,
       canManageBilling,
@@ -304,11 +349,10 @@ export const listBillingOptions = query({
   args: { organizationId: v.string() },
   handler: async (ctx, { organizationId }) => {
     await requireOrganizationMember(ctx, organizationId);
-    const providerEnvironment = process.env.BASEBLOCKS_BILLING_ENVIRONMENT;
-    if (
-      providerEnvironment !== "sandbox" &&
-      providerEnvironment !== "production"
-    ) {
+    let providerEnvironment: ProviderEnvironment;
+    try {
+      providerEnvironment = polarEnvironmentFromEnvironment();
+    } catch {
       return [];
     }
     const items = await ctx.db
@@ -388,6 +432,14 @@ export const beginCheckout = action({
       });
     }
     const idempotencyKey = validateOperationKey(args.idempotencyKey);
+    const successUrl = validateAppUrl(args.successUrl);
+    const returnUrl = validateAppUrl(args.returnUrl);
+    if (!auth.email) {
+      throw new ConvexError({
+        code: "BILLING_EMAIL_REQUIRED",
+        message: "A verified account email is required to manage billing",
+      });
+    }
     const seatSnapshot =
       catalog.kind === "plus"
         ? await ctx.runQuery(getSeatSnapshot, {
@@ -403,6 +455,7 @@ export const beginCheckout = action({
     ) {
       throw new Error("Workspace seat snapshot contract was violated");
     }
+    const attemptId = crypto.randomUUID();
     const intent = await ctx.runMutation(createCheckoutIntent, {
       organizationId: args.organizationId,
       actorId: auth.userId,
@@ -412,53 +465,85 @@ export const beginCheckout = action({
       requestedSeats: seatSnapshot?.billableSeatCount,
       requestedAmountMinor,
       idempotencyKey,
+      attemptId,
     });
     if (!intent) throw new Error("Checkout intent could not be persisted");
-    const polar = provider();
-    const customer = await ensureCustomer(
-      ctx,
-      polar,
-      environment,
-      args.organizationId,
-      auth,
-    );
-    if (intent.providerCheckoutId) {
-      const checkout = await polar.getCheckout(intent.providerCheckoutId);
-      return { url: checkout.url, checkoutId: checkout.id, replay: true };
+    if (intent.status === "failed") {
+      throw publicBillingError({
+        code: intent.failureCode ?? "BILLING_OPERATION_FAILED",
+        retryable: false,
+      });
+    }
+    if (intent.status === "retryable") {
+      throw new ConvexError({
+        code: "BILLING_RETRY_LATER",
+        message: "This checkout can be retried shortly.",
+      });
+    }
+    if (intent.status === "completed") {
+      throw new ConvexError({
+        code: "BILLING_CHECKOUT_COMPLETED",
+        message: "This checkout has already completed.",
+      });
+    }
+    if (intent.status === "pending" && intent.activeAttemptId !== attemptId) {
+      throw new ConvexError({
+        code: "BILLING_CHECKOUT_IN_PROGRESS",
+        message: "This checkout is already being created.",
+      });
     }
     try {
-      const checkout = await polar.createCheckout({
-        productIds: [catalog.providerProductId],
-        customerId: customer.providerCustomerId,
-        successUrl: validateAppUrl(args.successUrl),
-        returnUrl: validateAppUrl(args.returnUrl),
-        customerEmail: auth.email,
-        customerName: auth.name,
-        amountMinor:
-          requestedAmountMinor === undefined
-            ? undefined
-            : Number(requestedAmountMinor),
-        allowDiscountCodes: catalog.kind !== "aiCreditPack",
-        seats: seatSnapshot?.billableSeatCount,
-        metadata: {
-          ...billingOperationMetadata({
-            workspaceId: args.organizationId,
-            operationKey: idempotencyKey,
-            purpose:
-              catalog.kind === "plus" ? "plus_subscription" : "ai_credit_pack",
-          }),
-          ...(requestedAmountMinor === undefined
-            ? {}
-            : {
-                baseblocks_requested_amount_minor: Number(requestedAmountMinor),
-              }),
+      const polar = provider();
+      const customer = await ensureCustomer(
+        ctx,
+        polar,
+        environment,
+        args.organizationId,
+        auth,
+      );
+      const result = await executePolarCheckout(polar, {
+        providerCheckoutId: intent.providerCheckoutId,
+        checkout: {
+          productIds: [catalog.providerProductId],
+          customerId: customer.providerCustomerId,
+          successUrl,
+          returnUrl,
+          customerEmail: auth.email,
+          customerName: auth.name,
+          amountMinor:
+            requestedAmountMinor === undefined
+              ? undefined
+              : Number(requestedAmountMinor),
+          allowDiscountCodes: catalog.kind !== "aiCreditPack",
+          seats: seatSnapshot?.billableSeatCount,
+          metadata: {
+            ...billingOperationMetadata({
+              workspaceId: args.organizationId,
+              operationKey: idempotencyKey,
+              purpose:
+                catalog.kind === "plus"
+                  ? "plus_subscription"
+                  : "ai_credit_pack",
+            }),
+            ...(requestedAmountMinor === undefined
+              ? {}
+              : {
+                  baseblocks_requested_amount_minor:
+                    Number(requestedAmountMinor),
+                }),
+          },
         },
       });
+      const { checkout } = result;
       await ctx.runMutation(recordCheckoutCreated, {
         intentId: intent._id,
         providerCheckoutId: checkout.id,
         expiresAt: Date.parse(checkout.expiresAt),
+        attemptId,
       });
+      if (result.replay) {
+        return { url: checkout.url, checkoutId: checkout.id, replay: true };
+      }
       if (seatSnapshot) {
         await ctx.runMutation(recordSeatSnapshot, {
           organizationId: args.organizationId,
@@ -470,11 +555,23 @@ export const beginCheckout = action({
       }
       return { url: checkout.url, checkoutId: checkout.id, replay: false };
     } catch (error) {
-      await ctx.runMutation(recordCheckoutFailed, {
-        intentId: intent._id,
-        failureCode: error instanceof Error ? error.name : "UNKNOWN",
-      });
-      throw error;
+      const failure = classifyBillingFailure(error);
+      try {
+        await ctx.runMutation(recordCheckoutFailed, {
+          intentId: intent._id,
+          failureCode: failure.code,
+          attemptId,
+          retryable: failure.retryable,
+          retryAfterMs: failure.retryAfterMs,
+        });
+      } catch {
+        throw new ConvexError({
+          code: "BILLING_STATE_UNAVAILABLE",
+          message:
+            "Billing state could not be safely updated. Please try again.",
+        });
+      }
+      throw publicBillingError(failure);
     }
   },
 });
@@ -491,22 +588,102 @@ export const openCustomerPortal = action({
       },
     );
     const environment = billingEnvironment();
-    const polar = provider();
-    const customer = await ensureCustomer(
-      ctx,
-      polar,
-      environment,
-      args.organizationId,
-      auth,
-    );
-    const session = await polar.createCustomerPortalSession(
-      customer.providerCustomerId,
-      validateAppUrl(args.returnUrl),
-      customer.externalCustomerId,
-    );
-    return { url: session.customerPortalUrl, expiresAt: session.expiresAt };
+    const returnUrl = validateAppUrl(args.returnUrl);
+    try {
+      const polar = provider();
+      const customer = await ensureCustomer(
+        ctx,
+        polar,
+        environment,
+        args.organizationId,
+        auth,
+      );
+      const session = await polar.createCustomerPortalSession({
+        customerId: customer.providerCustomerId,
+        externalMemberId: customer.ownerExternalId,
+        returnUrl,
+      });
+      return { url: session.customerPortalUrl, expiresAt: session.expiresAt };
+    } catch (error) {
+      throw publicBillingError(classifyBillingFailure(error));
+    }
   },
 });
+
+async function syncPaidSeatsForOrganization(
+  ctx: ActionCtx,
+  organizationId: string,
+) {
+  const environment = billingEnvironment();
+  const [subscription, snapshot] = await Promise.all([
+    ctx.runQuery(getActiveSubscription, {
+      organizationId,
+      providerEnvironment: environment,
+    }),
+    ctx.runQuery(getSeatSnapshot, { organizationId }),
+  ]);
+  if (!subscription) return { state: "notSubscribed" as const };
+  if (
+    snapshot.billableSeatCount < 1 ||
+    snapshot.memberIds.length !== snapshot.billableSeatCount ||
+    new Set(snapshot.memberIds).size !== snapshot.billableSeatCount
+  ) {
+    throw new Error("Workspace seat snapshot contract was violated");
+  }
+  await ctx.runMutation(recordSeatSnapshot, {
+    organizationId,
+    subscriptionId: subscription._id,
+    membershipRevision: snapshot.membershipRevision,
+    memberIds: snapshot.memberIds,
+    billableSeatCount: snapshot.billableSeatCount,
+    source: "membership",
+  });
+  if (subscription.seatQuantity === snapshot.billableSeatCount) {
+    return { state: "unchanged" as const, seats: subscription.seatQuantity };
+  }
+  const idempotencyKey = `seat:${subscription.providerSubscriptionId}:${snapshot.membershipRevision}`;
+  const operation = await ctx.runMutation(createSeatSyncOperation, {
+    organizationId,
+    subscriptionId: subscription._id,
+    membershipRevision: snapshot.membershipRevision,
+    previousSeats: subscription.seatQuantity,
+    targetSeats: snapshot.billableSeatCount,
+    idempotencyKey,
+  });
+  if (!operation) throw new Error("Seat sync operation could not be persisted");
+  if (operation.status === "applied")
+    return { state: "applied" as const, seats: operation.targetSeats };
+  try {
+    const polar = provider();
+    const remote = await polar.getSubscription(
+      subscription.providerSubscriptionId,
+    );
+    const updated =
+      remote.seats === snapshot.billableSeatCount
+        ? remote
+        : await polar.updateSubscriptionSeats(
+            subscription.providerSubscriptionId,
+            snapshot.billableSeatCount,
+            "prorate",
+          );
+    await ctx.runMutation(completeSeatSyncOperation, {
+      operationId: operation._id,
+      providerModifiedAt: Date.parse(
+        updated.modifiedAt ?? new Date().toISOString(),
+      ),
+    });
+    return {
+      state: "applied" as const,
+      seats: updated.seats ?? snapshot.billableSeatCount,
+    };
+  } catch (error) {
+    await ctx.runMutation(failSeatSyncOperation, {
+      operationId: operation._id,
+      failureCode: error instanceof Error ? error.name : "UNKNOWN",
+    });
+    throw error;
+  }
+}
 
 export const syncPaidSeats = action({
   args: { organizationId: v.string() },
@@ -515,77 +692,14 @@ export const syncPaidSeats = action({
       resource: "member",
       action: "update",
     });
-    const environment = billingEnvironment();
-    const [subscription, snapshot] = await Promise.all([
-      ctx.runQuery(getActiveSubscription, {
-        organizationId,
-        providerEnvironment: environment,
-      }),
-      ctx.runQuery(getSeatSnapshot, { organizationId }),
-    ]);
-    if (!subscription) return { state: "notSubscribed" as const };
-    if (
-      snapshot.billableSeatCount < 1 ||
-      snapshot.memberIds.length !== snapshot.billableSeatCount ||
-      new Set(snapshot.memberIds).size !== snapshot.billableSeatCount
-    ) {
-      throw new Error("Workspace seat snapshot contract was violated");
-    }
-    await ctx.runMutation(recordSeatSnapshot, {
-      organizationId,
-      subscriptionId: subscription._id,
-      membershipRevision: snapshot.membershipRevision,
-      memberIds: snapshot.memberIds,
-      billableSeatCount: snapshot.billableSeatCount,
-      source: "membership",
-    });
-    if (subscription.seatQuantity === snapshot.billableSeatCount) {
-      return { state: "unchanged" as const, seats: subscription.seatQuantity };
-    }
-    const idempotencyKey = `seat:${subscription.providerSubscriptionId}:${snapshot.membershipRevision}`;
-    const operation = await ctx.runMutation(createSeatSyncOperation, {
-      organizationId,
-      subscriptionId: subscription._id,
-      membershipRevision: snapshot.membershipRevision,
-      previousSeats: subscription.seatQuantity,
-      targetSeats: snapshot.billableSeatCount,
-      idempotencyKey,
-    });
-    if (!operation)
-      throw new Error("Seat sync operation could not be persisted");
-    if (operation.status === "applied")
-      return { state: "applied" as const, seats: operation.targetSeats };
-    try {
-      const polar = provider();
-      const remote = await polar.getSubscription(
-        subscription.providerSubscriptionId,
-      );
-      const updated =
-        remote.seats === snapshot.billableSeatCount
-          ? remote
-          : await polar.updateSubscriptionSeats(
-              subscription.providerSubscriptionId,
-              snapshot.billableSeatCount,
-              "prorate",
-            );
-      await ctx.runMutation(completeSeatSyncOperation, {
-        operationId: operation._id,
-        providerModifiedAt: Date.parse(
-          updated.modifiedAt ?? new Date().toISOString(),
-        ),
-      });
-      return {
-        state: "applied" as const,
-        seats: updated.seats ?? snapshot.billableSeatCount,
-      };
-    } catch (error) {
-      await ctx.runMutation(failSeatSyncOperation, {
-        operationId: operation._id,
-        failureCode: error instanceof Error ? error.name : "UNKNOWN",
-      });
-      throw error;
-    }
+    return await syncPaidSeatsForOrganization(ctx, organizationId);
   },
+});
+
+export const syncPaidSeatsFromMembership = internalAction({
+  args: { organizationId: v.string() },
+  handler: async (ctx, { organizationId }) =>
+    await syncPaidSeatsForOrganization(ctx, organizationId),
 });
 
 export const setCancellation = action({

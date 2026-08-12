@@ -27,12 +27,7 @@ const SiteAiChat = dynamic(() =>
 );
 
 interface SiteEditorProps {
-  aiAvailabilityReason:
-    | "available"
-    | "creditsRequired"
-    | "reconciliationRequired"
-    | "policyUnavailable"
-    | "siteNotFound";
+  aiAvailabilityReason: "available" | "creditsRequired" | "siteNotFound";
   siteId: string;
   teamSlug: string;
 }

@@ -43,3 +43,44 @@ export const aiRunOutcome = v.union(
   v.literal("answered"),
   v.literal("applied"),
 );
+
+/** Serializable subset of AI SDK UIMessage parts persisted by Convex. */
+export const siteAssistantMessagePart = v.union(
+  v.object({ type: v.literal("text"), text: v.string() }),
+  v.object({ type: v.literal("reasoning"), text: v.string() }),
+  v.object({
+    type: v.literal("tool"),
+    toolCallId: v.string(),
+    toolName: v.string(),
+    state: v.union(
+      v.literal("input-available"),
+      v.literal("output-available"),
+      v.literal("output-error"),
+    ),
+    input: v.optional(v.any()),
+    output: v.optional(v.any()),
+    errorText: v.optional(v.string()),
+  }),
+  v.object({ type: v.literal("step-start"), step: v.number() }),
+  v.object({
+    type: v.literal("step-finish"),
+    step: v.number(),
+    finishReason: v.string(),
+  }),
+  v.object({
+    type: v.literal("workspace-applied"),
+    auditId: v.id("siteAssistantApplications"),
+    runId: v.id("siteAssistantRuns"),
+    operationCount: v.number(),
+    pageId: v.optional(v.id("pages")),
+    draftRevision: v.number(),
+  }),
+);
+
+export const siteAssistantRunStatus = v.union(
+  v.literal("queued"),
+  v.literal("running"),
+  v.literal("completed"),
+  v.literal("failed"),
+  v.literal("cancelled"),
+);

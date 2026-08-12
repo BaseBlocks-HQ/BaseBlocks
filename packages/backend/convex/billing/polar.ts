@@ -1,3 +1,5 @@
+import { Polar } from "@polar-sh/sdk";
+
 /**
  * Narrow, server-only Polar API boundary.
  *
@@ -11,7 +13,6 @@ export type PolarConfig = Readonly<{
   environment: PolarEnvironment;
   accessToken: string;
   webhookSecret: string;
-  apiBaseUrl: string;
 }>;
 
 export type PolarConfigInput = Readonly<{
@@ -22,10 +23,17 @@ export type PolarConfigInput = Readonly<{
   allowProduction?: boolean;
 }>;
 
-const API_BASE_URLS: Record<PolarEnvironment, string> = {
-  sandbox: "https://sandbox-api.polar.sh/v1",
-  production: "https://api.polar.sh/v1",
-};
+type PolarEnvironmentVariables = Readonly<
+  Partial<
+    Record<
+      | "BASEBLOCKS_BILLING_ENVIRONMENT"
+      | "POLAR_ACCESS_TOKEN"
+      | "POLAR_WEBHOOK_SECRET"
+      | "POLAR_ALLOW_PRODUCTION",
+      string | undefined
+    >
+  >
+>;
 
 export function createPolarConfig(input: PolarConfigInput): PolarConfig {
   if (input.environment !== "sandbox" && input.environment !== "production") {
@@ -47,8 +55,34 @@ export function createPolarConfig(input: PolarConfigInput): PolarConfig {
     environment: input.environment,
     accessToken,
     webhookSecret,
-    apiBaseUrl: API_BASE_URLS[input.environment],
   });
+}
+
+/** The single environment-to-configuration boundary for every Polar caller. */
+export function polarConfigFromEnvironment(
+  environment: PolarEnvironmentVariables = process.env as PolarEnvironmentVariables,
+): PolarConfig {
+  return createPolarConfig({
+    environment: environment.BASEBLOCKS_BILLING_ENVIRONMENT,
+    accessToken: environment.POLAR_ACCESS_TOKEN,
+    webhookSecret: environment.POLAR_WEBHOOK_SECRET,
+    allowProduction: environment.POLAR_ALLOW_PRODUCTION === "true",
+  });
+}
+
+export function polarEnvironmentFromEnvironment(
+  environment: Pick<
+    PolarEnvironmentVariables,
+    "BASEBLOCKS_BILLING_ENVIRONMENT"
+  > = process.env as PolarEnvironmentVariables,
+): PolarEnvironment {
+  const value = environment.BASEBLOCKS_BILLING_ENVIRONMENT;
+  if (value !== "sandbox" && value !== "production") {
+    throw new Error(
+      "BASEBLOCKS_BILLING_ENVIRONMENT must be explicitly set to sandbox or production",
+    );
+  }
+  return value;
 }
 
 function requireSecret(value: string | undefined, name: string): string {
@@ -111,6 +145,7 @@ export type PolarCheckout = Readonly<{
 export type PolarCustomerRequest = Readonly<{
   externalCustomerId: string;
   email: string;
+  ownerExternalId?: string;
   name?: string;
   locale?: string;
   metadata?: PolarMetadata;
@@ -234,14 +269,13 @@ export function normalizeSubscriptionLifecycle(
 export interface PolarBillingProvider {
   createCustomer(input: PolarCustomerRequest): Promise<PolarCustomer>;
   getCustomerByExternalId(externalCustomerId: string): Promise<PolarCustomer>;
-  getCustomerByEmail(email: string): Promise<PolarCustomer | null>;
   createCheckout(input: PolarCheckoutRequest): Promise<PolarCheckout>;
   getCheckout(checkoutId: string): Promise<PolarCheckout>;
-  createCustomerPortalSession(
-    customerId: string,
-    returnUrl: string,
-    externalMemberId?: string,
-  ): Promise<PolarPortalSession>;
+  createCustomerPortalSession(input: {
+    customerId: string;
+    externalMemberId: string;
+    returnUrl: string;
+  }): Promise<PolarPortalSession>;
   getSubscription(subscriptionId: string): Promise<PolarSubscription>;
   updateSubscriptionSeats(
     subscriptionId: string,
@@ -255,26 +289,54 @@ export interface PolarBillingProvider {
   revokeSubscription(subscriptionId: string): Promise<PolarSubscription>;
 }
 
-type Fetch = (
-  input: string | URL | Request,
-  init?: RequestInit,
-) => Promise<Response>;
+export async function resolvePolarOrganizationCustomer(
+  provider: PolarBillingProvider,
+  input: PolarCustomerRequest,
+): Promise<PolarCustomer> {
+  try {
+    return await provider.getCustomerByExternalId(input.externalCustomerId);
+  } catch (error) {
+    if (!(error instanceof PolarApiError) || error.status !== 404) throw error;
+  }
+  try {
+    return await provider.createCustomer(input);
+  } catch (error) {
+    // A concurrent request can win creation because external IDs are unique.
+    if (!(error instanceof PolarApiError) || error.status !== 409) throw error;
+    return await provider.getCustomerByExternalId(input.externalCustomerId);
+  }
+}
+
+export async function executePolarCheckout(
+  provider: PolarBillingProvider,
+  input: Readonly<{
+    providerCheckoutId?: string;
+    checkout: PolarCheckoutRequest;
+  }>,
+): Promise<Readonly<{ checkout: PolarCheckout; replay: boolean }>> {
+  if (input.providerCheckoutId) {
+    return {
+      checkout: await provider.getCheckout(input.providerCheckoutId),
+      replay: true,
+    };
+  }
+  return {
+    checkout: await provider.createCheckout(input.checkout),
+    replay: false,
+  };
+}
 
 export class PolarApiError extends Error {
   readonly status: number;
   readonly requestId: string | null;
   readonly retryAfter: string | null;
 
-  constructor(response: Response, detail?: string) {
-    super(
-      `Polar API request failed with status ${response.status}${
-        detail ? `: ${detail}` : ""
-      }`,
-    );
+  constructor(status: number, requestId: string | null = null) {
+    super(`Polar API request failed with status ${status}`);
     this.name = "PolarApiError";
-    this.status = response.status;
-    this.requestId = response.headers.get("x-request-id");
-    this.retryAfter = response.headers.get("retry-after");
+    this.status = status;
+    this.requestId = requestId;
+    this.retryAfter = null;
   }
 
   get retryable(): boolean {
@@ -284,90 +346,51 @@ export class PolarApiError extends Error {
 
 export function createPolarBillingProvider(
   config: PolarConfig,
-  fetchImplementation: Fetch = globalThis.fetch,
+  sdk: Polar = new Polar({
+    accessToken: config.accessToken,
+    server: config.environment,
+    retryConfig: { strategy: "none" },
+  }),
 ): PolarBillingProvider {
-  const request = async (
-    path: string,
-    init?: RequestInit,
-  ): Promise<unknown> => {
-    const response = await fetchImplementation(`${config.apiBaseUrl}${path}`, {
-      ...init,
-      headers: {
-        accept: "application/json",
-        authorization: `Bearer ${config.accessToken}`,
-        ...(init?.body ? { "content-type": "application/json" } : {}),
-        ...init?.headers,
-      },
-    });
-    if (!response.ok) {
-      const payload = await response
-        .clone()
-        .json()
-        .catch(() => null);
-      const detail = polarErrorDetail(payload);
-      throw new PolarApiError(response, detail);
+  const call = async <T>(operation: () => Promise<T>): Promise<T> => {
+    try {
+      return await operation();
+    } catch (error) {
+      const status = sdkErrorStatus(error);
+      if (status !== null) throw new PolarApiError(status, sdkRequestId(error));
+      throw error;
     }
-    return response.json();
   };
-
-  const updateSubscription = async (
-    subscriptionId: string,
-    body: Record<string, unknown>,
-  ) =>
-    parsePolarSubscription(
-      await request(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
-        method: "PATCH",
-        body: JSON.stringify(body),
-      }),
-    );
 
   return {
     async createCustomer(input) {
       assertIdentifier(input.externalCustomerId, "externalCustomerId");
       if (input.metadata) assertMetadata(input.metadata);
-      return mapCustomer(
-        await request("/customers/", {
-          method: "POST",
-          body: JSON.stringify({
-            type: "individual",
-            external_id: input.externalCustomerId,
-            email: input.email,
+      return mapSdkCustomer(
+        await call(() =>
+          sdk.customers.create({
+            type: "team",
+            externalId: input.externalCustomerId,
             name: input.name,
+            owner: {
+              email: input.email,
+              name: input.name,
+              externalId: input.ownerExternalId,
+            },
+            locale: input.locale,
             metadata: input.metadata,
           }),
-        }),
+        ),
       );
     },
 
     async getCustomerByExternalId(externalCustomerId) {
       assertIdentifier(externalCustomerId, "externalCustomerId");
-      return mapCustomer(
-        await request(
-          `/customers/external/${encodeURIComponent(externalCustomerId)}`,
+      return mapSdkCustomer(
+        await call(() =>
+          sdk.customers.getExternal({ externalId: externalCustomerId }),
         ),
       );
-    },
-
-    async getCustomerByEmail(email) {
-      const normalizedEmail = email.trim().toLowerCase();
-      const payload = object(
-        await request(
-          `/customers/?email=${encodeURIComponent(normalizedEmail)}`,
-        ),
-        "customer list",
-      );
-      const items = Array.isArray(payload.items) ? payload.items : [];
-      const exact = items.filter((item) => {
-        const customer = object(item, "customer");
-        return (
-          typeof customer.email === "string" &&
-          customer.email.toLowerCase() === normalizedEmail
-        );
-      });
-      if (exact.length > 1) {
-        throw new Error("Polar returned duplicate customers for one email");
-      }
-      return exact[0] ? mapCustomer(exact[0]) : null;
     },
 
     async createCheckout(input) {
@@ -389,78 +412,86 @@ export function createPolarBillingProvider(
         throw new RangeError("Checkout amount must be a non-negative integer");
       }
 
-      return mapCheckout(
-        await request("/checkouts/", {
-          method: "POST",
-          body: JSON.stringify({
-            products: input.productIds,
-            customer_id: input.customerId,
-            success_url: input.successUrl,
-            return_url: input.returnUrl,
+      return mapSdkCheckout(
+        await call(() =>
+          sdk.checkouts.create({
+            products: [...input.productIds],
+            customerId: input.customerId,
+            successUrl: input.successUrl,
+            returnUrl: input.returnUrl,
             metadata: input.metadata,
             amount: input.amountMinor,
-            allow_discount_codes: input.allowDiscountCodes,
+            allowDiscountCodes: input.allowDiscountCodes,
             seats: input.seats,
-            customer_email: input.customerEmail,
-            customer_name: input.customerName,
+            customerEmail: input.customerEmail,
+            customerName: input.customerName,
             locale: input.locale,
-            allow_trial: false,
+            allowTrial: false,
           }),
-        }),
+        ),
       );
     },
 
     async getCheckout(checkoutId) {
       assertIdentifier(checkoutId, "checkoutId");
-      return mapCheckout(
-        await request(`/checkouts/${encodeURIComponent(checkoutId)}`),
+      return mapSdkCheckout(
+        await call(() => sdk.checkouts.get({ id: checkoutId })),
       );
     },
 
-    async createCustomerPortalSession(customerId, returnUrl, externalMemberId) {
-      assertIdentifier(customerId, "customerId");
-      if (externalMemberId) {
-        assertIdentifier(externalMemberId, "externalMemberId");
-      }
-      assertSafeRedirectUrl(returnUrl, "returnUrl");
-      return mapPortalSession(
-        await request("/customer-sessions/", {
-          method: "POST",
-          body: JSON.stringify({
-            customer_id: customerId,
-            external_member_id: externalMemberId,
-            return_url: returnUrl,
+    async createCustomerPortalSession(input) {
+      assertIdentifier(input.customerId, "customerId");
+      assertIdentifier(input.externalMemberId, "externalMemberId");
+      assertSafeRedirectUrl(input.returnUrl, "returnUrl");
+      const providerReturnUrl = new URL(input.returnUrl).protocol === "https:";
+      return mapSdkPortalSession(
+        await call(() =>
+          sdk.customerSessions.create({
+            customerId: input.customerId,
+            externalMemberId: input.externalMemberId,
+            ...(providerReturnUrl ? { returnUrl: input.returnUrl } : {}),
           }),
-        }),
+        ),
       );
     },
 
     async getSubscription(subscriptionId) {
       assertIdentifier(subscriptionId, "subscriptionId");
-      return parsePolarSubscription(
-        await request(`/subscriptions/${encodeURIComponent(subscriptionId)}`),
+      return mapSdkSubscription(
+        await call(() => sdk.subscriptions.get({ id: subscriptionId })),
       );
     },
 
     async updateSubscriptionSeats(subscriptionId, seats, prorationBehavior) {
       assertIdentifier(subscriptionId, "subscriptionId");
       assertSeats(seats);
-      return updateSubscription(subscriptionId, {
-        seats,
-        proration_behavior: prorationBehavior,
-      });
+      return mapSdkSubscription(
+        await call(() =>
+          sdk.subscriptions.update({
+            id: subscriptionId,
+            subscriptionUpdate: { seats, prorationBehavior },
+          }),
+        ),
+      );
     },
 
     async setCancelAtPeriodEnd(subscriptionId, cancelAtPeriodEnd) {
       assertIdentifier(subscriptionId, "subscriptionId");
-      return updateSubscription(subscriptionId, {
-        cancel_at_period_end: cancelAtPeriodEnd,
-      });
+      return mapSdkSubscription(
+        await call(() =>
+          sdk.subscriptions.update({
+            id: subscriptionId,
+            subscriptionUpdate: { cancelAtPeriodEnd },
+          }),
+        ),
+      );
     },
 
     async revokeSubscription(subscriptionId) {
       assertIdentifier(subscriptionId, "subscriptionId");
-      return updateSubscription(subscriptionId, { revoke: true });
+      return mapSdkSubscription(
+        await call(() => sdk.subscriptions.revoke({ id: subscriptionId })),
+      );
     },
   };
 }
@@ -469,34 +500,27 @@ function assertIdentifier(value: string, name: string): void {
   if (!value || value.length > 500) throw new Error(`${name} is invalid`);
 }
 
-function polarErrorDetail(payload: unknown): string | undefined {
-  const value = optionalObject(payload);
-  const direct = [value.detail, value.error, value.message].find(
-    (candidate) => typeof candidate === "string",
-  );
-  if (typeof direct === "string") return direct.slice(0, 500);
-  if (Array.isArray(value.detail)) {
-    const messages = value.detail
-      .flatMap((item) => {
-        const issue = optionalObject(item);
-        return typeof issue.msg === "string" ? [issue.msg] : [];
-      })
-      .slice(0, 3);
-    if (messages.length) return messages.join("; ").slice(0, 500);
-  }
-  return undefined;
-}
-
 function assertSeats(seats: number): void {
-  if (!Number.isSafeInteger(seats) || seats < 1 || seats > 10_000) {
-    throw new Error("Polar seats must be an integer between 1 and 10000");
+  if (!Number.isSafeInteger(seats) || seats < 1 || seats > 1_000) {
+    throw new Error("Polar seats must be an integer between 1 and 1000");
   }
 }
 
 function assertSafeRedirectUrl(value: string, name: string): void {
   const url = new URL(value);
-  if (url.protocol !== "https:" || url.username || url.password) {
-    throw new Error(`${name} must be an HTTPS URL without credentials`);
+  const localHttp =
+    url.protocol === "http:" &&
+    (url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "::1");
+  if (
+    (url.protocol !== "https:" && !localHttp) ||
+    url.username ||
+    url.password
+  ) {
+    throw new Error(
+      `${name} must be HTTPS, or HTTP on localhost, without credentials`,
+    );
   }
 }
 
@@ -515,13 +539,87 @@ function assertMetadata(metadata: PolarMetadata): void {
   }
 }
 
-type JsonObject = Record<string, unknown>;
-
-function optionalObject(value: unknown): JsonObject {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as JsonObject)
-    : {};
+function sdkErrorStatus(error: unknown): number | null {
+  if (!error || typeof error !== "object") return null;
+  const status = "statusCode" in error ? error.statusCode : undefined;
+  return typeof status === "number" && Number.isInteger(status) ? status : null;
 }
+
+function sdkRequestId(error: unknown): string | null {
+  if (!error || typeof error !== "object" || !("headers" in error)) return null;
+  const headers = error.headers;
+  return headers instanceof Headers ? headers.get("x-request-id") : null;
+}
+
+function mapSdkCustomer(
+  customer: Awaited<ReturnType<Polar["customers"]["create"]>>,
+): PolarCustomer {
+  return {
+    id: customer.id,
+    externalId: customer.externalId ?? null,
+    email: customer.email ?? null,
+    name: customer.name,
+    type: customer.type,
+    modifiedAt: customer.modifiedAt?.toISOString() ?? null,
+  };
+}
+
+function mapSdkCheckout(
+  checkout: Awaited<ReturnType<Polar["checkouts"]["create"]>>,
+): PolarCheckout {
+  assertSafeRedirectUrl(checkout.url, "checkout.url");
+  return {
+    id: checkout.id,
+    status: checkout.status,
+    url: checkout.url,
+    expiresAt: checkout.expiresAt.toISOString(),
+    customerId: checkout.customerId,
+    subscriptionId: checkout.subscriptionId,
+    seats: checkout.seats ?? null,
+  };
+}
+
+function mapSdkPortalSession(
+  session: Awaited<ReturnType<Polar["customerSessions"]["create"]>>,
+): PolarPortalSession {
+  assertSafeRedirectUrl(session.customerPortalUrl, "customer portal URL");
+  return {
+    id: session.id,
+    customerId: session.customerId,
+    customerPortalUrl: session.customerPortalUrl,
+    expiresAt: session.expiresAt.toISOString(),
+  };
+}
+
+function mapSdkSubscription(
+  subscription: Awaited<ReturnType<Polar["subscriptions"]["get"]>>,
+): PolarSubscription {
+  return {
+    id: subscription.id,
+    customerId: subscription.customerId,
+    productId: subscription.productId,
+    status: subscription.status,
+    seats: subscription.seats ?? null,
+    amount: subscription.amount,
+    currency: subscription.currency,
+    recurringInterval: subscription.recurringInterval,
+    recurringIntervalCount: subscription.recurringIntervalCount,
+    currentPeriodStart: subscription.currentPeriodStart.toISOString(),
+    currentPeriodEnd: subscription.currentPeriodEnd.toISOString(),
+    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    canceledAt: subscription.canceledAt?.toISOString() ?? null,
+    endedAt: subscription.endedAt?.toISOString() ?? null,
+    pastDueAt: subscription.pastDueAt?.toISOString() ?? null,
+    pauseAtPeriodEnd: subscription.pauseAtPeriodEnd,
+    pausedAt: subscription.pausedAt?.toISOString() ?? null,
+    resumesAt: subscription.resumesAt?.toISOString() ?? null,
+    modifiedAt: subscription.modifiedAt?.toISOString() ?? null,
+    metadata: subscription.metadata as PolarMetadata,
+    pendingUpdate: subscription.pendingUpdate,
+  };
+}
+
+type JsonObject = Record<string, unknown>;
 
 function object(value: unknown, name: string): JsonObject {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -537,55 +635,6 @@ function string(value: unknown, name: string): string {
 
 function nullableString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
-}
-
-function mapCustomer(value: unknown): PolarCustomer {
-  const data = object(value, "customer");
-  return {
-    id: string(data.id, "customer.id"),
-    externalId: nullableString(data.external_id),
-    email: nullableString(data.email),
-    name: nullableString(data.name),
-    type: data.type === "individual" || data.type === "team" ? data.type : null,
-    modifiedAt: nullableString(data.modified_at),
-  };
-}
-
-function mapCheckout(value: unknown): PolarCheckout {
-  const data = object(value, "checkout");
-  const url = string(data.url, "checkout.url");
-  assertSafeRedirectUrl(url, "checkout.url");
-  const expiresAt = string(data.expires_at, "checkout.expires_at");
-  if (!Number.isFinite(Date.parse(expiresAt))) {
-    throw new Error("Polar returned an invalid checkout expiration");
-  }
-  return {
-    id: string(data.id, "checkout.id"),
-    status: string(data.status, "checkout.status"),
-    url,
-    expiresAt,
-    customerId: nullableString(data.customer_id),
-    subscriptionId: nullableString(data.subscription_id),
-    seats: typeof data.seats === "number" ? data.seats : null,
-  };
-}
-
-function mapPortalSession(value: unknown): PolarPortalSession {
-  const data = object(value, "customer portal session");
-  const customerPortalUrl = string(
-    data.customer_portal_url,
-    "customer_session.customer_portal_url",
-  );
-  assertSafeRedirectUrl(
-    customerPortalUrl,
-    "customer_session.customer_portal_url",
-  );
-  return {
-    id: string(data.id, "customer_session.id"),
-    customerId: string(data.customer_id, "customer_session.customer_id"),
-    customerPortalUrl,
-    expiresAt: string(data.expires_at, "customer_session.expires_at"),
-  };
 }
 
 export function parsePolarSubscription(value: unknown): PolarSubscription {
