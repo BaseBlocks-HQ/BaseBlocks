@@ -23,7 +23,12 @@ export default async function TeamLayout({
   if (!team) notFound();
 
   return (
-    <TeamAccessProvider team={team} teams={teams} user={user}>
+    <TeamAccessProvider
+      analyticsEnabled={analyticsEnabled}
+      team={team}
+      teams={teams}
+      user={user}
+    >
       <AppShell
         analyticsEnabled={analyticsEnabled}
         defaultSidebarOpen={

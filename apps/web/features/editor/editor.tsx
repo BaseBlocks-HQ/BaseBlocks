@@ -13,11 +13,18 @@ import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation } from "convex/react";
 import dynamic from "next/dynamic";
-import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EditorDialogs, type EditorDialogState } from "./editor-dialogs";
 import { DraftRestoreGate } from "./draft-restore-gate";
 import { EditorRevealBoundary } from "./editor-reveal-boundary";
+import {
+  siteEditorActionEvent,
+  sitePreviewStateEvent,
+  type SiteEditorAction,
+  type SitePreviewState,
+} from "./site-action-event";
 import { SiteHeaderContent } from "./site-header-content";
 
 const SiteAiChat = dynamic(() =>
@@ -57,6 +64,8 @@ function SiteEditorScreen({
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
     null,
   );
+  const searchParams = useSearchParams();
+  const requestedAction = searchParams.get("action");
 
   const unpublishSite = useMutation(api.releases.unpublish);
 
@@ -68,6 +77,50 @@ function SiteEditorScreen({
       toast.error("Failed to unpublish site");
     }
   };
+
+  useEffect(() => {
+    if (status !== "ready" || !requestedAction) return;
+
+    if (requestedAction === "preview") {
+      setIsPreviewing(true);
+    } else if (
+      requestedAction === "history" ||
+      requestedAction === "publish" ||
+      requestedAction === "settings" ||
+      requestedAction === "share"
+    ) {
+      setActiveDialog({ name: requestedAction, returnFocusTo: null });
+    } else {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("action");
+    window.history.replaceState(null, "", url);
+  }, [requestedAction, status]);
+
+  useEffect(() => {
+    const handleSiteAction = (event: Event) => {
+      const action = (event as CustomEvent<SiteEditorAction>).detail;
+      if (action === "preview") {
+        setIsPreviewing((current) => !current);
+        return;
+      }
+      setActiveDialog({ name: action, returnFocusTo: null });
+    };
+
+    window.addEventListener(siteEditorActionEvent, handleSiteAction);
+    return () =>
+      window.removeEventListener(siteEditorActionEvent, handleSiteAction);
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent<SitePreviewState>(sitePreviewStateEvent, {
+        detail: { isPreviewing, siteId },
+      }),
+    );
+  }, [isPreviewing, siteId]);
 
   if (status === "loading") {
     return <EditorRevealBoundary state="loading" />;

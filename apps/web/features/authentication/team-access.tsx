@@ -11,6 +11,7 @@ import {
 import { type ReactNode, createContext, use } from "react";
 
 interface TeamAccessValue {
+  analyticsEnabled: boolean;
   capabilities: {
     canEditContent: boolean;
     canManageLibraries: boolean;
@@ -30,6 +31,7 @@ interface TeamAccessValue {
 const TeamAccessContext = createContext<TeamAccessValue | null>(null);
 
 interface TeamAccessProviderProps {
+  analyticsEnabled: boolean;
   children: ReactNode;
   team: TeamRecord;
   teams: TeamRecord[];
@@ -37,6 +39,7 @@ interface TeamAccessProviderProps {
 }
 
 export function TeamAccessProvider({
+  analyticsEnabled,
   children,
   team,
   teams,
@@ -81,6 +84,7 @@ export function TeamAccessProvider({
   return (
     <TeamAccessContext.Provider
       value={{
+        analyticsEnabled,
         capabilities,
         role,
         team,

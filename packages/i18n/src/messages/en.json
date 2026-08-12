@@ -116,7 +116,6 @@
     "actions": "Site actions",
     "create": "Create site",
     "edit": "Edit",
-    "editInformation": "Edit site information",
     "delete": "Delete site",
     "settings": "Site settings",
     "publish": "Publish",
@@ -527,6 +526,10 @@
   "billing": {
     "title": "Billing",
     "adminRequired": "Only workspace owners and admins can manage billing.",
+    "memberView": {
+      "title": "Billing is managed for you",
+      "description": "You can view the current plan. Ask a workspace owner or admin to change the plan, payment method, or AI credit balance."
+    },
     "support": {
       "prompt": "For questions about billing,",
       "contact": "contact us",
@@ -765,14 +768,17 @@
       "limitReached": "You have reached the limit of {limit} owned workspaces.",
       "name": "Name",
       "slug": "URL slug",
-      "slugHint": "Lowercase letters, numbers, and hyphens only.",
+      "slugHint": "Use lowercase letters, numbers, and hyphens. For example, product-docs.",
       "details": "Workspace details",
       "save": "Save changes",
       "saved": "Workspace updated",
       "saveFailed": "Could not update the workspace",
-      "readOnly": "Only owners and admins can change workspace details.",
+      "readOnly": "You can view these details. Ask a workspace owner or admin to make changes.",
       "ownership": "Ownership",
       "ownershipDescription": "Transfer ownership before you leave.",
+      "currentOwner": "You are the owner",
+      "workspaceOwner": "Workspace owner",
+      "ownerUnavailable": "Owner information is not available.",
       "membersLoading": "Loading members…",
       "selectOwner": "Select the new owner",
       "transfer": "Transfer ownership",

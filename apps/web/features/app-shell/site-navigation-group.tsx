@@ -8,17 +8,21 @@ import {
   appSidebarRowGapClassName,
 } from "@/features/app-shell/app-sidebar-row";
 import { getTeamSiteEditorPath } from "@/features/dashboard/routes";
+import { SiteActionsMenuItems } from "@/features/dashboard/sites/site-actions-menu-items";
 import type { SiteManagementTarget } from "@/features/dashboard/sites/site-management-dialogs";
 import type { SiteNavigationItem } from "@/features/dashboard/use-site-navigation";
 import { CreatePageDialog } from "@/features/editor/pages/create-page-dialog";
 import { PageTree } from "@/features/editor/pages/page-tree";
+import {
+  openActiveSiteEditorAction,
+  type SiteEditorAction,
+} from "@/features/editor/site-action-event";
+import { getSiteOpenUrl } from "@/features/published-sites/urls";
 import { useRouter } from "@/i18n/navigation";
 import {
   Add01Icon,
   ArrowDown01Icon,
-  Delete01Icon,
   MoreHorizontalIcon,
-  PencilEdit01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -32,13 +36,11 @@ import {
 import {
   ContextMenu,
   ContextMenuContent,
-  ContextMenuItem,
   ContextMenuTrigger,
 } from "@baseblocks/ui/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -52,20 +54,24 @@ import { useState } from "react";
 
 export function SiteNavigationGroup({
   activeSiteId,
+  analyticsEnabled,
   canEdit,
   canManageSites,
   onDeleteSite,
-  onEditSite,
+  onUnpublishSite,
+  previewing,
   onSelectActivePage,
   selectedPageId,
   site,
   teamSlug,
 }: {
   activeSiteId: string | null;
+  analyticsEnabled: boolean;
   canEdit: boolean;
   canManageSites: boolean;
   onDeleteSite: (site: SiteManagementTarget) => void;
-  onEditSite: (site: SiteManagementTarget) => void;
+  onUnpublishSite: (siteId: string) => void;
+  previewing: boolean;
   onSelectActivePage: (pageId: string) => void;
   selectedPageId: string | null;
   site: SiteNavigationItem;
@@ -83,22 +89,40 @@ export function SiteNavigationGroup({
     expanded ? "navigation.collapseSite" : "navigation.expandSite",
     { site: site.name },
   );
-  const siteActions = [
-    {
-      id: "edit",
-      icon: PencilEdit01Icon,
-      label: t("sites.editInformation"),
-      onSelect: () => onEditSite(site),
-      destructive: false,
-    },
-    {
-      id: "delete",
-      icon: Delete01Icon,
-      label: t("sites.delete"),
-      onSelect: () => onDeleteSite(site),
-      destructive: true,
-    },
-  ] as const;
+  const openSiteAction = (action: SiteEditorAction) => {
+    if (isActive) {
+      openActiveSiteEditorAction(action);
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set("action", action);
+    router.push(`${siteHref}?${params.toString()}`);
+  };
+
+  const siteActionItems = (kind: "context" | "dropdown") => (
+    <SiteActionsMenuItems
+      analyticsEnabled={analyticsEnabled}
+      canDelete={canManageSites}
+      isPreviewing={previewing}
+      kind={kind}
+      onDelete={() => onDeleteSite(site)}
+      onHistory={() => openSiteAction("history")}
+      onPreview={() => openSiteAction("preview")}
+      onPublish={() => openSiteAction("publish")}
+      onSettings={() => openSiteAction("settings")}
+      onShare={() => openSiteAction("share")}
+      onUnpublish={
+        site.liveReleaseId ? () => onUnpublishSite(site._id) : undefined
+      }
+      onViewSite={() =>
+        window.open(getSiteOpenUrl(teamSlug, site.slug), "_blank")
+      }
+      siteId={site._id}
+      sitePublished={Boolean(site.liveReleaseId)}
+      teamSlug={teamSlug}
+    />
+  );
 
   const siteHeader = (
     <ActionRow className="group/site relative min-w-0">
@@ -227,16 +251,7 @@ export function SiteNavigationGroup({
           <ContextMenu>
             <ContextMenuTrigger asChild>{siteHeader}</ContextMenuTrigger>
             <ContextMenuContent className="w-52">
-              {siteActions.map((action) => (
-                <ContextMenuItem
-                  key={action.id}
-                  onSelect={action.onSelect}
-                  variant={action.destructive ? "destructive" : undefined}
-                >
-                  <HugeiconsIcon className="size-4" icon={action.icon} />
-                  {action.label}
-                </ContextMenuItem>
-              ))}
+              {siteActionItems("context")}
             </ContextMenuContent>
           </ContextMenu>
           <DropdownMenuContent
@@ -245,16 +260,7 @@ export function SiteNavigationGroup({
             side="right"
             sideOffset={6}
           >
-            {siteActions.map((action) => (
-              <DropdownMenuItem
-                key={action.id}
-                onSelect={action.onSelect}
-                variant={action.destructive ? "destructive" : undefined}
-              >
-                <HugeiconsIcon className="size-4" icon={action.icon} />
-                {action.label}
-              </DropdownMenuItem>
-            ))}
+            {siteActionItems("dropdown")}
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (

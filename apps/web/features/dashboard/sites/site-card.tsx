@@ -5,7 +5,6 @@ import {
   Delete01Icon,
   LinkSquare01Icon,
   MoreHorizontalIcon,
-  PencilEdit01Icon,
 } from "@hugeicons/core-free-icons";
 import { Link } from "@/i18n/navigation";
 import { DashboardListRow } from "@/features/dashboard/layout/dashboard-page";
@@ -35,7 +34,6 @@ import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
-import { EditSiteDialog } from "./edit-site-dialog";
 
 interface SiteCardProps {
   canManageSites: boolean;
@@ -55,7 +53,6 @@ interface SiteCardProps {
 }
 
 export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const t = useTranslations();
@@ -154,39 +151,22 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
                   </DropdownMenuItem>
                 ) : null}
                 {canManageSites ? (
-                  <>
-                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                      <HugeiconsIcon
-                        icon={PencilEdit01Icon}
-                        className="mr-2 h-4 w-4"
-                      />
-                      {t("common.edit")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => setDeleteOpen(true)}
-                    >
-                      <HugeiconsIcon
-                        icon={Delete01Icon}
-                        className="mr-2 h-4 w-4"
-                      />
-                      {t("common.delete")}
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <HugeiconsIcon
+                      icon={Delete01Icon}
+                      className="mr-2 h-4 w-4"
+                    />
+                    {t("common.delete")}
+                  </DropdownMenuItem>
                 ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : null}
         </div>
       </DashboardListRow>
-
-      {canManageSites && (
-        <EditSiteDialog
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          site={site}
-        />
-      )}
 
       {canManageSites && (
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
