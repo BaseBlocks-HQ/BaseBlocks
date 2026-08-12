@@ -16,6 +16,41 @@ export type CheckoutIntentLifecycle = Readonly<{
   nextAttemptAt?: number;
 }>;
 
+type NewCheckoutIntentCommand = Readonly<{
+  organizationId: string;
+  actorId: string;
+  providerEnvironment: "sandbox" | "production";
+  purpose: "plus" | "aiCreditPack";
+  sku: string;
+  requestedSeats?: number;
+  requestedAmountMinor?: bigint;
+  idempotencyKey: string;
+  attemptId: string;
+}>;
+
+/** Projects command input into the persisted schema deliberately. */
+export function newCheckoutIntentDocument(
+  command: NewCheckoutIntentCommand,
+  now: number,
+) {
+  return {
+    organizationId: command.organizationId,
+    actorId: command.actorId,
+    providerEnvironment: command.providerEnvironment,
+    purpose: command.purpose,
+    sku: command.sku,
+    requestedSeats: command.requestedSeats,
+    requestedAmountMinor: command.requestedAmountMinor,
+    idempotencyKey: command.idempotencyKey,
+    status: "pending" as const,
+    attemptCount: 1,
+    activeAttemptId: command.attemptId,
+    leaseExpiresAt: now + CHECKOUT_ATTEMPT_LEASE_MS,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export function checkoutAttemptCanAcquire(
   intent: CheckoutIntentLifecycle,
   attemptId: string,

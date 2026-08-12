@@ -4,6 +4,7 @@ import {
   CHECKOUT_ATTEMPT_LEASE_MS,
   checkoutAttemptCanAcquire,
   checkoutAttemptShouldReplay,
+  newCheckoutIntentDocument,
 } from "./billing/checkoutIntent";
 import {
   aiTopUpAmountToCreditUnits,
@@ -367,15 +368,10 @@ export const createCheckoutIntent = internalMutation({
       return await ctx.db.get(existing._id);
     }
     const now = Date.now();
-    const id = await ctx.db.insert("billingCheckoutIntents", {
-      ...args,
-      status: "pending",
-      attemptCount: 1,
-      activeAttemptId: args.attemptId,
-      leaseExpiresAt: now + CHECKOUT_ATTEMPT_LEASE_MS,
-      createdAt: now,
-      updatedAt: now,
-    });
+    const id = await ctx.db.insert(
+      "billingCheckoutIntents",
+      newCheckoutIntentDocument(args, now),
+    );
     return await ctx.db.get(id);
   },
 });
