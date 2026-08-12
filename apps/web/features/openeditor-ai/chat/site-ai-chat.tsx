@@ -40,7 +40,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AgentActivity, PendingAgentActivity } from "./agent-activity";
 import { getConversationTranscriptState } from "./conversation-state";
@@ -154,27 +154,17 @@ function EnabledSiteAiChat({
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const resolvedConversationId =
+    conversationId ??
+    (!composingNewConversation ? conversations?.[0]?._id : undefined) ??
+    null;
   const conversationView = useQuery(
     api.siteAssistantRuns.conversation,
-    conversationId ? { conversationId } : "skip",
+    resolvedConversationId
+      ? { conversationId: resolvedConversationId }
+      : "skip",
   );
   const messages = conversationView?.messages;
-
-  useEffect(() => {
-    const firstConversation = conversations?.[0];
-    if (conversationId || composingNewConversation || !firstConversation)
-      return;
-    setConversationId(firstConversation._id);
-  }, [composingNewConversation, conversationId, conversations]);
-
-  useEffect(() => {
-    if (
-      submitting &&
-      messages?.some((message) => message.id === submitting.messageId)
-    ) {
-      setSubmitting(null);
-    }
-  }, [messages, submitting]);
 
   useEffect(() => {
     const chat = chatRef.current;
@@ -199,7 +189,9 @@ function EnabledSiteAiChat({
 
   const activeConversation =
     conversationView?.conversation ??
-    conversations?.find((conversation) => conversation._id === conversationId);
+    conversations?.find(
+      (conversation) => conversation._id === resolvedConversationId,
+    );
   const activeRun = [...(messages ?? [])]
     .reverse()
     .find(
@@ -207,26 +199,27 @@ function EnabledSiteAiChat({
         message.role === "assistant" &&
         (message.run?.status === "queued" || message.run?.status === "running"),
     )?.run;
-  const pending = Boolean(submitting || activeRun);
-  const pendingIsPersisted = Boolean(
+  const submissionPersisted = Boolean(
     submitting &&
       messages?.some((message) => message.id === submitting.messageId),
   );
-  const displayMessages = useMemo(() => messages ?? [], [messages]);
+  const pending = Boolean((submitting && !submissionPersisted) || activeRun);
+  const pendingIsPersisted = Boolean(submitting && submissionPersisted);
+  const displayMessages = messages ?? [];
   const transcriptState = getConversationTranscriptState({
     composingNewConversation,
     conversationsLoaded: conversations !== undefined,
-    conversationId,
+    conversationId: resolvedConversationId,
     hasConversations: Boolean(conversations?.length),
     messagesLoaded: messages !== undefined,
   });
 
   useEffect(() => {
     if (!messages) return;
-    if (observedConversationIdRef.current !== conversationId) {
+    if (observedConversationIdRef.current !== resolvedConversationId) {
       observedApplicationsRef.current.clear();
       applicationsInitializedRef.current = false;
-      observedConversationIdRef.current = conversationId;
+      observedConversationIdRef.current = resolvedConversationId;
     }
     const applications = messages.flatMap((message) =>
       message.parts.flatMap((part) => {
@@ -250,7 +243,7 @@ function EnabledSiteAiChat({
     for (const auditId of fresh) seen.add(auditId);
     onApplied();
     toast.success("Site updated");
-  }, [conversationId, messages, onApplied]);
+  }, [messages, onApplied, resolvedConversationId]);
   const startConversation = () => {
     setConversationId(null);
     setComposingNewConversation(true);
@@ -258,34 +251,34 @@ function EnabledSiteAiChat({
     setInput("");
   };
 
-  const archiveConversationById = async (
+  const archiveConversationById = (
     targetConversationId: Id<"siteAssistantConversations">,
   ) => {
     if (
       archivingConversationId ||
-      (pending && targetConversationId === conversationId)
+      (pending && targetConversationId === resolvedConversationId)
     ) {
       return;
     }
     setArchivingConversationId(targetConversationId);
-    try {
-      await archiveConversation({ conversationId: targetConversationId });
-      if (targetConversationId === conversationId) {
-        setConversationId(null);
-        setError(null);
-      }
-    } catch (cause) {
-      toast.error(
-        cause instanceof Error
-          ? cause.message
-          : "The conversation could not be archived",
-      );
-    } finally {
-      setArchivingConversationId(null);
-    }
+    void archiveConversation({ conversationId: targetConversationId })
+      .then(() => {
+        if (targetConversationId === resolvedConversationId) {
+          setConversationId(null);
+          setError(null);
+        }
+      })
+      .catch((cause: unknown) => {
+        toast.error(
+          cause instanceof Error
+            ? cause.message
+            : "The conversation could not be archived",
+        );
+      })
+      .finally(() => setArchivingConversationId(null));
   };
 
-  const send = async (content: string) => {
+  const send = (content: string) => {
     const prompt = content.trim();
     if (!prompt || pending) return;
     const requestId = crypto.randomUUID();
@@ -293,46 +286,48 @@ function EnabledSiteAiChat({
     setInput("");
     setError(null);
     setSubmitting({ requestId, messageId, content: prompt });
-    try {
-      const result = await submitTurn({
-        siteId,
-        conversationId: conversationId ?? undefined,
-        requestId,
-        message: { id: messageId, parts: [{ type: "text", text: prompt }] },
+    void submitTurn({
+      siteId,
+      conversationId: resolvedConversationId ?? undefined,
+      requestId,
+      message: { id: messageId, parts: [{ type: "text", text: prompt }] },
+    })
+      .then((result) => {
+        setComposingNewConversation(false);
+        setConversationId(result.conversationId);
+      })
+      .catch((cause: unknown) => {
+        const message =
+          cause instanceof Error ? cause.message : "The editor agent failed";
+        setError(message);
+        setInput((current) => (current.trim() ? current : prompt));
+        setSubmitting(null);
+        toast.error(message);
       });
-      setComposingNewConversation(false);
-      setConversationId(result.conversationId);
-    } catch (cause) {
-      const message =
-        cause instanceof Error ? cause.message : "The editor agent failed";
-      setError(message);
-      setInput((current) => (current.trim() ? current : prompt));
-      setSubmitting(null);
-      toast.error(message);
-    }
   };
 
-  const revert = async (message: {
+  const revert = (message: {
     id: string;
     auditId?: Id<"siteAssistantApplications">;
   }) => {
-    if (!message.auditId || revertingMessageId) return;
+    const auditId = message.auditId;
+    if (!auditId || revertingMessageId) return;
     setRevertingMessageId(message.id);
     setError(null);
-    try {
-      await revertChange({ auditId: message.auditId });
-      onApplied();
-      toast.success("AI changes reverted");
-    } catch (cause) {
-      const failure =
-        cause instanceof Error
-          ? cause.message
-          : "The change could not be reverted";
-      setError(failure);
-      toast.error(failure);
-    } finally {
-      setRevertingMessageId(null);
-    }
+    void revertChange({ auditId })
+      .then(() => {
+        onApplied();
+        toast.success("AI changes reverted");
+      })
+      .catch((cause: unknown) => {
+        const failure =
+          cause instanceof Error
+            ? cause.message
+            : "The change could not be reverted";
+        setError(failure);
+        toast.error(failure);
+      })
+      .finally(() => setRevertingMessageId(null));
   };
 
   return (
@@ -373,7 +368,7 @@ function EnabledSiteAiChat({
                 role="list"
               >
                 {conversations.map((conversation) => {
-                  const active = conversation._id === conversationId;
+                  const active = conversation._id === resolvedConversationId;
                   return (
                     <ActionRow
                       className={cn(
