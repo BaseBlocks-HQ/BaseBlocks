@@ -10,12 +10,6 @@ crons.interval(
 );
 
 crons.interval(
-  "repair Polar webhook processing",
-  { minutes: 15 },
-  internal.billingModel.recoverWebhookEvents,
-);
-
-crons.interval(
   "expire included AI credits",
   { minutes: 15 },
   internal.aiCredits.expireDueIncludedLots,
