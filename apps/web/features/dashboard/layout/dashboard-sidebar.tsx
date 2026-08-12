@@ -38,6 +38,7 @@ import {
   appSidebarRowGapClassName,
 } from "@/features/app-shell/app-sidebar-row";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Badge } from "@baseblocks/ui/badge";
 import {
   SidebarContent,
   SidebarGroup,
@@ -116,14 +117,23 @@ export function DashboardSidebarContent({
                     isActive={pathname.startsWith(teamIntegrationsPath)}
                     label={t("integrations.title")}
                   />
-                  {analyticsEnabled ? (
-                    <SidebarNavigationItem
-                      href={teamAnalyticsPath}
-                      icon={Analytics01Icon}
-                      isActive={pathname.startsWith(teamAnalyticsPath)}
-                      label={t("navigation.analytics")}
-                    />
-                  ) : null}
+                  <SidebarNavigationItem
+                    disabled={!analyticsEnabled}
+                    href={teamAnalyticsPath}
+                    icon={Analytics01Icon}
+                    isActive={pathname.startsWith(teamAnalyticsPath)}
+                    label={t("navigation.analytics")}
+                    trailing={
+                      !analyticsEnabled ? (
+                        <Badge
+                          className="ml-auto h-5 shrink-0 px-1.5 text-[10px] font-normal"
+                          variant="outline"
+                        >
+                          {t("navigation.comingSoon")}
+                        </Badge>
+                      ) : null
+                    }
+                  />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -186,36 +196,55 @@ export function DashboardSidebarContent({
 }
 
 function SidebarNavigationItem({
+  disabled = false,
   href,
   icon,
   isActive,
   label,
+  trailing,
 }: {
+  disabled?: boolean;
   href: string;
   icon: IconSvgElement;
   isActive: boolean;
   label: string;
+  trailing?: React.ReactNode;
 }) {
+  const content = (
+    <>
+      <span className={appSidebarIconSlotClassName}>
+        <HugeiconsIcon
+          icon={icon}
+          className={cn(
+            appSidebarIconClassName,
+            isActive ? "text-sidebar-foreground" : undefined,
+          )}
+          strokeWidth={APP_SIDEBAR_ICON_STROKE}
+        />
+      </span>
+      <span className="truncate">{label}</span>
+      {trailing}
+    </>
+  );
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        asChild
-        className={appSidebarRowClassName}
+        asChild={!disabled}
+        className={cn(
+          appSidebarRowClassName,
+          disabled && "cursor-not-allowed opacity-55",
+        )}
+        disabled={disabled}
         isActive={isActive}
       >
-        <Link href={href} prefetch={false}>
-          <span className={appSidebarIconSlotClassName}>
-            <HugeiconsIcon
-              icon={icon}
-              className={cn(
-                appSidebarIconClassName,
-                isActive ? "text-sidebar-foreground" : undefined,
-              )}
-              strokeWidth={APP_SIDEBAR_ICON_STROKE}
-            />
-          </span>
-          <span className="truncate">{label}</span>
-        </Link>
+        {disabled ? (
+          content
+        ) : (
+          <Link href={href} prefetch={false}>
+            {content}
+          </Link>
+        )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

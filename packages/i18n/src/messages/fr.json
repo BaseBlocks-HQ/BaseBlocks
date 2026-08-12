@@ -527,6 +527,10 @@
   "billing": {
     "title": "Facturation",
     "adminRequired": "Seuls les propriétaires et administrateurs de l’espace peuvent gérer la facturation.",
+    "memberView": {
+      "title": "La facturation est gérée pour vous",
+      "description": "Vous pouvez consulter l’offre actuelle. Demandez à un propriétaire ou à un administrateur de modifier l’offre, le mode de paiement ou le solde de crédits IA."
+    },
     "support": {
       "prompt": "Pour toute question sur la facturation,",
       "contact": "contactez-nous",
@@ -770,9 +774,12 @@
       "save": "Enregistrer",
       "saved": "Espace de travail mis à jour",
       "saveFailed": "Impossible de mettre à jour l’espace de travail",
-      "readOnly": "Seuls les propriétaires et administrateurs peuvent modifier l’espace de travail.",
+      "readOnly": "Vous pouvez consulter ces informations. Demandez à un propriétaire ou à un administrateur de les modifier.",
       "ownership": "Propriété",
       "ownershipDescription": "Transférez la propriété avant de partir.",
+      "currentOwner": "Vous êtes propriétaire",
+      "workspaceOwner": "Propriétaire de l’espace",
+      "ownerUnavailable": "Les informations sur le propriétaire ne sont pas disponibles.",
       "membersLoading": "Chargement des membres…",
       "selectOwner": "Sélectionner le nouveau propriétaire",
       "transfer": "Transférer la propriété",

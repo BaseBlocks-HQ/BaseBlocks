@@ -59,7 +59,7 @@ export function SiteHeaderContent({
 }: SiteHeaderContentProps) {
   const { canEdit } = useEditorSite();
   const { site } = useEditorWorkspace();
-  const { capabilities } = useTeamAccess();
+  const { analyticsEnabled, capabilities } = useTeamAccess();
 
   return (
     <AppHeaderPortal>
@@ -68,6 +68,7 @@ export function SiteHeaderContent({
           <SiteSidebarTrigger />
         </div>
         <SiteHeaderActions
+          analyticsEnabled={analyticsEnabled}
           canEdit={canEdit}
           canManageSites={capabilities.canManageSites}
           isPreviewing={isPreviewing}
@@ -106,6 +107,7 @@ function SiteSidebarTrigger() {
 }
 
 function SiteHeaderActions({
+  analyticsEnabled,
   canEdit,
   canManageSites,
   isPreviewing,
@@ -122,6 +124,7 @@ function SiteHeaderActions({
   aiChatOpen,
   onToggleAiChat,
 }: {
+  analyticsEnabled: boolean;
   canEdit: boolean;
   canManageSites: boolean;
   isPreviewing: boolean;
@@ -156,6 +159,7 @@ function SiteHeaderActions({
             hasUnpublishedChanges={hasUnpublishedChanges}
           />
           <SiteHeaderMoreActions
+            analyticsEnabled={analyticsEnabled}
             canManageSites={canManageSites}
             isPreviewing={isPreviewing}
             onOpenDialog={onOpenDialog}

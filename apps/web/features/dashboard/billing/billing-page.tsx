@@ -132,6 +132,17 @@ export function BillingPage({
     );
   };
 
+  if (!entitlement.canManageBilling) {
+    return (
+      <BillingOverview
+        canManageBilling={false}
+        entitlement={entitlement}
+        plansHref={getTeamBillingPlansPath(team.slug)}
+        plusOptions={plusOptions}
+      />
+    );
+  }
+
   if (view === "plans") {
     return (
       <BillingPlansPage

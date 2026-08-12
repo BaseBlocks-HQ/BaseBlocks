@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, InformationCircleIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -171,6 +171,62 @@ export function BillingOverview({
     currency: "USD",
     maximumFractionDigits: 2,
   }).format(Number(entitlement.availableAiCreditUnits) / 1_000_000);
+
+  if (!canManageBilling) {
+    return (
+      <DashboardPage className="gap-8">
+        <DashboardPageHeader title={t("title")} />
+
+        <BillingStatusCallout callout={callout} canManageBilling={false} />
+
+        <section aria-labelledby="billing-current-plan" className="space-y-3">
+          <h2 className="text-sm font-medium" id="billing-current-plan">
+            {t("current.title")}
+          </h2>
+          <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/[0.06]">
+            <p className="text-sm font-medium">
+              {isPlus ? t("plans.plus.name") : t("plans.free.name")}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("current.memberCount", {
+                count: entitlement.billableSeatCount,
+              })}
+              {isPlus
+                ? ` · ${t("current.paidSeatCount", {
+                    count: entitlement.paidSeatCapacity,
+                  })}`
+                : null}
+            </p>
+            {effectiveThrough ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("current.effectiveThrough", { date: effectiveThrough })}
+              </p>
+            ) : null}
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="billing-member-access"
+          className="flex gap-3 rounded-xl bg-muted/60 px-4 py-3"
+        >
+          <HugeiconsIcon
+            aria-hidden="true"
+            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+            icon={InformationCircleIcon}
+          />
+          <div>
+            <h2 className="text-sm font-medium" id="billing-member-access">
+              {t("memberView.title")}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("memberView.description")}
+            </p>
+          </div>
+        </section>
+      </DashboardPage>
+    );
+  }
+
   return (
     <DashboardPage className="gap-8">
       <DashboardPageHeader

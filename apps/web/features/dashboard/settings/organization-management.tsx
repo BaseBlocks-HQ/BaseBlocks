@@ -15,7 +15,6 @@ import {
   roleHasPermission,
 } from "@baseblocks/backend/auth-permissions";
 import { SLUG_PATTERN } from "@baseblocks/domain";
-import { getPrimaryOrganizationRole } from "@baseblocks/backend/organization-policy";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@baseblocks/ui/alert-dialog";
-import { Badge } from "@baseblocks/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -48,8 +47,11 @@ type Member = {
   userId?: string;
   email: string;
   name?: string;
+  imageUrl?: string;
   role: OrganizationRole;
 };
+
+const slugPattern = new RegExp(`^${SLUG_PATTERN}$`);
 
 export function OrganizationManagement({
   organization,
@@ -64,7 +66,6 @@ export function OrganizationManagement({
 }) {
   const t = useTranslations("settings.organizations");
   const router = useRouter();
-  const role = getPrimaryOrganizationRole(organization.memberRole);
   const canUpdate = roleHasPermission(organization.memberRole, {
     resource: "organization",
     action: "update",
@@ -79,6 +80,7 @@ export function OrganizationManagement({
   const transferOwnership = useMutation(api.organizations.transferOwnership);
   const [name, setName] = useState(organization.name);
   const [slug, setSlug] = useState(organization.slug);
+  const [slugTouched, setSlugTouched] = useState(false);
   const [targetMemberId, setTargetMemberId] = useState("");
   const [working, setWorking] = useState<
     "save" | "leave" | "transfer" | "delete" | null
@@ -90,15 +92,19 @@ export function OrganizationManagement({
   useEffect(() => {
     setName(organization.name);
     setSlug(organization.slug);
+    setSlugTouched(false);
     setTargetMemberId("");
   }, [organization]);
 
   const otherMembers =
     members?.filter((member) => member.userId !== user?.id) ?? [];
-  const roleLabel = t(`roles.${role}`);
+  const owner = members?.find((member) => member.role === "owner");
+  const slugIsInvalid = slugTouched && !slugPattern.test(slug);
 
   const saveIdentity = async (event: React.FormEvent) => {
     event.preventDefault();
+    setSlugTouched(true);
+    if (!slugPattern.test(slug)) return;
     setWorking("save");
     try {
       const nextSlug = slug.trim().toLowerCase();
@@ -184,19 +190,16 @@ export function OrganizationManagement({
   return (
     <div className="space-y-10">
       <section aria-labelledby="workspace-details-title" className="space-y-4">
-        <form
-          className="space-y-4"
-          id="workspace-details-form"
-          onSubmit={saveIdentity}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
+        {canUpdate ? (
+          <form
+            className="space-y-4"
+            id="workspace-details-form"
+            onSubmit={saveIdentity}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-medium" id="workspace-details-title">
                 {t("details")}
               </h2>
-              <Badge variant="secondary">{roleLabel}</Badge>
-            </div>
-            {canUpdate ? (
               <Button
                 disabled={working !== null}
                 form="workspace-details-form"
@@ -206,93 +209,165 @@ export function OrganizationManagement({
                 {working === "save" ? <Spinner className="size-3.5" /> : null}
                 {t("save")}
               </Button>
-            ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="organization-name">{t("name")}</Label>
+              <Input
+                className="h-8"
+                id="organization-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="organization-slug">{t("slug")}</Label>
+              <Input
+                aria-describedby={
+                  slugIsInvalid ? "organization-slug-error" : undefined
+                }
+                aria-invalid={slugIsInvalid}
+                className="h-8"
+                id="organization-slug"
+                pattern={SLUG_PATTERN}
+                value={slug}
+                onChange={(event) => {
+                  setSlug(event.target.value.toLowerCase());
+                  setSlugTouched(true);
+                }}
+                onInvalid={(event) => {
+                  event.preventDefault();
+                  setSlugTouched(true);
+                }}
+                required
+              />
+              {slugIsInvalid ? (
+                <p
+                  className="text-xs text-destructive"
+                  id="organization-slug-error"
+                >
+                  {t("slugHint")}
+                </p>
+              ) : null}
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-medium" id="workspace-details-title">
+                {t("details")}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("readOnly")}
+              </p>
+            </div>
+            <dl className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/[0.06]">
+              <div className="grid gap-1 px-4 py-3 sm:grid-cols-[8rem_1fr] sm:items-center">
+                <dt className="text-xs text-muted-foreground">{t("name")}</dt>
+                <dd className="text-sm font-medium">{organization.name}</dd>
+              </div>
+              <div className="grid gap-1 border-t border-foreground/[0.06] px-4 py-3 sm:grid-cols-[8rem_1fr] sm:items-center">
+                <dt className="text-xs text-muted-foreground">{t("slug")}</dt>
+                <dd className="text-sm font-medium">{organization.slug}</dd>
+              </div>
+            </dl>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="organization-name">{t("name")}</Label>
-            <Input
-              disabled={!canUpdate}
-              id="organization-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="organization-slug">{t("slug")}</Label>
-            <Input
-              disabled={!canUpdate}
-              id="organization-slug"
-              pattern={SLUG_PATTERN}
-              value={slug}
-              onChange={(event) => setSlug(event.target.value.toLowerCase())}
-              required
-            />
-            <p className="text-xs text-muted-foreground">{t("slugHint")}</p>
-          </div>
-        </form>
-        {!canUpdate ? (
-          <p className="text-sm text-muted-foreground">{t("readOnly")}</p>
-        ) : null}
+        )}
       </section>
 
-      {canDelete ? (
-        <section
-          aria-labelledby="workspace-ownership-title"
-          className="space-y-3"
-        >
-          <div>
-            <h2 className="text-sm font-medium" id="workspace-ownership-title">
-              {t("ownership")}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("ownershipDescription")}
-            </p>
+      <section
+        aria-labelledby="workspace-ownership-title"
+        className="space-y-3"
+      >
+        <h2 className="text-sm font-medium" id="workspace-ownership-title">
+          {t("ownership")}
+        </h2>
+        {members === undefined ? (
+          <div
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+            role="status"
+          >
+            <Spinner className="size-4" />
+            {t("membersLoading")}
           </div>
-          {members === undefined ? (
-            <div
-              className="flex items-center gap-2 text-sm text-muted-foreground"
-              role="status"
-            >
-              <Spinner className="size-4" />
-              {t("membersLoading")}
+        ) : owner ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/[0.06]">
+              <Avatar className="size-9">
+                {owner.imageUrl ? <AvatarImage src={owner.imageUrl} /> : null}
+                <AvatarFallback>
+                  {(owner.name?.[0] || owner.email[0] || "?").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {owner.name || owner.email}
+                </p>
+                {owner.name ? (
+                  <p className="truncate text-xs text-muted-foreground">
+                    {owner.email}
+                  </p>
+                ) : null}
+              </div>
+              <p className="shrink-0 text-xs text-muted-foreground">
+                {owner.userId === user?.id
+                  ? t("currentOwner")
+                  : t("workspaceOwner")}
+              </p>
             </div>
-          ) : otherMembers.length > 0 ? (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Select
-                disabled={working !== null}
-                value={targetMemberId}
-                onValueChange={setTargetMemberId}
-              >
-                <SelectTrigger className="min-w-0 flex-1 [&>span]:truncate">
-                  <SelectValue placeholder={t("selectOwner")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {otherMembers.map((member) => (
-                    <SelectItem key={member._id} value={member._id}>
-                      {member.name || member.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                disabled={!targetMemberId || working !== null}
-                onClick={() => setConfirm("transfer")}
-                size="compact"
-                type="button"
-                variant="outline"
-              >
-                {working === "transfer" ? <Spinner className="size-4" /> : null}
-                {t("transfer")}
-              </Button>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("inviteBeforeTransfer")}
-            </p>
-          )}
-        </section>
-      ) : null}
+            {canDelete && otherMembers.length > 0 ? (
+              <div>
+                <p className="mb-2 text-sm text-muted-foreground">
+                  {t("ownershipDescription")}
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Select
+                    disabled={working !== null}
+                    value={targetMemberId}
+                    onValueChange={setTargetMemberId}
+                  >
+                    <SelectTrigger
+                      className="min-w-0 flex-1 [&>span]:truncate"
+                      size="sm"
+                    >
+                      <SelectValue placeholder={t("selectOwner")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {otherMembers.map((member) => (
+                        <SelectItem key={member._id} value={member._id}>
+                          {member.name || member.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {targetMemberId ? (
+                    <Button
+                      disabled={working !== null}
+                      onClick={() => setConfirm("transfer")}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {working === "transfer" ? (
+                        <Spinner className="size-4" />
+                      ) : null}
+                      {t("transfer")}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ) : canDelete ? (
+              <p className="text-sm text-muted-foreground">
+                {t("inviteBeforeTransfer")}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {t("ownerUnavailable")}
+          </p>
+        )}
+      </section>
 
       <section
         aria-labelledby="workspace-danger-zone-title"

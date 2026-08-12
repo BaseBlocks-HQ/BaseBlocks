@@ -12,6 +12,7 @@ import type { EditorDialogName } from "@/features/editor/editor-dialogs";
 import { getSiteOpenUrl } from "@/features/published-sites/urls";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@baseblocks/ui/button";
+import { Badge } from "@baseblocks/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
 export function SiteHeaderMoreActions({
+  analyticsEnabled,
   canManageSites,
   isPreviewing,
   onOpenDialog,
@@ -48,6 +50,7 @@ export function SiteHeaderMoreActions({
   teamSlug,
   site,
 }: {
+  analyticsEnabled: boolean;
   canManageSites: boolean;
   isPreviewing: boolean;
   onOpenDialog: (
@@ -88,6 +91,14 @@ export function SiteHeaderMoreActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52" sideOffset={6}>
+          {onTogglePreview ? (
+            <DropdownMenuItem onSelect={onTogglePreview}>
+              <HugeiconsIcon
+                icon={isPreviewing ? PencilEdit01Icon : ViewIcon}
+              />
+              {isPreviewing ? tHeader("edit") : tHeader("preview")}
+            </DropdownMenuItem>
+          ) : null}
           {sitePublished ? (
             <DropdownMenuItem
               onSelect={() =>
@@ -98,14 +109,7 @@ export function SiteHeaderMoreActions({
               {t("viewSite")}
             </DropdownMenuItem>
           ) : null}
-          {onTogglePreview ? (
-            <DropdownMenuItem onSelect={onTogglePreview}>
-              <HugeiconsIcon
-                icon={isPreviewing ? PencilEdit01Icon : ViewIcon}
-              />
-              {isPreviewing ? tHeader("edit") : tHeader("preview")}
-            </DropdownMenuItem>
-          ) : null}
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => onOpenDialog("settings", triggerRef.current)}
           >
@@ -118,26 +122,36 @@ export function SiteHeaderMoreActions({
               {tSites("editInformation")}
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem asChild>
-            <Link href={`${getTeamAnalyticsPath(teamSlug)}?site=${siteId}`}>
+          {analyticsEnabled ? (
+            <DropdownMenuItem asChild>
+              <Link href={`${getTeamAnalyticsPath(teamSlug)}?site=${siteId}`}>
+                <HugeiconsIcon icon={Analytics01Icon} />
+                {tNavigation("analytics")}
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem disabled>
               <HugeiconsIcon icon={Analytics01Icon} />
               {tNavigation("analytics")}
-            </Link>
-          </DropdownMenuItem>
-          {!sitePublished ? (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => onOpenDialog("publish", triggerRef.current)}
+              <Badge
+                className="ml-auto h-5 px-1.5 text-[10px] font-normal"
+                variant="outline"
               >
-                <HugeiconsIcon icon={Globe02Icon} />
-                {tHeader("publishSite")}
-              </DropdownMenuItem>
-            </>
+                {tNavigation("comingSoon")}
+              </Badge>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          {!sitePublished ? (
+            <DropdownMenuItem
+              onSelect={() => onOpenDialog("publish", triggerRef.current)}
+            >
+              <HugeiconsIcon icon={Globe02Icon} />
+              {tHeader("publishSite")}
+            </DropdownMenuItem>
           ) : null}
           {sitePublished ? (
             <>
-              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={() => onOpenDialog("share", triggerRef.current)}
               >
