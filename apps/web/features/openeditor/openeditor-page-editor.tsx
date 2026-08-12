@@ -12,7 +12,6 @@ import { api, type Doc, type Id } from "@baseblocks/backend";
 import { generateSlug } from "@baseblocks/domain";
 import type { SaveStatus } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
-import { Spinner } from "@baseblocks/ui/spinner";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
@@ -34,7 +33,7 @@ import {
   OpenEditorThemeProvider,
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -44,6 +43,7 @@ import { useBaseBlocksImageRuntime } from "./image-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
 import { useVersionedPageDocument } from "./use-versioned-page-document";
+import type { VersionedDocument } from "./versioned-document";
 import {
   createOpenEditorPageTabs,
   deleteOpenEditorTextRange,
@@ -58,6 +58,7 @@ export function OpenEditorPageEditor({
   pageId,
   pages,
   preview = false,
+  remoteDocument,
   siteId,
 }: {
   authoritativeRefreshRevision?: number;
@@ -65,6 +66,7 @@ export function OpenEditorPageEditor({
   pageId: Id<"pages">;
   pages: Doc<"pages">[];
   preview?: boolean;
+  remoteDocument: VersionedDocument;
   siteId: Id<"sites">;
 }) {
   const t = useTranslations("editor.pageEditor");
@@ -76,16 +78,10 @@ export function OpenEditorPageEditor({
   const saveContent = useMutation(api.pageContent.save);
   const attachmentRuntime = useBaseBlocksAttachmentRuntime(siteId);
   const imageRuntime = useBaseBlocksImageRuntime(siteId);
-  const remoteDocument = useQuery(api.pageContent.getVersioned, { pageId });
   const { document, onChange } = useVersionedPageDocument({
     authoritativeRefreshRevision,
     pageId,
-    remote: remoteDocument
-      ? {
-          document: remoteDocument.document as OpenEditorDocument,
-          contentHash: remoteDocument.contentHash,
-        }
-      : remoteDocument,
+    remote: remoteDocument,
     save: saveContent,
     onSaveStatusChange,
     onError: () => toast.error(t("saveFailed")),
@@ -170,14 +166,6 @@ export function OpenEditorPageEditor({
       pageRuntime={pageRuntime}
     />
   ) : null;
-
-  if (!document) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
-        <Spinner className="size-6" aria-label={t("loading")} />
-      </div>
-    );
-  }
 
   return (
     <SiteRenderActionsProvider actions={{ siteId }}>

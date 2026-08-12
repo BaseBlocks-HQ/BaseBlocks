@@ -5,19 +5,19 @@ import { useTeamAccess } from "@/features/authentication/team-access";
 import { useEditorWorkspace } from "@/features/editor/editor-state";
 import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-editor";
 import { api } from "@baseblocks/backend";
-import type { Doc, Id } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import type { SaveStatus } from "@baseblocks/domain";
-import { Button } from "@baseblocks/ui/button";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import dynamic from "next/dynamic";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import { EditorDialogs, type EditorDialogState } from "./editor-dialogs";
-import type { DraftSummary } from "./release-dialogs";
+import { DraftRestoreGate } from "./draft-restore-gate";
+import { EditorRevealBoundary } from "./editor-reveal-boundary";
 import { SiteHeaderContent } from "./site-header-content";
 
 const SiteAiChat = dynamic(() =>
@@ -38,7 +38,15 @@ function SiteEditorScreen({
   teamSlug,
 }: SiteEditorProps) {
   const { team } = useTeamAccess();
-  const { pages, restore, selectedPage, site, status } = useEditorWorkspace();
+  const {
+    draftSummary,
+    pages,
+    restore,
+    selectedDocument,
+    selectedPage,
+    site,
+    status,
+  } = useEditorWorkspace();
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [activeDialog, setActiveDialog] = useState<EditorDialogState | null>(
@@ -50,9 +58,6 @@ function SiteEditorScreen({
     null,
   );
 
-  const draftSummaryQuery = useQuery(api.releases.getDraftSummary, {
-    siteId: siteId as Id<"sites">,
-  });
   const unpublishSite = useMutation(api.releases.unpublish);
 
   const handleUnpublish = async () => {
@@ -64,45 +69,41 @@ function SiteEditorScreen({
     }
   };
 
-  if (status === "loading" || draftSummaryQuery === undefined) {
-    return <EditorLoading />;
+  if (status === "loading") {
+    return <EditorRevealBoundary state="loading" />;
   }
 
-  if (!site || !draftSummaryQuery || site.organizationId !== team._id) {
-    return (
-      <Empty>
+  if (!site || !draftSummary || site.organizationId !== team._id) {
+    return <EditorRevealBoundary state="missing" />;
+  }
+
+  const pageEditor =
+    selectedPage && selectedDocument?.pageId === selectedPage._id ? (
+      <OpenEditorPageEditor
+        authoritativeRefreshRevision={aiApplyRevision}
+        key={selectedPage._id}
+        onSaveStatusChange={setSaveStatus}
+        pageId={selectedPage._id}
+        pages={pages}
+        preview={isPreviewing}
+        remoteDocument={{
+          contentHash: selectedDocument.contentHash,
+          document: selectedDocument.document,
+        }}
+        siteId={site._id}
+      />
+    ) : (
+      <Empty className="min-h-[50vh]">
         <EmptyHeader>
           <EmptyTitle className="font-normal text-muted-foreground">
-            Site not found
+            Select a page to edit
           </EmptyTitle>
         </EmptyHeader>
       </Empty>
     );
-  }
-
-  const draftSummary = draftSummaryQuery as DraftSummary;
-  const pageEditor = selectedPage ? (
-    <OpenEditorPageEditor
-      authoritativeRefreshRevision={aiApplyRevision}
-      key={selectedPage._id}
-      onSaveStatusChange={setSaveStatus}
-      pageId={selectedPage._id}
-      pages={pages}
-      preview={isPreviewing}
-      siteId={site._id}
-    />
-  ) : (
-    <Empty className="min-h-[50vh]">
-      <EmptyHeader>
-        <EmptyTitle className="font-normal text-muted-foreground">
-          Select a page to edit
-        </EmptyTitle>
-      </EmptyHeader>
-    </Empty>
-  );
 
   return (
-    <>
+    <EditorRevealBoundary state="ready">
       {restore ? (
         <DraftRestoreGate restore={restore} />
       ) : (
@@ -185,109 +186,14 @@ function SiteEditorScreen({
         siteSlug={site.slug}
         teamSlug={team.slug}
       />
-    </>
-  );
-}
-
-function DraftRestoreGate({
-  restore,
-}: {
-  restore: {
-    _id: Id<"draftRestores">;
-    status: Doc<"draftRestores">["status"] | "orphaned";
-    failure?: string;
-  };
-}) {
-  const resume = useMutation(api.draftRestores.resume);
-  const cancel = useMutation(api.draftRestores.cancel);
-  const [resuming, setResuming] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-
-  return (
-    <div className="flex min-h-0 flex-1 items-center justify-center bg-background p-6">
-      <div className="max-w-md text-center">
-        {restore.status !== "paused" && restore.status !== "orphaned" ? (
-          <Spinner className="mx-auto size-6 text-muted-foreground" />
-        ) : null}
-        <h1 className="mt-4 text-base font-semibold">
-          {restore.status === "paused"
-            ? "Draft restore paused"
-            : restore.status === "orphaned"
-              ? "Draft restore needs recovery"
-              : restore.status === "validating"
-                ? "Checking historical version"
-                : "Restoring draft"}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {restore.status === "paused"
-            ? (restore.failure ??
-              "The restore paused after repeated failures. Resume it to continue safely.")
-            : restore.status === "orphaned"
-              ? restore.failure
-              : "The editor stays locked until the historical draft is coherent and ready."}
-        </p>
-        {restore.status === "paused" ? (
-          <Button
-            className="mt-4 rounded-full"
-            disabled={resuming}
-            onClick={async () => {
-              setResuming(true);
-              try {
-                await resume({ restoreId: restore._id });
-              } catch (error) {
-                setResuming(false);
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "The restore could not resume",
-                );
-              }
-            }}
-          >
-            {resuming ? <Spinner /> : null}
-            Resume restore
-          </Button>
-        ) : null}
-        {restore.status === "validating" ? (
-          <Button
-            className="mt-4 rounded-full"
-            disabled={cancelling}
-            onClick={async () => {
-              setCancelling(true);
-              try {
-                await cancel({ restoreId: restore._id });
-              } catch (error) {
-                setCancelling(false);
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "The restore could not be cancelled",
-                );
-              }
-            }}
-            variant="outline"
-          >
-            {cancelling ? <Spinner /> : null}
-            Cancel restore
-          </Button>
-        ) : null}
-      </div>
-    </div>
+    </EditorRevealBoundary>
   );
 }
 
 export function SiteEditor(props: SiteEditorProps) {
   return (
-    <Suspense fallback={<EditorLoading />}>
+    <Suspense fallback={<EditorRevealBoundary state="loading" />}>
       <SiteEditorScreen {...props} />
     </Suspense>
-  );
-}
-
-function EditorLoading() {
-  return (
-    <div className="flex min-h-0 flex-1 items-center justify-center bg-background">
-      <Spinner className="size-6 text-muted-foreground" />
-    </div>
   );
 }

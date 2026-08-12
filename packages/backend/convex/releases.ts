@@ -12,6 +12,7 @@ import {
   extractionBlocksPublication,
   isPublicationInFlight,
 } from "./model/releaseState";
+import { buildDraftSummary } from "./model/draftSummary";
 import {
   findActivePublication,
   promoteRelease,
@@ -56,23 +57,7 @@ export const getDraftSummary = query({
   handler: async (ctx, { siteId }) => {
     const site = await requireSiteForMember(ctx, siteId);
     if (!site) return null;
-    const liveRelease = site.liveReleaseId
-      ? await ctx.db.get(site.liveReleaseId)
-      : null;
-    return {
-      draftRevision: site.draftRevision,
-      liveRelease: liveRelease
-        ? { _id: liveRelease._id, number: liveRelease.number }
-        : null,
-      nextReleaseNumber: site.nextReleaseNumber,
-      hasUnpublishedChanges:
-        Boolean(site.activeDraftRestoreId) ||
-        (await ctx.db
-          .query("draftChanges")
-          .withIndex("by_site", (q) => q.eq("siteId", siteId))
-          .first()) !== null ||
-        site.draftBaseReleaseId !== site.liveReleaseId,
-    };
+    return buildDraftSummary(ctx, site);
   },
 });
 

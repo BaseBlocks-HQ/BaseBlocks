@@ -9,11 +9,18 @@ import type { ReactNode } from "react";
 import { authClient } from "@/lib/auth/client";
 import { convex } from "@/lib/convex/client";
 
-export function ConvexClientProvider({ children }: { children: ReactNode }) {
+export function ConvexClientProvider({
+  children,
+  initialToken,
+}: {
+  children: ReactNode;
+  initialToken?: string | null;
+}) {
   return (
     <ConvexBetterAuthProvider
       authClient={authClient as unknown as AuthClient}
       client={convex}
+      initialToken={initialToken}
     >
       {children}
     </ConvexBetterAuthProvider>

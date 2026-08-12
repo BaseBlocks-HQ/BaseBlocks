@@ -5,7 +5,7 @@ import { GuestEditorProvider } from "@/features/editor/editor-state";
 import { Link } from "@/i18n/navigation";
 import { workspaceApi } from "@/lib/convex/workspace-api";
 import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-editor";
-import type { Doc, Id } from "@baseblocks/backend";
+import { api, type Doc, type Id } from "@baseblocks/backend";
 import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
@@ -26,14 +26,17 @@ export function GuestPage({ pageId }: { pageId: string }) {
   const result = useQuery(workspaceApi.pageGuests.getGuestWorkspace, {
     pageId: pageId as Id<"pages">,
   }) as GuestWorkspace | null | undefined;
-  if (result === undefined) {
+  const selectedDocument = useQuery(api.pageContent.getVersioned, {
+    pageId: pageId as Id<"pages">,
+  });
+  if (result === undefined || selectedDocument === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner className="size-5" />
       </div>
     );
   }
-  if (!result) {
+  if (!result || !selectedDocument) {
     return (
       <Empty className="min-h-screen">
         <EmptyHeader>
@@ -73,9 +76,11 @@ export function GuestPage({ pageId }: { pageId: string }) {
             theme={result.site.settings.theme}
           >
             <OpenEditorPageEditor
+              key={selectedPage._id}
               pageId={selectedPage._id}
               pages={result.pages}
               preview={selectedPage.guestPermission !== "editor"}
+              remoteDocument={selectedDocument}
               siteId={result.site._id}
             />
           </SiteThemeScope>

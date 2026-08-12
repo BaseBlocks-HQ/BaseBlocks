@@ -2,8 +2,15 @@
 
 import { api, type Doc, type Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, createContext, use, useEffect, useState } from "react";
+import type { VersionedDocument } from "@/features/openeditor/versioned-document";
+import type { DraftRestoreState } from "./draft-restore-gate";
+
+type EditorSnapshot = NonNullable<
+  FunctionReturnType<typeof api.editorWorkspace.get>
+>;
 
 interface EditorPermissions {
   canEdit: boolean;
@@ -27,16 +34,14 @@ interface EditorSiteContextValue {
 }
 
 interface EditorWorkspaceContextValue {
-  status: "idle" | "loading" | "ready" | "missing";
+  status: "idle" | "loading" | "ready" | "restoring" | "missing";
   site: Doc<"sites"> | null;
   pages: Doc<"pages">[];
   selectedPage: Doc<"pages"> | null;
   selectedPageId: string | null;
-  restore: {
-    _id: Id<"draftRestores">;
-    status: Doc<"draftRestores">["status"] | "orphaned";
-    failure?: string;
-  } | null;
+  selectedDocument: (VersionedDocument & { pageId: Id<"pages"> }) | null;
+  draftSummary: EditorSnapshot["draftSummary"] | null;
+  restore: DraftRestoreState | null;
 }
 
 const EditorNavigationContext =
@@ -77,7 +82,13 @@ export function EditorProvider({
   const requestedPageId = searchParams.get("page");
   const workspace = useQuery(
     api.editorWorkspace.get,
-    siteId ? { organizationId, siteId: siteId as Id<"sites"> } : "skip",
+    siteId
+      ? {
+          organizationId,
+          siteId: siteId as Id<"sites">,
+          requestedPageId: requestedPageId ?? undefined,
+        }
+      : "skip",
   );
   const [historyState, setHistoryState] = useState<{
     siteId: string;
@@ -87,8 +98,7 @@ export function EditorProvider({
 
   const pages = workspace?.pages ?? [];
   const workspaceReady = workspace !== undefined && workspace !== null;
-  const selectedPage =
-    pages.find((page) => page._id === requestedPageId) ?? pages[0] ?? null;
+  const selectedPage = workspace?.selectedPage ?? null;
   const selectedPageId = selectedPage?._id ?? null;
 
   const replaceEditorUrl = (pageId: string | null) => {
@@ -161,11 +171,13 @@ export function EditorProvider({
         ? "loading"
         : workspace === null
           ? "missing"
-          : "ready",
+          : workspace.status,
     site: workspace?.site ?? null,
     pages,
     selectedPage,
     selectedPageId,
+    selectedDocument: workspace?.selectedDocument ?? null,
+    draftSummary: workspace?.draftSummary ?? null,
     restore: workspace?.restore ?? null,
   };
 
