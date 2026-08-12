@@ -9,17 +9,13 @@ import {
 import { useTeamAccess } from "@/features/authentication/team-access";
 import {
   DashboardPage,
+  DashboardPageEmptyState,
   DashboardPageHeader,
-  DashboardPageState,
+  DashboardPageLoadingState,
 } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import { Card, CardContent, CardHeader, CardTitle } from "@baseblocks/ui/card";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@baseblocks/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   Select,
@@ -28,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -402,25 +397,18 @@ function AnalyticsState({
   loading: boolean;
 }) {
   if (loading) {
-    return (
-      <DashboardPageState>
-        <Spinner className="size-6 text-muted-foreground" />
-      </DashboardPageState>
-    );
+    return <DashboardPageLoadingState />;
   }
 
   if (!analytics || analytics.status === "unavailable") {
     return (
-      <Empty className="min-h-72">
-        <EmptyHeader>
-          <EmptyTitle>Analytics isn&apos;t available</EmptyTitle>
-          <EmptyDescription>
-            {analytics?.status === "unavailable"
-              ? analytics.message
-              : "We couldn't load analytics for this site."}
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <DashboardPageEmptyState
+        message={
+          analytics?.status === "unavailable"
+            ? analytics.message
+            : "We couldn't load analytics for this site."
+        }
+      />
     );
   }
 
@@ -534,14 +522,7 @@ export function AnalyticsPage({ initialSiteId }: { initialSiteId?: string }) {
       />
 
       {sites?.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>No sites yet</EmptyTitle>
-            <EmptyDescription>
-              Create a site to start viewing analytics.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <DashboardPageEmptyState message="No sites yet" />
       ) : (
         <AnalyticsState
           analytics={analytics}

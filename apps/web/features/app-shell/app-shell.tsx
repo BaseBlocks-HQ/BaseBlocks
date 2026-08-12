@@ -26,7 +26,7 @@ export function AppShell({
       className="brand-interface"
       cookieName="app_sidebar_state"
       defaultOpen={defaultSidebarOpen}
-      style={{ "--sidebar-width": "13.5rem" } as CSSProperties}
+      style={{ "--sidebar-width": "15rem" } as CSSProperties}
     >
       <EditorProvider
         organizationId={team._id}

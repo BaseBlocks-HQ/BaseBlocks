@@ -3,13 +3,11 @@
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { getTeamDashboardPath } from "@/features/dashboard/routes";
 import { DashboardSidebarContent } from "@/features/dashboard/layout/dashboard-sidebar";
-import { SiteEditorSidebarContent } from "@/features/editor/site-editor-sidebar";
 import { Link } from "@/i18n/navigation";
 import { SidebarHeader, SidebarTrigger } from "@baseblocks/ui/sidebar";
-import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
-import { Suspense } from "react";
 import { AppSidebarFrame } from "./app-sidebar-frame";
+import { appSidebarIconSlotClassName } from "./app-sidebar-row";
 
 export function AppSidebar({
   analyticsEnabled,
@@ -24,10 +22,10 @@ export function AppSidebar({
   return (
     <AppSidebarFrame>
       <SidebarHeader className="shrink-0 p-1">
-        <div className="flex h-9 items-center justify-between px-2">
+        <div className="grid h-9 grid-cols-[1rem_1fr_1rem] items-center px-2">
           <Link
             aria-label="BaseBlocks"
-            className="flex size-4 items-center justify-center"
+            className={appSidebarIconSlotClassName}
             href={getTeamDashboardPath(team.slug)}
             prefetch={false}
           >
@@ -42,25 +40,16 @@ export function AppSidebar({
           </Link>
           <SidebarTrigger
             aria-label={t("toggleSidebar")}
-            className="size-7 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground"
+            className="col-start-3 size-7 justify-self-center rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground"
             title={t("toggleSidebar")}
           />
         </div>
       </SidebarHeader>
 
-      {siteId ? (
-        <Suspense
-          fallback={
-            <div className="flex min-h-0 flex-1 items-center justify-center">
-              <Spinner className="size-5 text-sidebar-foreground/45" />
-            </div>
-          }
-        >
-          <SiteEditorSidebarContent />
-        </Suspense>
-      ) : (
-        <DashboardSidebarContent analyticsEnabled={analyticsEnabled} />
-      )}
+      <DashboardSidebarContent
+        analyticsEnabled={analyticsEnabled}
+        siteId={siteId}
+      />
     </AppSidebarFrame>
   );
 }

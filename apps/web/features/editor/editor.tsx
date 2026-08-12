@@ -112,8 +112,6 @@ function SiteEditorScreen({
             siteSlug={site.slug}
             siteId={site._id}
             sitePublished={Boolean(site.liveReleaseId)}
-            siteName={site.name}
-            siteLogoUrl={site.logoUrl}
             saveStatus={saveStatus}
             onOpenDialog={(name, returnFocusTo) =>
               setActiveDialog({ name, returnFocusTo })

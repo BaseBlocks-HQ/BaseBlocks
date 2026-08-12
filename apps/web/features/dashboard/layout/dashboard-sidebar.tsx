@@ -5,39 +5,26 @@ import {
   Add01Icon,
   Analytics01Icon,
   ArrowLeft01Icon,
-  ArrowDown01Icon,
   CorporateIcon,
   CreditCardIcon,
-  CogIcon,
   Home01Icon,
-  LanguageSquareIcon,
+  InboxIcon,
   Link01Icon,
-  Logout01Icon,
-  PaintBoardIcon,
-  Tick01Icon,
   UserCircleIcon,
   UserGroupIcon,
 } from "@hugeicons/core-free-icons";
-import { Link, usePathname, useRouter } from "@/i18n/navigation";
-import {
-  productPaletteIds,
-  useProductAppearance,
-  type ProductPaletteId,
-} from "@/components/product-theme-provider";
-import { routing } from "@/i18n/routing";
-import { authClient } from "@/lib/auth/client";
-import type { Locale } from "@baseblocks/i18n";
-import {
-  getSiteThemePreviewColors,
-  siteThemeStyleIds,
-  type SiteThemeStyleId,
-} from "@baseblocks/domain";
+import { AppSidebarFooter } from "@/features/app-shell/app-sidebar-footer";
+import { WorkspaceSiteNavigation } from "@/features/app-shell/workspace-site-navigation";
+import { CreateSiteDialog } from "@/features/dashboard/sites/create-site-dialog";
+import { useSiteNavigation } from "@/features/dashboard/use-site-navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import {
   getTeamAnalyticsPath,
   getTeamAccountSettingsPath,
   getTeamBillingPath,
   getTeamDashboardPath,
   getTeamIntegrationsPath,
+  getTeamInboxPath,
   getTeamMembersPath,
   getTeamOrganizationsSettingsPath,
   getTeamSettingsPath,
@@ -46,150 +33,44 @@ import { useTeamAccess } from "@/features/authentication/team-access";
 import {
   APP_SIDEBAR_ICON_STROKE,
   appSidebarIconClassName,
+  appSidebarIconSlotClassName,
   appSidebarRowClassName,
+  appSidebarRowGapClassName,
 } from "@/features/app-shell/app-sidebar-row";
-import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
-import { useLocale, useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import dynamic from "next/dynamic";
-const InvitationInbox = dynamic(() =>
-  import("@/features/dashboard/invitation-inbox").then(
-    (module) => module.InvitationInbox,
-  ),
-);
-
-const languageNames: Record<Locale, string> = {
-  en: "English",
-  fr: "Français",
-};
+import { useTranslations } from "next-intl";
 
 export function DashboardSidebarContent({
   analyticsEnabled,
+  siteId,
 }: {
   analyticsEnabled: boolean;
+  siteId: string | null;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const t = useTranslations();
   const billingT = useTranslations("billing");
-  const locale = useLocale() as Locale;
-  const { setTheme, theme, resolvedTheme } = useTheme();
-  const {
-    palette: productPalette,
-    setPalette: setProductPalette,
-    setStyle: setProductStyle,
-    style: productStyle,
-  } = useProductAppearance();
-  const { team, teams, user } = useTeamAccess();
+  const { capabilities, team } = useTeamAccess();
   const teamMembersPath = getTeamMembersPath(team.slug);
   const teamIntegrationsPath = getTeamIntegrationsPath(team.slug);
   const teamAnalyticsPath = getTeamAnalyticsPath(team.slug);
   const teamBillingPath = getTeamBillingPath(team.slug);
+  const teamInboxPath = getTeamInboxPath(team.slug);
   const teamSettingsPath = getTeamSettingsPath(team.slug);
   const teamAccountSettingsPath = getTeamAccountSettingsPath(team.slug);
   const teamOrganizationsSettingsPath = getTeamOrganizationsSettingsPath(
     team.slug,
   );
+  const sites = useSiteNavigation(team._id);
   const isSettingsRoute = pathname.startsWith(teamSettingsPath);
-
-  const navItems: {
-    available: boolean;
-    title: string;
-    href: string;
-    icon: IconSvgElement;
-    isActive: boolean;
-  }[] = [
-    {
-      available: true,
-      title: t("navigation.dashboard"),
-      href: getTeamDashboardPath(team.slug),
-      icon: Home01Icon,
-      isActive: pathname === getTeamDashboardPath(team.slug),
-    },
-    {
-      available: analyticsEnabled,
-      title: t("navigation.analytics"),
-      href: teamAnalyticsPath,
-      icon: Analytics01Icon,
-      isActive: pathname.startsWith(teamAnalyticsPath),
-    },
-    {
-      available: true,
-      title: t("team.title"),
-      href: teamMembersPath,
-      icon: UserGroupIcon,
-      isActive: pathname.startsWith(teamMembersPath),
-    },
-    {
-      available: true,
-      title: billingT("title"),
-      href: teamBillingPath,
-      icon: CreditCardIcon,
-      isActive: pathname.startsWith(teamBillingPath),
-    },
-    {
-      available: true,
-      title: t("integrations.title"),
-      href: teamIntegrationsPath,
-      icon: Link01Icon,
-      isActive: pathname.startsWith(teamIntegrationsPath),
-    },
-  ];
-
-  const themeSummary =
-    theme === "system"
-      ? t("common.themeSystem")
-      : resolvedTheme === "dark"
-        ? t("common.themeDark")
-        : t("common.themeLight");
-
-  const paletteLabels: Record<ProductPaletteId, string> = {
-    neutral: t("common.themeNeutral"),
-    amber: t("common.themeAmber"),
-    blue: t("common.themeBlue"),
-    green: t("common.themeGreen"),
-    violet: t("common.themeViolet"),
-    rose: t("common.themeRose"),
-  };
-  const styleLabels: Record<SiteThemeStyleId, string> = {
-    subtle: t("common.themeSubtle"),
-    tinted: t("common.themeTinted"),
-    vibrant: t("common.themeVibrant"),
-  };
-
-  const handleLogout = async () => {
-    await authClient.signOut();
-    window.location.href = "/login";
-  };
-
-  const handleLocaleChange = (newLocale: Locale) => {
-    router.replace(pathname, { locale: newLocale });
-  };
-
-  const profileLabel = user?.name || user?.email || team.name;
-  const profileFallback = (user?.name?.[0] || user?.email?.[0] || "U")
-    .toUpperCase()
-    .slice(0, 1);
 
   return (
     <>
@@ -198,95 +79,100 @@ export function DashboardSidebarContent({
           {isSettingsRoute ? (
             <SidebarGroup className="p-0">
               <SidebarGroupContent>
-                <SidebarMenu className="gap-px">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      className={appSidebarRowClassName}
-                    >
-                      <Link
-                        href={getTeamDashboardPath(team.slug)}
-                        prefetch={false}
-                      >
-                        <HugeiconsIcon
-                          icon={ArrowLeft01Icon}
-                          className={appSidebarIconClassName}
-                          strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                        />
-                        <span>{t("common.back")}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SettingsSidebarItem
+                <SidebarMenu className={appSidebarRowGapClassName}>
+                  <SidebarNavigationItem
+                    href={getTeamDashboardPath(team.slug)}
+                    icon={ArrowLeft01Icon}
+                    isActive={false}
+                    label={t("common.back")}
+                  />
+                  <SidebarNavigationItem
                     href={teamAccountSettingsPath}
                     icon={UserCircleIcon}
                     isActive={pathname === teamAccountSettingsPath}
                     label={t("settings.accountNav")}
                   />
-                  <SettingsSidebarItem
+                  <SidebarNavigationItem
                     href={teamOrganizationsSettingsPath}
                     icon={CorporateIcon}
                     isActive={pathname === teamOrganizationsSettingsPath}
                     label={t("settings.organizationsNav")}
                   />
+                  <SidebarNavigationItem
+                    href={teamMembersPath}
+                    icon={UserGroupIcon}
+                    isActive={pathname.startsWith(teamMembersPath)}
+                    label={t("team.title")}
+                  />
+                  <SidebarNavigationItem
+                    href={teamBillingPath}
+                    icon={CreditCardIcon}
+                    isActive={pathname.startsWith(teamBillingPath)}
+                    label={billingT("title")}
+                  />
+                  <SidebarNavigationItem
+                    href={teamIntegrationsPath}
+                    icon={Link01Icon}
+                    isActive={pathname.startsWith(teamIntegrationsPath)}
+                    label={t("integrations.title")}
+                  />
+                  {analyticsEnabled ? (
+                    <SidebarNavigationItem
+                      href={teamAnalyticsPath}
+                      icon={Analytics01Icon}
+                      isActive={pathname.startsWith(teamAnalyticsPath)}
+                      label={t("navigation.analytics")}
+                    />
+                  ) : null}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           ) : (
             <SidebarGroup className="p-0">
               <SidebarGroupContent>
-                <SidebarMenu className="gap-px">
-                  {navItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      {item.available ? (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={item.isActive}
-                          className={appSidebarRowClassName}
-                        >
-                          <Link
-                            href={item.href}
-                            prefetch={false}
-                            title={item.title}
-                          >
-                            <HugeiconsIcon
-                              icon={item.icon}
-                              className={cn(
-                                appSidebarIconClassName,
-                                item.isActive
-                                  ? "text-sidebar-foreground"
-                                  : undefined,
-                              )}
-                              strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                            />
-                            <span className="truncate">{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      ) : (
-                        <>
+                <SidebarMenu className={appSidebarRowGapClassName}>
+                  <SidebarNavigationItem
+                    href={getTeamDashboardPath(team.slug)}
+                    icon={Home01Icon}
+                    isActive={pathname === getTeamDashboardPath(team.slug)}
+                    label={t("navigation.dashboard")}
+                  />
+                  <SidebarNavigationItem
+                    href={teamInboxPath}
+                    icon={InboxIcon}
+                    isActive={pathname === teamInboxPath}
+                    label={t("inbox.title")}
+                  />
+                  {capabilities.canManageSites ? (
+                    <SidebarMenuItem>
+                      <CreateSiteDialog
+                        organizationId={team._id}
+                        trigger={
                           <SidebarMenuButton
-                            aria-label={`${item.title} — ${t("navigation.comingSoon")}`}
                             className={cn(
                               appSidebarRowClassName,
-                              "cursor-default pr-20",
+                              "text-sidebar-foreground/60",
                             )}
-                            disabled
                             type="button"
                           >
-                            <HugeiconsIcon
-                              icon={item.icon}
-                              className={appSidebarIconClassName}
-                              strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                            />
-                            <span className="truncate">{item.title}</span>
+                            <span className={appSidebarIconSlotClassName}>
+                              <HugeiconsIcon
+                                aria-hidden
+                                className={appSidebarIconClassName}
+                                icon={Add01Icon}
+                                strokeWidth={APP_SIDEBAR_ICON_STROKE}
+                              />
+                            </span>
+                            <span>{t("dashboard.createSite")}</span>
                           </SidebarMenuButton>
-                          <SidebarMenuBadge className="right-2 border border-sidebar-border bg-sidebar-accent px-1.5 text-[0.625rem] font-medium text-sidebar-foreground/65">
-                            {t("navigation.comingSoon")}
-                          </SidebarMenuBadge>
-                        </>
-                      )}
+                        }
+                      />
                     </SidebarMenuItem>
-                  ))}
+                  ) : null}
+                  <WorkspaceSiteNavigation
+                    activeSiteId={siteId}
+                    sites={sites}
+                  />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -294,281 +180,12 @@ export function DashboardSidebarContent({
         </div>
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto shrink-0 border-0 p-1">
-        <SidebarMenu className="gap-px">
-          <SidebarMenuItem>
-            <InvitationInbox
-              fullWidth
-              fullWidthTriggerClassName={cn(
-                appSidebarRowClassName,
-                "has-[>svg]:px-2",
-              )}
-            />
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    appSidebarRowClassName,
-                    "justify-between text-left",
-                  )}
-                  type="button"
-                >
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <span className="flex w-3.5 shrink-0 justify-center">
-                      <Avatar className="size-5 rounded-full">
-                        {user?.imageUrl ? (
-                          <AvatarImage src={user.imageUrl} />
-                        ) : null}
-                        <AvatarFallback className="text-[10px]">
-                          {profileFallback}
-                        </AvatarFallback>
-                      </Avatar>
-                    </span>
-                    <span className="min-w-0 truncate text-sidebar-foreground">
-                      {profileLabel}
-                    </span>
-                  </span>
-                  <HugeiconsIcon
-                    icon={ArrowDown01Icon}
-                    className="size-3.5 shrink-0 text-sidebar-foreground/45"
-                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                  />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 rounded-xl">
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="w-full gap-2">
-                    <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <HugeiconsIcon
-                        icon={CorporateIcon}
-                        className="h-4 w-4 shrink-0 text-muted-foreground"
-                        strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                      />
-                      <span className="min-w-0 truncate">
-                        {t("settings.organizationsNav")}
-                      </span>
-                    </span>
-                    <span
-                      className="w-[7rem] shrink-0 truncate text-right text-xs text-muted-foreground"
-                      title={team.name}
-                    >
-                      {team.name}
-                    </span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-60 rounded-xl">
-                    {teams.map((workspace) => (
-                      <DropdownMenuItem
-                        key={workspace._id}
-                        className="rounded-lg"
-                        title={workspace.name}
-                        onClick={() => {
-                          void authClient.organization
-                            .setActive({ organizationId: workspace._id })
-                            .then(() =>
-                              router.push(getTeamDashboardPath(workspace.slug)),
-                            );
-                        }}
-                      >
-                        <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <span className="block truncate font-medium">
-                              {workspace.name}
-                            </span>
-                            <span className="block truncate text-xs text-muted-foreground">
-                              {workspace.slug}
-                            </span>
-                          </div>
-                          {workspace._id === team._id && (
-                            <HugeiconsIcon
-                              icon={Tick01Icon}
-                              className="h-4 w-4"
-                              strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                            />
-                          )}
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuItem
-                      className="rounded-lg"
-                      onSelect={() => {
-                        router.push(teamOrganizationsSettingsPath);
-                      }}
-                    >
-                      <HugeiconsIcon
-                        icon={Add01Icon}
-                        className="size-4 text-muted-foreground"
-                      />
-                      <span>{t("settings.organizations.create")}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="w-full gap-2">
-                    <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <HugeiconsIcon
-                        icon={LanguageSquareIcon}
-                        className="h-4 w-4 shrink-0 text-muted-foreground"
-                        strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                      />
-                      <span>{t("language.menuLabel")}</span>
-                    </span>
-                    <span className="w-[7rem] shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                      {languageNames[locale]}
-                    </span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {routing.locales.map((loc) => (
-                      <DropdownMenuItem
-                        key={loc}
-                        className={locale === loc ? "bg-accent" : undefined}
-                        onClick={() => handleLocaleChange(loc)}
-                      >
-                        <span className="mr-1">{languageNames[loc]}</span>
-                        {locale === loc ? (
-                          <HugeiconsIcon
-                            icon={Tick01Icon}
-                            className="ml-auto h-4 w-4 text-muted-foreground"
-                            strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                          />
-                        ) : null}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="w-full gap-2">
-                    <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <HugeiconsIcon
-                        className="h-4 w-4 shrink-0 text-muted-foreground"
-                        icon={PaintBoardIcon}
-                      />
-                      <span>{t("common.themeMenu")}</span>
-                    </span>
-                    <span className="w-[7rem] shrink-0 truncate text-right text-xs text-muted-foreground">
-                      {paletteLabels[productPalette]}
-                    </span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <span className="flex-1">{t("common.themeMode")}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {themeSummary}
-                        </span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {(["light", "dark", "system"] as const).map((value) => (
-                          <DropdownMenuItem
-                            key={value}
-                            onClick={() => setTheme(value)}
-                          >
-                            {value === "light"
-                              ? t("common.themeLight")
-                              : value === "dark"
-                                ? t("common.themeDark")
-                                : t("common.themeSystem")}
-                            {theme === value ? (
-                              <HugeiconsIcon
-                                icon={Tick01Icon}
-                                className="ml-auto size-4 text-muted-foreground"
-                              />
-                            ) : null}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <span className="flex-1">{t("common.themeColor")}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {paletteLabels[productPalette]}
-                        </span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {productPaletteIds.map((palette) => (
-                          <DropdownMenuItem
-                            key={palette}
-                            onClick={() => setProductPalette(palette)}
-                          >
-                            <ProductPaletteIndicator
-                              palette={palette}
-                              style={productStyle}
-                            />
-                            {paletteLabels[palette]}
-                            {productPalette === palette ? (
-                              <HugeiconsIcon
-                                icon={Tick01Icon}
-                                className="ml-auto size-4 text-muted-foreground"
-                              />
-                            ) : null}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <span className="flex-1">{t("common.themeStyle")}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {styleLabels[productStyle]}
-                        </span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {siteThemeStyleIds.map((style) => (
-                          <DropdownMenuItem
-                            key={style}
-                            onClick={() => setProductStyle(style)}
-                          >
-                            {styleLabels[style]}
-                            {productStyle === style ? (
-                              <HugeiconsIcon
-                                icon={Tick01Icon}
-                                className="ml-auto size-4 text-muted-foreground"
-                              />
-                            ) : null}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuItem
-                  onSelect={() => {
-                    router.push(teamAccountSettingsPath);
-                  }}
-                >
-                  <HugeiconsIcon
-                    icon={CogIcon}
-                    className="h-4 w-4 shrink-0 text-muted-foreground"
-                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                  />
-                  <span>{t("common.settings")}</span>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                  <HugeiconsIcon
-                    icon={Logout01Icon}
-                    className="h-4 w-4 shrink-0"
-                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                  />
-                  <span>{t("common.signOut")}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      <AppSidebarFooter />
     </>
   );
 }
 
-function SettingsSidebarItem({
+function SidebarNavigationItem({
   href,
   icon,
   isActive,
@@ -587,34 +204,19 @@ function SettingsSidebarItem({
         isActive={isActive}
       >
         <Link href={href} prefetch={false}>
-          <HugeiconsIcon
-            icon={icon}
-            className={cn(
-              appSidebarIconClassName,
-              isActive ? "text-sidebar-foreground" : undefined,
-            )}
-            strokeWidth={APP_SIDEBAR_ICON_STROKE}
-          />
+          <span className={appSidebarIconSlotClassName}>
+            <HugeiconsIcon
+              icon={icon}
+              className={cn(
+                appSidebarIconClassName,
+                isActive ? "text-sidebar-foreground" : undefined,
+              )}
+              strokeWidth={APP_SIDEBAR_ICON_STROKE}
+            />
+          </span>
           <span className="truncate">{label}</span>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
-  );
-}
-
-function ProductPaletteIndicator({
-  palette,
-  style,
-}: {
-  palette: ProductPaletteId;
-  style: SiteThemeStyleId;
-}) {
-  const colors = getSiteThemePreviewColors({ palette, style });
-  return (
-    <span
-      aria-hidden
-      className="size-3.5 rounded-full border border-black/10 shadow-xs dark:border-white/15"
-      style={{ backgroundColor: colors.primary }}
-    />
   );
 }

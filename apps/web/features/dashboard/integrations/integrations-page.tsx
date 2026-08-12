@@ -13,7 +13,7 @@ import {
   DashboardListRow,
   DashboardPage,
   DashboardPageHeader,
-  DashboardPageState,
+  DashboardPageLoadingState,
 } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import type { FunctionReturnType } from "convex/server";
@@ -333,9 +333,7 @@ export function IntegrationsPage({
       <DashboardPageHeader title={t("title")} />
 
       {notionEnabled && connections === undefined ? (
-        <DashboardPageState>
-          <Spinner className="size-6 text-muted-foreground" />
-        </DashboardPageState>
+        <DashboardPageLoadingState />
       ) : (
         <>
           {notionEnabled && connections && connections.length > 0 ? (

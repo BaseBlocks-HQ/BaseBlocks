@@ -18,11 +18,12 @@ import { Label } from "@baseblocks/ui/label";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
-import { type FormEvent, useReducer, useState } from "react";
+import { type FormEvent, type ReactNode, useReducer, useState } from "react";
 
 interface CreateSiteDialogProps {
   disabled?: boolean;
   organizationId: string;
+  trigger?: ReactNode;
 }
 
 interface CreateSiteFormState {
@@ -96,6 +97,7 @@ function createSiteFormReducer(
 export function CreateSiteDialog({
   disabled = false,
   organizationId,
+  trigger,
 }: CreateSiteDialogProps) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
@@ -184,15 +186,17 @@ export function CreateSiteDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          className="product-primary-action rounded-[0.625rem]"
-          disabled={disabled}
-          size="compact"
-          type="button"
-        >
-          <HugeiconsIcon icon={Add01Icon} className="size-4" />
-          {t("dashboard.createSite")}
-        </Button>
+        {trigger ?? (
+          <Button
+            className="product-primary-action rounded-[0.625rem]"
+            disabled={disabled}
+            size="compact"
+            type="button"
+          >
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
+            {t("dashboard.createSite")}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent
         className={
