@@ -31,6 +31,9 @@ import {
 } from "./billing/polar";
 
 type JsonObject = Record<string, unknown>;
+type WebhookKind = "subscription" | "order";
+
+const MAX_WEBHOOK_ATTEMPTS = 8;
 
 function object(value: unknown): JsonObject | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -62,6 +65,12 @@ function findWorkspaceId(data: JsonObject): string | undefined {
     string(data.external_customer_id) ??
     string(customer?.external_id)
   );
+}
+
+function webhookKind(eventType: string): WebhookKind | null {
+  if (eventType.startsWith("subscription.")) return "subscription";
+  if (eventType.startsWith("order.")) return "order";
+  return null;
 }
 
 function normalizedOrderState(eventType: string, data: JsonObject) {
@@ -991,24 +1000,35 @@ export const processWebhook = internalMutation({
   args: { eventId: v.id("billingWebhookEvents") },
   handler: async (ctx, { eventId }) => {
     const event = await ctx.db.get(eventId);
-    if (!event || event.status === "processed" || event.status === "ignored") {
-      return null;
-    }
-    const now = Date.now();
     if (
-      event.status === "processing" &&
-      event.leaseExpiresAt !== undefined &&
-      event.leaseExpiresAt > now
+      !event ||
+      event.status === "processed" ||
+      event.status === "ignored" ||
+      event.status === "deadLettered"
     ) {
       return null;
     }
-    await ctx.db.patch(event._id, {
-      status: "processing",
-      attemptCount: event.attemptCount + 1,
-      leaseExpiresAt: now + 60_000,
-      nextAttemptAt: now + 60_000,
-      updatedAt: now,
-    });
+    const now = Date.now();
+    const kind = webhookKind(event.eventType);
+    if (!kind) {
+      await ctx.db.patch(event._id, {
+        status: "ignored",
+        attemptCount: event.attemptCount + 1,
+        failureCode: "EVENT_NOT_APPLICABLE",
+        failureMessage: undefined,
+        processedAt: now,
+        nextAttemptAt: undefined,
+        updatedAt: now,
+      });
+      return null;
+    }
+    if (
+      event.status === "failed" &&
+      event.nextAttemptAt !== undefined &&
+      event.nextAttemptAt > now
+    ) {
+      return null;
+    }
     try {
       const payload = object(event.payload);
       const data = object(payload?.data);
@@ -1017,9 +1037,10 @@ export const processWebhook = internalMutation({
       if (!organizationId) {
         await ctx.db.patch(event._id, {
           status: "ignored",
+          attemptCount: event.attemptCount + 1,
           failureCode: "WORKSPACE_ID_MISSING",
           processedAt: now,
-          leaseExpiresAt: undefined,
+          nextAttemptAt: undefined,
           updatedAt: now,
         });
         return null;
@@ -1035,47 +1056,40 @@ export const processWebhook = internalMutation({
         await ctx.db.patch(event._id, {
           status: "ignored",
           organizationId,
+          attemptCount: event.attemptCount + 1,
           failureCode: "WORKSPACE_DELETED",
           processedAt: now,
-          leaseExpiresAt: undefined,
           nextAttemptAt: undefined,
           updatedAt: now,
         });
         return null;
       }
-      if (event.eventType.startsWith("subscription.")) {
+      if (kind === "subscription") {
         await upsertSubscription(ctx, event, data, organizationId);
-      } else if (event.eventType.startsWith("order.")) {
-        await processOrder(ctx, event, data, organizationId);
       } else {
-        await ctx.db.patch(event._id, {
-          status: "ignored",
-          failureCode: "EVENT_NOT_APPLICABLE",
-          processedAt: now,
-          leaseExpiresAt: undefined,
-          updatedAt: now,
-        });
-        return null;
+        await processOrder(ctx, event, data, organizationId);
       }
       await ctx.db.patch(event._id, {
         status: "processed",
         organizationId,
+        attemptCount: event.attemptCount + 1,
         processedAt: Date.now(),
-        leaseExpiresAt: undefined,
         nextAttemptAt: undefined,
         failureCode: undefined,
         failureMessage: undefined,
         updatedAt: Date.now(),
       });
     } catch (error) {
+      const attemptCount = event.attemptCount + 1;
       const retryDelay = Math.min(
         60 * 60_000,
         60_000 * 2 ** Math.min(event.attemptCount, 6),
       );
+      const terminal = attemptCount >= MAX_WEBHOOK_ATTEMPTS;
       await ctx.db.patch(event._id, {
-        status: "failed",
-        leaseExpiresAt: undefined,
-        nextAttemptAt: Date.now() + retryDelay,
+        status: terminal ? "deadLettered" : "failed",
+        attemptCount,
+        nextAttemptAt: terminal ? undefined : Date.now() + retryDelay,
         failureCode: "PROCESSING_FAILED",
         failureMessage:
           error instanceof Error
@@ -1083,39 +1097,14 @@ export const processWebhook = internalMutation({
             : "Unknown error",
         updatedAt: Date.now(),
       });
-      await ctx.scheduler.runAfter(
-        retryDelay,
-        internal.billingModel.processWebhook,
-        { eventId: event._id },
-      );
+      if (!terminal) {
+        await ctx.scheduler.runAfter(
+          retryDelay,
+          internal.billingModel.processWebhook,
+          { eventId: event._id },
+        );
+      }
     }
     return null;
-  },
-});
-
-export const recoverWebhookEvents = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const now = Date.now();
-    const [failed, stalled] = await Promise.all([
-      ctx.db
-        .query("billingWebhookEvents")
-        .withIndex("by_status_retry", (q) =>
-          q.eq("status", "failed").lte("nextAttemptAt", now),
-        )
-        .take(50),
-      ctx.db
-        .query("billingWebhookEvents")
-        .withIndex("by_status_retry", (q) =>
-          q.eq("status", "processing").lte("nextAttemptAt", now),
-        )
-        .take(50),
-    ]);
-    for (const event of [...failed, ...stalled]) {
-      await ctx.scheduler.runAfter(0, internal.billingModel.processWebhook, {
-        eventId: event._id,
-      });
-    }
-    return failed.length + stalled.length;
   },
 });
