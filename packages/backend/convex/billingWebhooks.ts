@@ -1,7 +1,10 @@
 import { makeFunctionReference } from "convex/server";
 import type { Id } from "./_generated/dataModel";
 import { httpAction } from "./_generated/server";
-import { verifyPolarWebhook } from "./billing/polar";
+import {
+  polarEnvironmentFromEnvironment,
+  verifyPolarWebhook,
+} from "./billing/polar";
 
 type JsonObject = Record<string, unknown>;
 type ProviderEnvironment = "sandbox" | "production";
@@ -48,11 +51,6 @@ function milliseconds(value: unknown): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function environment(): ProviderEnvironment | null {
-  const value = process.env.BASEBLOCKS_BILLING_ENVIRONMENT;
-  return value === "sandbox" || value === "production" ? value : null;
-}
-
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
@@ -64,8 +62,10 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 export const handlePolarWebhook = httpAction(async (ctx, request) => {
-  const providerEnvironment = environment();
-  if (!providerEnvironment) {
+  let providerEnvironment: ProviderEnvironment;
+  try {
+    providerEnvironment = polarEnvironmentFromEnvironment();
+  } catch {
     return new Response("Billing webhook is not configured", { status: 503 });
   }
   const rawPayload = await request.text();

@@ -4,8 +4,12 @@ import {
   billingOperationMetadata,
   createPolarBillingProvider,
   createPolarConfig,
+  executePolarCheckout,
   normalizeSubscriptionLifecycle,
+  PolarApiError,
+  resolvePolarOrganizationCustomer,
   verifyPolarWebhook,
+  type PolarBillingProvider,
   type PolarSubscription,
 } from "./polar";
 
@@ -46,7 +50,7 @@ function subscription(
 
 describe("Polar configuration", () => {
   test("is sandbox-first and requires an explicit production gate", () => {
-    expect(config.apiBaseUrl).toBe("https://sandbox-api.polar.sh/v1");
+    expect(config.environment).toBe("sandbox");
     expect(() =>
       createPolarConfig({
         environment: "production",
@@ -60,8 +64,8 @@ describe("Polar configuration", () => {
         accessToken: "production-access-token",
         webhookSecret: "production-webhook-secret",
         allowProduction: true,
-      }).apiBaseUrl,
-    ).toBe("https://api.polar.sh/v1");
+      }).environment,
+    ).toBe("production");
   });
 
   test("rejects missing secrets and ambiguous environments", () => {
@@ -83,57 +87,36 @@ describe("Polar configuration", () => {
 });
 
 describe("Polar request boundary", () => {
-  test("reuses a customer found by unique billing email", async () => {
-    const provider = createPolarBillingProvider(config, async (url) => {
-      expect(String(url)).toContain("/customers/?email=owner%40example.com");
-      return Response.json({
-        items: [
-          {
-            id: "customer_1",
-            external_id: "payer_1",
-            email: "owner@example.com",
-            name: "Owner",
-            type: "individual",
-            modified_at: "2026-08-10T00:00:00Z",
+  const sdkCheckout = (overrides: Record<string, unknown> = {}) => ({
+    id: "checkout_1",
+    status: "open",
+    url: "https://sandbox.polar.sh/checkout/checkout_1",
+    expiresAt: new Date("2026-09-10T00:00:00Z"),
+    customerId: "customer_1",
+    subscriptionId: null,
+    seats: 3,
+    ...overrides,
+  });
+
+  function sdk(overrides: Record<string, unknown>) {
+    return overrides as unknown as NonNullable<
+      Parameters<typeof createPolarBillingProvider>[1]
+    >;
+  }
+
+  test("creates a no-trial seat checkout through the official SDK", async () => {
+    let request: Record<string, unknown> | undefined;
+    const provider = createPolarBillingProvider(
+      config,
+      sdk({
+        checkouts: {
+          create: async (value: Record<string, unknown>) => {
+            request = value;
+            return sdkCheckout();
           },
-        ],
-      });
-    });
-
-    await expect(
-      provider.getCustomerByEmail("owner@example.com"),
-    ).resolves.toEqual(
-      expect.objectContaining({ id: "customer_1", externalId: "payer_1" }),
+        },
+      }),
     );
-  });
-
-  test("includes Polar validation details without exposing the response body", async () => {
-    const provider = createPolarBillingProvider(config, async () =>
-      Response.json(
-        { detail: [{ msg: "Email address is already used" }] },
-        { status: 422 },
-      ),
-    );
-
-    await expect(
-      provider.getCustomerByEmail("owner@example.com"),
-    ).rejects.toThrow("422: Email address is already used");
-  });
-
-  test("creates a no-trial seat checkout with reconciliation metadata", async () => {
-    const calls: Array<{ url: string; init?: RequestInit }> = [];
-    const provider = createPolarBillingProvider(config, async (url, init) => {
-      calls.push({ url: String(url), init });
-      return Response.json({
-        id: "checkout_1",
-        status: "open",
-        url: "https://sandbox.polar.sh/checkout/checkout_1",
-        expires_at: "2026-08-10T00:00:00Z",
-        customer_id: null,
-        subscription_id: null,
-        seats: 3,
-      });
-    });
 
     const metadata = billingOperationMetadata({
       workspaceId: "workspace_1",
@@ -149,34 +132,67 @@ describe("Polar request boundary", () => {
       metadata,
     });
 
-    expect(calls[0]?.url).toBe("https://sandbox-api.polar.sh/v1/checkouts/");
-    const body = JSON.parse(String(calls[0]?.init?.body));
-    expect(body).toMatchObject({
+    expect(request).toMatchObject({
       products: ["product_monthly"],
-      customer_id: "customer_1",
+      customerId: "customer_1",
       seats: 3,
-      allow_trial: false,
+      allowTrial: false,
       metadata,
     });
-    expect(
-      String(new Headers(calls[0]?.init?.headers).get("authorization")),
-    ).toBe("Bearer sandbox-access-token");
+  });
+
+  test("creates each workspace as a team customer with an owner member", async () => {
+    let request: Record<string, unknown> | undefined;
+    const provider = createPolarBillingProvider(
+      config,
+      sdk({
+        customers: {
+          create: async (value: Record<string, unknown>) => {
+            request = value;
+            return {
+              id: "customer_1",
+              externalId: "organization_1",
+              email: null,
+              name: "Workspace",
+              type: "team",
+              modifiedAt: null,
+            };
+          },
+        },
+      }),
+    );
+    await provider.createCustomer({
+      externalCustomerId: "organization_1",
+      email: "owner@example.com",
+      ownerExternalId: "user_1",
+      name: "Workspace",
+    });
+    expect(request).toMatchObject({
+      type: "team",
+      externalId: "organization_1",
+      name: "Workspace",
+      owner: {
+        email: "owner@example.com",
+        name: "Workspace",
+        externalId: "user_1",
+      },
+    });
+    expect(request).not.toHaveProperty("email");
   });
 
   test("passes a validated customer-selected amount to custom pricing", async () => {
-    let body: Record<string, unknown> | undefined;
-    const provider = createPolarBillingProvider(config, async (_url, init) => {
-      body = JSON.parse(String(init?.body));
-      return Response.json({
-        id: "checkout_custom",
-        status: "open",
-        url: "https://sandbox.polar.sh/checkout/checkout_custom",
-        expires_at: "2026-08-10T00:00:00Z",
-        customer_id: "customer_1",
-        subscription_id: null,
-        seats: null,
-      });
-    });
+    let request: Record<string, unknown> | undefined;
+    const provider = createPolarBillingProvider(
+      config,
+      sdk({
+        checkouts: {
+          create: async (value: Record<string, unknown>) => {
+            request = value;
+            return sdkCheckout({ id: "checkout_custom", seats: null });
+          },
+        },
+      }),
+    );
 
     await provider.createCheckout({
       productIds: ["product_ai_top_up"],
@@ -192,78 +208,119 @@ describe("Polar request boundary", () => {
       }),
     });
 
-    expect(body).toMatchObject({
+    expect(request).toMatchObject({
       products: ["product_ai_top_up"],
       amount: 1_700,
-      allow_discount_codes: false,
+      allowDiscountCodes: false,
     });
   });
 
-  test("maps seat, cancellation, portal, and reconciliation API boundaries", async () => {
-    const calls: Array<{ url: string; init?: RequestInit }> = [];
+  test("maps subscription and portal operations to documented SDK calls", async () => {
+    const calls: Array<{ method: string; request: unknown }> = [];
     const responseSubscription = {
       id: "sub_1",
-      customer_id: "customer_1",
-      product_id: "product_1",
+      customerId: "customer_1",
+      productId: "product_1",
       status: "active",
       seats: 4,
       amount: 3200,
       currency: "usd",
-      recurring_interval: "month",
-      recurring_interval_count: 1,
-      current_period_start: "2026-08-01T00:00:00Z",
-      current_period_end: "2026-09-01T00:00:00Z",
-      cancel_at_period_end: false,
-      pause_at_period_end: false,
+      recurringInterval: "month",
+      recurringIntervalCount: 1,
+      currentPeriodStart: new Date("2026-08-01T00:00:00Z"),
+      currentPeriodEnd: new Date("2026-09-01T00:00:00Z"),
+      cancelAtPeriodEnd: false,
+      canceledAt: null,
+      endedAt: null,
+      pastDueAt: null,
+      pauseAtPeriodEnd: false,
+      pausedAt: null,
+      resumesAt: null,
+      modifiedAt: new Date("2026-08-01T00:00:00Z"),
       metadata: {},
-      pending_update: null,
+      pendingUpdate: null,
     };
-    const provider = createPolarBillingProvider(config, async (url, init) => {
-      calls.push({ url: String(url), init });
-      if (String(url).endsWith("/customer-sessions/")) {
-        return Response.json({
-          id: "session_1",
-          customer_id: "customer_1",
-          customer_portal_url: "https://sandbox.polar.sh/purchases/session_1",
-          expires_at: "2026-08-09T13:00:00Z",
-        });
-      }
-      return Response.json(responseSubscription);
-    });
+    const provider = createPolarBillingProvider(
+      config,
+      sdk({
+        subscriptions: {
+          update: async (request: unknown) => {
+            calls.push({ method: "update", request });
+            return responseSubscription;
+          },
+          revoke: async (request: unknown) => {
+            calls.push({ method: "revoke", request });
+            return responseSubscription;
+          },
+          get: async (request: unknown) => {
+            calls.push({ method: "get", request });
+            return responseSubscription;
+          },
+        },
+        customerSessions: {
+          create: async (request: unknown) => {
+            calls.push({ method: "portal", request });
+            return {
+              id: "session_1",
+              customerId: "customer_1",
+              customerPortalUrl: "https://sandbox.polar.sh/purchases/session_1",
+              expiresAt: new Date("2026-08-09T13:00:00Z"),
+            };
+          },
+        },
+      }),
+    );
 
     await provider.updateSubscriptionSeats("sub_1", 4, "prorate");
     await provider.setCancelAtPeriodEnd("sub_1", true);
     await provider.revokeSubscription("sub_1");
     await provider.getSubscription("sub_1");
-    const portal = await provider.createCustomerPortalSession(
-      "customer_1",
-      "https://app.example.com/settings/billing",
-      "workspace_1",
-    );
+    const portal = await provider.createCustomerPortalSession({
+      customerId: "customer_1",
+      externalMemberId: "workspace_1",
+      returnUrl: "https://app.example.com/settings/billing",
+    });
 
-    expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
-      seats: 4,
-      proration_behavior: "prorate",
+    expect(calls[0]).toEqual({
+      method: "update",
+      request: {
+        id: "sub_1",
+        subscriptionUpdate: { seats: 4, prorationBehavior: "prorate" },
+      },
     });
-    expect(JSON.parse(String(calls[1]?.init?.body))).toEqual({
-      cancel_at_period_end: true,
+    expect(calls[1]).toEqual({
+      method: "update",
+      request: {
+        id: "sub_1",
+        subscriptionUpdate: { cancelAtPeriodEnd: true },
+      },
     });
-    expect(JSON.parse(String(calls[2]?.init?.body))).toEqual({ revoke: true });
-    expect(calls[3]?.init?.method).toBeUndefined();
-    expect(JSON.parse(String(calls[4]?.init?.body))).toEqual({
-      customer_id: "customer_1",
-      external_member_id: "workspace_1",
-      return_url: "https://app.example.com/settings/billing",
+    expect(calls[2]).toEqual({ method: "revoke", request: { id: "sub_1" } });
+    expect(calls[3]).toEqual({ method: "get", request: { id: "sub_1" } });
+    expect(calls[4]).toEqual({
+      method: "portal",
+      request: {
+        customerId: "customer_1",
+        externalMemberId: "workspace_1",
+        returnUrl: "https://app.example.com/settings/billing",
+      },
     });
     expect(portal.customerPortalUrl).toContain("sandbox.polar.sh");
   });
 
-  test("rejects invalid seats and unsafe redirect URLs before fetch", async () => {
+  test("rejects invalid seats and unsafe redirect URLs before the SDK", async () => {
     let called = false;
-    const provider = createPolarBillingProvider(config, async () => {
-      called = true;
-      throw new Error("unexpected fetch");
-    });
+    const provider = createPolarBillingProvider(
+      config,
+      sdk({
+        checkouts: {
+          create: async () => {
+            called = true;
+            throw new Error("unexpected SDK call");
+          },
+        },
+      }),
+    );
     await expect(
       provider.createCheckout({
         productIds: ["product_monthly"],
@@ -275,6 +332,83 @@ describe("Polar request boundary", () => {
       }),
     ).rejects.toThrow("HTTPS");
     expect(called).toBe(false);
+  });
+
+  test("sanitizes SDK HTTP failures", async () => {
+    const provider = createPolarBillingProvider(
+      config,
+      sdk({
+        checkouts: {
+          get: async () => {
+            throw { statusCode: 401, body: "secret provider response" };
+          },
+        },
+      }),
+    );
+    await expect(provider.getCheckout("checkout_1")).rejects.toEqual(
+      expect.objectContaining({ name: "PolarApiError", status: 401 }),
+    );
+    await expect(provider.getCheckout("checkout_1")).rejects.not.toThrow(
+      "secret provider response",
+    );
+  });
+
+  test("uses the organization as the immutable external customer identity", async () => {
+    let createdExternalId: string | undefined;
+    const provider = {
+      getCustomerByExternalId: async () => {
+        throw new PolarApiError(404);
+      },
+      createCustomer: async (input: { externalCustomerId: string }) => {
+        createdExternalId = input.externalCustomerId;
+        return {
+          id: "customer_1",
+          externalId: input.externalCustomerId,
+          email: "owner@example.com",
+          name: "Owner",
+          type: "individual" as const,
+          modifiedAt: null,
+        };
+      },
+    } as unknown as PolarBillingProvider;
+
+    const customer = await resolvePolarOrganizationCustomer(provider, {
+      externalCustomerId: "organization_1",
+      email: "owner@example.com",
+    });
+    expect(createdExternalId).toBe("organization_1");
+    expect(customer.externalId).toBe("organization_1");
+  });
+
+  test("replays a persisted checkout without creating another", async () => {
+    let createCalls = 0;
+    const provider = {
+      getCheckout: async () => ({
+        id: "checkout_1",
+        status: "open",
+        url: "https://sandbox.polar.sh/checkout/checkout_1",
+        expiresAt: "2026-09-10T00:00:00Z",
+        customerId: "customer_1",
+        subscriptionId: null,
+        seats: 1,
+      }),
+      createCheckout: async () => {
+        createCalls += 1;
+        throw new Error("should not create");
+      },
+    } as unknown as PolarBillingProvider;
+    const result = await executePolarCheckout(provider, {
+      providerCheckoutId: "checkout_1",
+      checkout: {
+        productIds: ["product_1"],
+        customerId: "customer_1",
+        successUrl: "https://app.example.com/success",
+        returnUrl: "https://app.example.com/billing",
+        metadata: {},
+      },
+    });
+    expect(result.replay).toBe(true);
+    expect(createCalls).toBe(0);
   });
 });
 

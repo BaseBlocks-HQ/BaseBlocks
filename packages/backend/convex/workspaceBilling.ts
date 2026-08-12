@@ -46,7 +46,6 @@ export const getSeatSnapshot = internalQuery({
       billableSeatCount: Math.max(1, activeMemberCount),
       memberIds,
       membershipRevision: JSON.stringify(memberIds),
-      calculatedAt: Date.now(),
       source: "better-auth-members" as const,
     };
   },

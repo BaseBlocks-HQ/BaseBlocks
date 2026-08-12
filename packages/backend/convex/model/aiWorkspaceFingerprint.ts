@@ -5,7 +5,7 @@ import {
   type OpenEditorProjectSnapshot,
   type WorkspaceSiteManifest,
 } from "@openeditor/workspace";
-import { AiChangesetValidationError } from "./aiChangesetPlan";
+import { AiWorkspaceValidationError } from "./aiWorkspaceBounds";
 
 export type AiPageFingerprintPrecondition = {
   pageId: string;
@@ -46,7 +46,7 @@ export async function fingerprintAiProjectTrustRoot(
 }
 
 function fail(message: string): never {
-  throw new AiChangesetValidationError(message);
+  throw new AiWorkspaceValidationError(message);
 }
 
 /** Verify the complete OpenEditor trust root inside the write transaction. */

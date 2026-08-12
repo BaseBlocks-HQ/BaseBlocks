@@ -2,8 +2,6 @@ import { describe, expect, test } from "bun:test";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import {
-  allocateCreditLots,
-  finalizeAiReservation,
   replaceUnusedIncludedCreditLots,
   resolveBillingEnvironment,
   selectIncludedCreditLotsForReplacement,
@@ -13,11 +11,6 @@ function lot(
   id: string,
   bucket: "included" | "prepaid",
   availableUnits: bigint,
-  options: {
-    expiresAt?: number;
-    spendPriority?: number;
-    createdAt?: number;
-  } = {},
 ) {
   return {
     _id: id,
@@ -28,11 +21,9 @@ function lot(
     sourceRef: id,
     grantedUnits: availableUnits,
     availableUnits,
-    reservedUnits: 0n,
     revokedUnits: 0n,
-    spendPriority: options.spendPriority ?? (bucket === "included" ? 0 : 1),
-    expiresAt: options.expiresAt,
-    createdAt: options.createdAt ?? 0,
+    spendPriority: bucket === "included" ? 0 : 1,
+    createdAt: 0,
     updatedAt: 0,
   } as Doc<"aiCreditLots">;
 }
@@ -47,8 +38,7 @@ function replacementContext(
       const chain = {
         eq: () => chain,
         unique: async () => (table === "aiCreditAccounts" ? account : null),
-        take: async (limit: number) =>
-          table === "aiCreditLots" ? lots.slice(0, limit) : [],
+        collect: async () => (table === "aiCreditLots" ? lots : []),
       };
       return {
         withIndex: (
@@ -62,161 +52,19 @@ function replacementContext(
     },
     patch: async (id: unknown, value: Record<string, unknown>) => {
       if (id === account._id) Object.assign(account, value);
-      const lotToPatch = lots.find((candidate) => candidate._id === id);
-      if (lotToPatch) Object.assign(lotToPatch, value);
+      const candidate = lots.find((item) => item._id === id);
+      if (candidate) Object.assign(candidate, value);
     },
     insert: async (_table: string, value: unknown) => {
       ledgerEntries.push(value);
       return "ledger-entry";
     },
   };
-  return {
-    ctx: { db } as unknown as MutationCtx,
-    ledgerEntries,
-  };
+  return { ctx: { db } as unknown as MutationCtx, ledgerEntries };
 }
 
-describe("AI credit allocation", () => {
-  test("spends included expiring credits before prepaid credits", () => {
-    const result = allocateCreditLots(
-      [lot("prepaid", "prepaid", 100n), lot("included", "included", 40n)],
-      70n,
-      10,
-    );
-    expect(result.map(({ lotId, units }) => [String(lotId), units])).toEqual([
-      ["included", 40n],
-      ["prepaid", 30n],
-    ]);
-  });
-
-  test("does not reserve a lot that expires before settlement lease", () => {
-    expect(
-      allocateCreditLots(
-        [lot("included", "included", 100n, { expiresAt: 5 })],
-        50n,
-        10,
-      ),
-    ).toEqual([]);
-  });
-
-  test("fails closed rather than partially reserving", () => {
-    expect(
-      allocateCreditLots([lot("prepaid", "prepaid", 49n)], 50n, 10),
-    ).toEqual([]);
-  });
-
-  test("two serialized reservations cannot overspend the same lot", () => {
-    const sharedLot = lot("prepaid", "prepaid", 100n);
-    const first = allocateCreditLots([sharedLot], 70n, 10);
-    expect(first).toHaveLength(1);
-    sharedLot.availableUnits -= first[0]?.units ?? 0n;
-
-    expect(allocateCreditLots([sharedLot], 70n, 10)).toEqual([]);
-    expect(sharedLot.availableUnits).toBe(30n);
-  });
-});
-
-describe("AI credit finalization", () => {
-  test("a failed request releases every reserved unit", async () => {
-    const reservation = {
-      _id: "reservation",
-      organizationId: "org",
-      actorId: "actor",
-      aiRunId: "run",
-      status: "reserved",
-      reservedIncludedUnits: 0n,
-      reservedPrepaidUnits: 100n,
-      policyVersion: "test",
-    } as unknown as Doc<"aiCreditReservations">;
-    const account = {
-      _id: "account",
-      organizationId: "org",
-      availableIncludedUnits: 0n,
-      availablePrepaidUnits: 0n,
-      reservedIncludedUnits: 0n,
-      reservedPrepaidUnits: 100n,
-      lifetimeConsumedUnits: 0n,
-      version: 1,
-    } as unknown as Doc<"aiCreditAccounts">;
-    const reservedLot = {
-      ...lot("prepaid", "prepaid", 0n),
-      reservedUnits: 100n,
-    };
-    const allocation = {
-      _id: "allocation",
-      reservationId: reservation._id,
-      lotId: reservedLot._id,
-      bucket: "prepaid",
-      reservedUnits: 100n,
-      settledUnits: 0n,
-      releasedUnits: 0n,
-      spendPriority: 1,
-      createdAt: 0,
-      updatedAt: 0,
-    } as unknown as Doc<"aiCreditReservationAllocations">;
-    const records = new Map<string, object>([
-      [String(reservation._id), reservation],
-      [String(account._id), account],
-      [String(reservedLot._id), reservedLot],
-      [String(allocation._id), allocation],
-    ]);
-    const ledgerEntries: unknown[] = [];
-    const db = {
-      get: async (id: string) => records.get(String(id)) ?? null,
-      patch: async (id: string, value: Record<string, unknown>) => {
-        Object.assign(records.get(String(id)) ?? {}, value);
-      },
-      insert: async (_table: string, value: unknown) => {
-        ledgerEntries.push(value);
-        return "ledger";
-      },
-      query(table: string) {
-        const chain = {
-          eq: () => chain,
-          unique: async () => (table === "aiCreditAccounts" ? account : null),
-          collect: async () =>
-            table === "aiCreditReservationAllocations" ? [allocation] : [],
-        };
-        return {
-          withIndex: (
-            _index: string,
-            callback: (query: typeof chain) => unknown,
-          ) => {
-            callback(chain);
-            return chain;
-          },
-        };
-      },
-    };
-
-    const status = await finalizeAiReservation(
-      { db } as unknown as MutationCtx,
-      {
-        reservationId: reservation._id,
-        generationIds: [],
-        failureCode: "run_failed",
-        now: 10,
-      },
-    );
-
-    expect(status).toBe("released");
-    expect(reservedLot.availableUnits).toBe(100n);
-    expect(reservedLot.reservedUnits).toBe(0n);
-    expect(account.availablePrepaidUnits).toBe(100n);
-    expect(account.reservedPrepaidUnits).toBe(0n);
-    expect(reservation.releasedUnits).toBe(100n);
-    expect(ledgerEntries).toEqual([
-      expect.objectContaining({
-        eventKind: "release",
-        availableDeltaUnits: 100n,
-        reservedDeltaUnits: -100n,
-      }),
-    ]);
-  });
-});
-
 describe("included credit replacement", () => {
-  test("mutates monthly annual monthly plans idempotently", async () => {
+  test("replaces recurring grants while preserving prepaid funding", async () => {
     const monthly = lot("monthly", "included", 500_000n);
     const prepaid = lot("prepaid", "prepaid", 4_000_000n);
     const account = {
@@ -236,94 +84,25 @@ describe("included credit replacement", () => {
       }),
     ).toBe(500_000n);
     expect(monthly.availableUnits).toBe(0n);
-    expect(account.availableIncludedUnits).toBe(0n);
     expect(prepaid.availableUnits).toBe(4_000_000n);
-
-    const annual = lot("annual", "included", 6_000_000n);
-    Object.assign(account, { availableIncludedUnits: 6_000_000n });
-    const lots = [monthly, prepaid, annual];
-    const annualState = replacementContext(lots, account);
-    expect(
-      await replaceUnusedIncludedCreditLots(annualState.ctx, {
-        organizationId: "org",
-        replacementRef: "monthly-order",
-        preserveSourceRef: "monthly-again",
-        policyVersion: "test",
-        now: 2,
+    expect(state.ledgerEntries).toEqual([
+      expect.objectContaining({
+        eventKind: "adjust",
+        availableDeltaUnits: -500_000n,
       }),
-    ).toBe(6_000_000n);
-    expect(annual.availableUnits).toBe(0n);
-
-    const monthlyAgain = lot("monthly-again", "included", 500_000n);
-    lots.push(monthlyAgain);
-    const replayState = replacementContext(lots, account);
-    expect(
-      await replaceUnusedIncludedCreditLots(replayState.ctx, {
-        organizationId: "org",
-        replacementRef: "monthly-order",
-        preserveSourceRef: "monthly-again",
-        policyVersion: "test",
-        now: 3,
-      }),
-    ).toBe(0n);
-    expect(monthlyAgain.availableUnits).toBe(500_000n);
-    expect(prepaid.availableUnits).toBe(4_000_000n);
-    expect(replayState.ledgerEntries).toEqual([]);
-    expect(annualState.ledgerEntries).toHaveLength(1);
+    ]);
   });
 
-  test("replaces recurring lots once while preserving prepaid packs", () => {
-    const monthly = lot("monthly", "included", 500_000n, {
-      createdAt: 1,
-    });
-    const prepaid = lot("prepaid", "prepaid", 4_000_000n, {
-      createdAt: 2,
-    });
-    const annual = lot("annual", "included", 6_000_000n, {
-      createdAt: 3,
-    });
-
-    const afterAnnual = selectIncludedCreditLotsForReplacement(
-      [monthly, prepaid],
-      { excludeSourceRef: "annual" },
-    );
+  test("selects only unused recurring grants", () => {
+    const spent = lot("spent", "included", 0n);
+    const current = lot("current", "included", 500_000n);
+    const old = lot("old", "included", 25n);
+    const prepaid = lot("prepaid", "prepaid", 100n);
     expect(
-      afterAnnual.map(({ lotId, units }) => [String(lotId), units]),
-    ).toEqual([["monthly", 500_000n]]);
-
-    const monthlyAgain = selectIncludedCreditLotsForReplacement(
-      [{ ...monthly, availableUnits: 0n }, prepaid, annual],
-      { excludeSourceRef: "monthly-again" },
-    );
-    expect(
-      monthlyAgain.map(({ lotId, units }) => [String(lotId), units]),
-    ).toEqual([["annual", 6_000_000n]]);
-
-    const replay = selectIncludedCreditLotsForReplacement(
-      [
-        { ...monthly, availableUnits: 0n },
-        prepaid,
-        { ...annual, availableUnits: 0n },
-        lot("monthly-again", "included", 500_000n),
-      ],
-      { excludeSourceRef: "monthly-again" },
-    );
-    expect(replay).toEqual([]);
-    expect(prepaid.availableUnits).toBe(4_000_000n);
-  });
-
-  test("does not replace reserved units", () => {
-    const reserved = {
-      ...lot("reserved", "included", 25n),
-      grantedUnits: 100n,
-      availableUnits: 25n,
-      reservedUnits: 75n,
-    };
-    expect(
-      selectIncludedCreditLotsForReplacement([reserved], {
-        excludeSourceRef: "different-current-lot",
+      selectIncludedCreditLotsForReplacement([spent, current, old, prepaid], {
+        excludeSourceRef: "current",
       }).map(({ lotId, units }) => [String(lotId), units]),
-    ).toEqual([["reserved", 25n]]);
+    ).toEqual([["old", 25n]]);
   });
 });
 

@@ -94,6 +94,12 @@ export const billingTables = {
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])
+    .index("by_organization_environment_status_updated", [
+      "organizationId",
+      "providerEnvironment",
+      "normalizedStatus",
+      "updatedAt",
+    ])
     .index("by_provider_subscription", [
       "providerEnvironment",
       "providerSubscriptionId",
@@ -185,12 +191,17 @@ export const billingTables = {
     providerCheckoutId: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
+      v.literal("retryable"),
       v.literal("created"),
       v.literal("completed"),
       v.literal("expired"),
       v.literal("failed"),
     ),
     expiresAt: v.optional(v.number()),
+    attemptCount: v.optional(v.number()),
+    activeAttemptId: v.optional(v.string()),
+    leaseExpiresAt: v.optional(v.number()),
+    nextAttemptAt: v.optional(v.number()),
     failureCode: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),

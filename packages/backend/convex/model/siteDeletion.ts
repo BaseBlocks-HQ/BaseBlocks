@@ -86,19 +86,42 @@ export async function deleteSiteData(
   }
 
   const conversations = await ctx.db
-    .query("aiConversations")
+    .query("siteAssistantConversations")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
     .collect();
   for (const conversation of conversations) {
+    const assistantRuns = await ctx.db
+      .query("siteAssistantRuns")
+      .withIndex("by_conversation_created", (q) =>
+        q.eq("conversationId", conversation._id),
+      )
+      .collect();
+    for (const run of assistantRuns) {
+      await deleteRows(
+        ctx,
+        await ctx.db
+          .query("siteAssistantGenerations")
+          .withIndex("by_run", (q) => q.eq("runId", run._id))
+          .collect(),
+      );
+      await deleteRows(
+        ctx,
+        await ctx.db
+          .query("siteAssistantApplications")
+          .withIndex("by_run", (q) => q.eq("runId", run._id))
+          .collect(),
+      );
+    }
     await deleteRows(
       ctx,
       await ctx.db
-        .query("aiConversationMessages")
+        .query("siteAssistantEvents")
         .withIndex("by_conversation_created", (q) =>
           q.eq("conversationId", conversation._id),
         )
         .collect(),
     );
+    await deleteRows(ctx, assistantRuns);
   }
 
   const releases = await ctx.db
@@ -171,18 +194,6 @@ export async function deleteSiteData(
     ctx.db
       .query("contentPayloads")
       .withIndex("by_site_hash", (q) => q.eq("siteId", siteId))
-      .collect(),
-    ctx.db
-      .query("aiChangesetAudits")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect(),
-    ctx.db
-      .query("aiChangesetReverts")
-      .withIndex("by_site_created", (q) => q.eq("siteId", siteId))
-      .collect(),
-    ctx.db
-      .query("aiRuns")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect(),
   ]);
   for (const rows of siteRows) await deleteRows(ctx, rows);

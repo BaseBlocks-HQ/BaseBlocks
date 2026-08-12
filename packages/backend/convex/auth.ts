@@ -81,6 +81,26 @@ async function prepareAccountDeletion(
   });
 }
 
+async function schedulePaidSeatSync(
+  ctx: GenericCtx<DataModel>,
+  organizationId: string,
+) {
+  const scheduler = (
+    ctx as unknown as {
+      scheduler: {
+        runAfter: (
+          delayMs: number,
+          reference: unknown,
+          args: { organizationId: string },
+        ) => Promise<unknown>;
+      };
+    }
+  ).scheduler;
+  await scheduler.runAfter(0, internal.billing.syncPaidSeatsFromMembership, {
+    organizationId,
+  });
+}
+
 function parseAuthOrigin(origin: string, envName = "APP_URL"): string {
   const trimmed = origin.trim();
   if (!trimmed) {
@@ -215,7 +235,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
       microsoft: {
         clientId: process.env.MICROSOFT_CLIENT_ID!,
         clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-        tenantId: process.env.MICROSOFT_TENANT_ID || "common",
+        tenantId: process.env.MICROSOFT_TENANT_ID!,
         authority: "https://login.microsoftonline.com",
         prompt: "select_account",
       },
@@ -255,6 +275,15 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
                 ...hint,
               },
             );
+          },
+          afterAddMember: async ({ member }) => {
+            await schedulePaidSeatSync(ctx, member.organizationId);
+          },
+          afterRemoveMember: async ({ member }) => {
+            await schedulePaidSeatSync(ctx, member.organizationId);
+          },
+          afterUpdateMemberRole: async ({ member }) => {
+            await schedulePaidSeatSync(ctx, member.organizationId);
           },
         },
       }),

@@ -10,8 +10,8 @@ crons.interval(
 );
 
 crons.interval(
-  "recover Polar webhook processing",
-  { minutes: 1 },
+  "repair Polar webhook processing",
+  { minutes: 15 },
   internal.billingModel.recoverWebhookEvents,
 );
 
@@ -22,8 +22,8 @@ crons.interval(
 );
 
 crons.interval(
-  "reconcile paid workspace seats",
-  { minutes: 5 },
+  "repair paid workspace seats",
+  { hours: 24 },
   internal.billing.reconcilePaidSeats,
   { limit: 25 },
 );

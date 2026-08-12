@@ -1,12 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalPassThroughEnv": [
-    "AI_GATEWAY_API_KEY",
-    "EDITOR_AI_MODEL",
-    "FLAGS",
-    "FLAGS_SECRET",
-    "VERCEL_OIDC_TOKEN"
-  ],
+  "globalPassThroughEnv": ["FLAGS", "FLAGS_SECRET"],
   "ui": "tui",
   "tasks": {
     "build": {
@@ -30,10 +24,8 @@
         "FILES_API_SECRET",
         "EXTRACTION_API_URL",
         "EXTRACTION_API_SECRET",
-        "BASEBLOCKS_AI_FUNDING_MODE",
         "BASEBLOCKS_BILLING_ENVIRONMENT",
-        "CRON_SECRET",
-        "AI_RECONCILIATION_SECRET"
+        "CRON_SECRET"
       ]
     },
     "lint": {

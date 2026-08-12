@@ -2,7 +2,8 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
+import { internalMutation } from "./_generated/server";
 import {
   getPageAccessOrNull,
   listActiveGuestGrantsForSite,
@@ -17,21 +18,32 @@ import {
 const permissionValidator = v.union(v.literal("viewer"), v.literal("editor"));
 const INVITATION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
+export const expireInvitation = internalMutation({
+  args: { invitationId: v.id("pageGuestInvitations") },
+  returns: v.null(),
+  handler: async (ctx, { invitationId }) => {
+    const invitation = await ctx.db.get(invitationId);
+    if (invitation?.status !== "pending") return null;
+    const now = Date.now();
+    if (invitation.expiresAt > now) {
+      await ctx.scheduler.runAt(
+        invitation.expiresAt,
+        internal.pageGuests.expireInvitation,
+        { invitationId },
+      );
+      return null;
+    }
+    await ctx.db.patch(invitationId, { status: "expired", updatedAt: now });
+    return null;
+  },
+});
+
 function hashInvitationToken(token: string): string {
   return bytesToHex(sha256(utf8ToBytes(token)));
 }
 
 function newInvitationToken(): string {
   return `${crypto.randomUUID()}${crypto.randomUUID().replaceAll("-", "")}`;
-}
-
-function effectiveInvitationStatus(invitation: {
-  status: string;
-  expiresAt: number;
-}): string {
-  return invitation.status === "pending" && invitation.expiresAt <= Date.now()
-    ? "expired"
-    : invitation.status;
 }
 
 function assertGuestEmail(email: string): string {
@@ -99,12 +111,9 @@ export const listForPage = queryGeneric({
         }),
     );
     return {
-      invitations: invitations
-        .filter((invitation) => invitation.pageId === pageId)
-        .map((invitation) => ({
-          ...invitation,
-          status: effectiveInvitationStatus(invitation),
-        })),
+      invitations: invitations.filter(
+        (invitation) => invitation.pageId === pageId,
+      ),
       grants: hydratedGrants,
     };
   },
@@ -154,6 +163,11 @@ export const invite = mutationGeneric({
       createdAt: now,
       updatedAt: now,
     });
+    await ctx.scheduler.runAt(
+      now + INVITATION_LIFETIME_MS,
+      internal.pageGuests.expireInvitation,
+      { invitationId },
+    );
     return {
       invitationId,
       token,
@@ -184,7 +198,7 @@ export const getInvitation = queryGeneric({
           pageId: invitation.pageId,
           pageTitle: page.title,
           permission: invitation.permission,
-          status: effectiveInvitationStatus(invitation),
+          status: invitation.status,
           expiresAt: invitation.expiresAt,
         }
       : null;

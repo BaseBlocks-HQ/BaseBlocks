@@ -6,7 +6,10 @@ import {
   integrationSyncStatus,
 } from "./validators/integrations";
 import { siteSettings } from "./validators/sites";
-import { aiRunOutcome, aiRunTelemetry } from "./validators/ai";
+import {
+  siteAssistantMessagePart,
+  siteAssistantRunStatus,
+} from "./validators/ai";
 import { workspaceTables } from "./schema/workspaces";
 import { billingTables } from "./schema/billing";
 import { aiCreditTables } from "./schema/aiCredits";
@@ -124,127 +127,13 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_site_entity", ["siteId", "entityType", "entityId"]),
 
-  aiChangesetAudits: defineTable({
-    siteId: v.id("sites"),
-    runId: v.id("aiRuns"),
-    actorId: v.string(),
-    requestId: v.optional(v.string()),
-    executor: v.optional(v.string()),
-    modelId: v.string(),
-    expectedProjectFingerprint: v.string(),
-    resultProjectFingerprint: v.string(),
-    expectedSiteFingerprint: v.string(),
-    resultSiteFingerprint: v.string(),
-    expectedPageFingerprints: v.array(
-      v.object({
-        pageId: v.string(),
-        fingerprint: v.union(v.string(), v.null()),
-      }),
-    ),
-    resultPageFingerprints: v.array(
-      v.object({
-        pageId: v.string(),
-        fingerprint: v.union(v.string(), v.null()),
-      }),
-    ),
-    resultDigest: v.string(),
-    previousSiteName: v.optional(v.string()),
-    nextSiteName: v.optional(v.string()),
-    siteNameChanged: v.optional(v.boolean()),
-    baseDraftRevision: v.number(),
-    resultDraftRevision: v.number(),
-    operationCount: v.number(),
-    createdPageIds: v.array(v.id("pages")),
-    updatedPageIds: v.array(v.id("pages")),
-    deletedPageIds: v.array(v.id("pages")),
-    createdAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_site_created", ["siteId", "createdAt"]),
-
-  aiChangesetReverts: defineTable({
-    auditId: v.id("aiChangesetAudits"),
-    siteId: v.id("sites"),
-    runId: v.id("aiRuns"),
-    actorId: v.string(),
-    appliedDraftRevision: v.number(),
-    appliedSiteName: v.optional(v.string()),
-    appliedDefaultPageId: v.optional(v.id("pages")),
-    previousSiteName: v.string(),
-    previousDefaultPageId: v.optional(v.id("pages")),
-    createdPageIds: v.array(v.id("pages")),
-    previousPages: v.array(
-      v.object({
-        pageId: v.id("pages"),
-        parentId: v.optional(v.id("pages")),
-        title: v.string(),
-        slug: v.string(),
-        icon: v.optional(v.string()),
-        order: v.number(),
-        restoreDocument: v.boolean(),
-        contentRevisionId: v.optional(v.id("contentRevisions")),
-      }),
-    ),
-    createdAt: v.number(),
-    revertedAt: v.optional(v.number()),
-    revertedBy: v.optional(v.string()),
-    revertDraftRevision: v.optional(v.number()),
-  })
-    .index("by_audit", ["auditId"])
-    .index("by_site_created", ["siteId", "createdAt"]),
-
-  aiRuns: defineTable({
-    siteId: v.id("sites"),
-    organizationId: v.string(),
-    actorId: v.string(),
-    requestId: v.string(),
-    promptFingerprint: v.string(),
-    modelId: v.string(),
-    mode: v.union(v.literal("preview"), v.literal("apply")),
-    status: v.union(
-      v.literal("running"),
-      v.literal("completed"),
-      v.literal("failed"),
-    ),
-    leaseExpiresAt: v.number(),
-    creditReservationId: v.optional(v.id("aiCreditReservations")),
-    maximumCreditUnits: v.optional(v.int64()),
-    settledCreditUnits: v.optional(v.int64()),
-    creditStatus: v.optional(
-      v.union(
-        v.literal("reserved"),
-        v.literal("settled"),
-        v.literal("released"),
-        v.literal("reconcilePending"),
-      ),
-    ),
-    creditPolicyVersion: v.optional(v.string()),
-    feature: v.optional(v.string()),
-    providerEnvironment: v.optional(
-      v.union(v.literal("sandbox"), v.literal("production")),
-    ),
-    result: v.optional(v.any()),
-    outcome: v.optional(aiRunOutcome),
-    telemetry: v.optional(aiRunTelemetry),
-    failureCode: v.optional(v.string()),
-    failureMessage: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-    completedAt: v.optional(v.number()),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_site_actor_request", ["siteId", "actorId", "requestId"])
-    .index("by_actor_status_lease", ["actorId", "status", "leaseExpiresAt"])
-    .index("by_site_status_lease", ["siteId", "status", "leaseExpiresAt"])
-    .index("by_org_status_lease", [
-      "organizationId",
-      "status",
-      "leaseExpiresAt",
-    ])
-    .index("by_org_created", ["organizationId", "createdAt"])
-    .index("by_credit_reservation", ["creditReservationId"]),
-
-  aiConversations: defineTable({
+  /**
+   * The site assistant is turn/run based: a turn owns its immutable user
+   * message and an ordered event journal. The reactive query projects the
+   * journal into UIMessage-shaped messages; no second flattened message model
+   * can drift from execution state.
+   */
+  siteAssistantConversations: defineTable({
     siteId: v.id("sites"),
     organizationId: v.string(),
     actorId: v.string(),
@@ -256,42 +145,89 @@ export default defineSchema({
     .index("by_site_actor_updated", ["siteId", "actorId", "updatedAt"])
     .index("by_site", ["siteId"]),
 
-  aiConversationMessages: defineTable({
-    conversationId: v.id("aiConversations"),
+  siteAssistantRuns: defineTable({
+    conversationId: v.id("siteAssistantConversations"),
     siteId: v.id("sites"),
+    organizationId: v.string(),
     actorId: v.string(),
+    canManageSite: v.boolean(),
     requestId: v.string(),
-    role: v.union(v.literal("user"), v.literal("assistant")),
-    content: v.string(),
-    mode: v.union(v.literal("preview"), v.literal("apply")),
-    status: v.literal("completed"),
-    operationCount: v.optional(v.number()),
-    auditId: v.optional(v.id("aiChangesetAudits")),
+    modelId: v.string(),
+    status: siteAssistantRunStatus,
+    userMessageId: v.string(),
+    userParts: v.array(siteAssistantMessagePart),
+    workflowId: v.optional(v.string()),
+    cancellationFence: v.number(),
+    failureCode: v.optional(v.string()),
+    failureMessage: v.optional(v.string()),
     revertedAt: v.optional(v.number()),
     createdAt: v.number(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
   })
     .index("by_conversation_created", ["conversationId", "createdAt"])
-    .index("by_conversation_request_role", [
-      "conversationId",
-      "requestId",
-      "role",
-    ]),
+    .index("by_site_actor_request", ["siteId", "actorId", "requestId"])
+    .index("by_site_status", ["siteId", "status"])
+    .index("by_organization_status", ["organizationId", "status"]),
 
-  aiOrganizationEntitlements: defineTable({
-    organizationId: v.string(),
-    enabled: v.boolean(),
-    dailyRunLimit: v.number(),
-    maxActorConcurrency: v.number(),
-    maxSiteConcurrency: v.number(),
-    maxOrganizationConcurrency: v.number(),
-    maxRequestsPerRun: v.number(),
-    maxInputTokensPerRun: v.number(),
-    maxOutputTokensPerRun: v.number(),
-    maxSpendUsdPerRun: v.number(),
-    maxChargeUnits: v.optional(v.int64()),
-    policyVersion: v.string(),
+  siteAssistantEvents: defineTable({
+    runId: v.id("siteAssistantRuns"),
+    conversationId: v.id("siteAssistantConversations"),
+    sequence: v.number(),
+    part: siteAssistantMessagePart,
+    createdAt: v.number(),
+  })
+    .index("by_run_sequence", ["runId", "sequence"])
+    .index("by_conversation_created", ["conversationId", "createdAt"]),
+
+  /** Gateway truth is stored per generation and costed asynchronously. */
+  siteAssistantGenerations: defineTable({
+    runId: v.id("siteAssistantRuns"),
+    generationId: v.string(),
+    requestedModelId: v.string(),
+    resolvedModelId: v.optional(v.string()),
+    provider: v.optional(v.string()),
+    inputTokens: v.optional(v.number()),
+    outputTokens: v.optional(v.number()),
+    totalTokens: v.optional(v.number()),
+    reasoningTokens: v.optional(v.number()),
+    cachedInputTokens: v.optional(v.number()),
+    finishReason: v.optional(v.string()),
+    costUsd: v.optional(v.number()),
+    costStatus: v.union(
+      v.literal("pending"),
+      v.literal("costed"),
+      v.literal("failed"),
+    ),
+    reconciliationAttempts: v.optional(v.number()),
+    reconciliationFailureCode: v.optional(v.string()),
+    observedAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_organization", ["organizationId"]),
+  })
+    .index("by_run", ["runId"])
+    .index("by_generation", ["generationId"])
+    .index("by_cost_status", ["costStatus", "observedAt"]),
+
+  siteAssistantApplications: defineTable({
+    runId: v.id("siteAssistantRuns"),
+    toolCallId: v.string(),
+    siteId: v.id("sites"),
+    operationCount: v.number(),
+    actorId: v.string(),
+    baseDraftRevision: v.number(),
+    resultDraftRevision: v.number(),
+    operations: v.any(),
+    previousSite: v.any(),
+    previousPages: v.any(),
+    createdAt: v.number(),
+    revertedAt: v.optional(v.number()),
+    revertedBy: v.optional(v.string()),
+    revertDraftRevision: v.optional(v.number()),
+  })
+    .index("by_run", ["runId"])
+    .index("by_run_tool_call", ["runId", "toolCallId"])
+    .index("by_site_created", ["siteId", "createdAt"]),
 
   documentLibraries: defineTable({
     siteId: v.id("sites"),
