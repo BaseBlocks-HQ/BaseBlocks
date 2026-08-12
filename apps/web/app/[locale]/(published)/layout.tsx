@@ -3,6 +3,7 @@ import {
   PublicConvexClientProvider,
 } from "@/lib/convex/provider";
 import "@/app/product.css";
+import { getToken } from "@/lib/auth/server";
 import { parseRequestHost } from "@/lib/routing/hosts";
 import type { ReactNode } from "react";
 import { selectMessages } from "@/i18n/messages";
@@ -16,9 +17,10 @@ export default async function PublicLayout({
 }: {
   children: ReactNode;
 }) {
-  const [messages, requestHeaders] = await Promise.all([
+  const [messages, requestHeaders, token] = await Promise.all([
     getMessages(),
     headers(),
+    getToken(),
   ]);
   const host =
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
@@ -26,9 +28,6 @@ export default async function PublicLayout({
   const supportsTeamSession =
     parsedHost.kind === "subdomain" ||
     parsedHost.kind === "localhost-subdomain";
-  const Provider = supportsTeamSession
-    ? ConvexClientProvider
-    : PublicConvexClientProvider;
   return (
     <NextIntlClientProvider
       messages={selectMessages(messages, [
@@ -39,7 +38,13 @@ export default async function PublicLayout({
         "language",
       ])}
     >
-      <Provider>{children}</Provider>
+      {supportsTeamSession ? (
+        <ConvexClientProvider initialToken={token}>
+          {children}
+        </ConvexClientProvider>
+      ) : (
+        <PublicConvexClientProvider>{children}</PublicConvexClientProvider>
+      )}
       <Toaster />
     </NextIntlClientProvider>
   );

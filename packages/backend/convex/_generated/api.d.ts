@@ -41,6 +41,7 @@ import type * as model_billingRetention from "../model/billingRetention.js";
 import type * as model_contentObjects from "../model/contentObjects.js";
 import type * as model_draft from "../model/draft.js";
 import type * as model_draftChanges from "../model/draftChanges.js";
+import type * as model_draftSummary from "../model/draftSummary.js";
 import type * as model_fileExtraction from "../model/fileExtraction.js";
 import type * as model_libraryAccess from "../model/libraryAccess.js";
 import type * as model_pageDeletion from "../model/pageDeletion.js";
@@ -124,6 +125,7 @@ declare const fullApi: ApiFromModules<{
   "model/contentObjects": typeof model_contentObjects;
   "model/draft": typeof model_draft;
   "model/draftChanges": typeof model_draftChanges;
+  "model/draftSummary": typeof model_draftSummary;
   "model/fileExtraction": typeof model_fileExtraction;
   "model/libraryAccess": typeof model_libraryAccess;
   "model/pageDeletion": typeof model_pageDeletion;

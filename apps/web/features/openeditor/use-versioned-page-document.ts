@@ -9,11 +9,7 @@ import {
 import type { SaveStatus } from "@baseblocks/domain";
 import type { OpenEditorDocument } from "@openeditor/core";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-type VersionedDocument = {
-  document: OpenEditorDocument;
-  contentHash: string;
-};
+import type { VersionedDocument } from "./versioned-document";
 
 type SaveResult = VersionedDocument & {
   status: "saved" | "conflict";
@@ -31,17 +27,17 @@ export function useVersionedPageDocument({
   onError: () => void;
   onSaveStatusChange?: (status: SaveStatus) => void;
   pageId: Id<"pages">;
-  remote: VersionedDocument | null | undefined;
+  remote: VersionedDocument;
   save: (args: {
     pageId: Id<"pages">;
     content: OpenEditorDocument;
     expectedContentHash: string;
   }) => Promise<SaveResult>;
 }) {
-  const [document, setDocument] = useState<OpenEditorDocument>();
-  const documentRef = useRef<OpenEditorDocument | undefined>(undefined);
-  const baseHashRef = useRef<string | undefined>(undefined);
-  const baseDocumentRef = useRef<OpenEditorDocument | undefined>(undefined);
+  const [document, setDocument] = useState<OpenEditorDocument>(remote.document);
+  const documentRef = useRef<OpenEditorDocument>(remote.document);
+  const baseHashRef = useRef<string>(remote.contentHash);
+  const baseDocumentRef = useRef<OpenEditorDocument>(remote.document);
   const pendingRef = useRef<OpenEditorDocument | undefined>(undefined);
   const inFlightDocumentRef = useRef<OpenEditorDocument | undefined>(undefined);
   const savingRef = useRef(false);
@@ -64,13 +60,12 @@ export function useVersionedPageDocument({
   }, []);
 
   const persist = useCallback(async () => {
-    if (savingRef.current || !baseHashRef.current) return;
+    if (savingRef.current) return;
     const writeGeneration = writeGenerationRef.current;
     savingRef.current = true;
     while (
       writeGeneration === writeGenerationRef.current &&
-      pendingRef.current &&
-      baseHashRef.current
+      pendingRef.current
     ) {
       const submitted = pendingRef.current;
       if (!submitted) break;
@@ -102,10 +97,7 @@ export function useVersionedPageDocument({
 
       if (result.status === "conflict") {
         const baseDocument = baseDocumentRef.current;
-        if (
-          baseDocument &&
-          !hasSameNonPageContent(baseDocument, result.document)
-        ) {
+        if (!hasSameNonPageContent(baseDocument, result.document)) {
           conflictRef.current = true;
           baseHashRef.current = result.contentHash;
           baseDocumentRef.current = result.document;
@@ -117,7 +109,7 @@ export function useVersionedPageDocument({
         }
         baseHashRef.current = result.contentHash;
         baseDocumentRef.current = result.document;
-        const local = documentRef.current ?? submitted;
+        const local = documentRef.current;
         const rebased = reconcileChildPageProjection(local, result.document);
         apply(rebased);
         if (JSON.stringify(rebased) !== JSON.stringify(result.document)) {
@@ -127,14 +119,13 @@ export function useVersionedPageDocument({
       }
 
       if (baseHashRef.current !== expectedContentHash) {
-        const current = documentRef.current;
-        if (current) pendingRef.current = current;
+        pendingRef.current = documentRef.current;
         continue;
       }
       baseHashRef.current = result.contentHash;
       baseDocumentRef.current = result.document;
       const current = documentRef.current;
-      if (!current || JSON.stringify(current) === JSON.stringify(submitted)) {
+      if (JSON.stringify(current) === JSON.stringify(submitted)) {
         apply(result.document);
       } else {
         pendingRef.current = current;
@@ -175,19 +166,12 @@ export function useVersionedPageDocument({
   );
 
   useEffect(() => {
-    if (!remote) return;
-    const incoming = remote.document as OpenEditorDocument;
+    const incoming = remote.document;
     if (conflictRef.current) return;
-    if (!baseHashRef.current) {
-      baseHashRef.current = remote.contentHash;
-      baseDocumentRef.current = incoming;
-      apply(incoming);
-      return;
-    }
     if (remote.contentHash === baseHashRef.current) return;
 
     const local = documentRef.current;
-    if (!local || (!pendingRef.current && !savingRef.current)) {
+    if (!pendingRef.current && !savingRef.current) {
       baseHashRef.current = remote.contentHash;
       baseDocumentRef.current = incoming;
       apply(incoming);
@@ -198,7 +182,6 @@ export function useVersionedPageDocument({
     const baseDocument = baseDocumentRef.current;
     const inFlightDocument = inFlightDocumentRef.current;
     if (
-      baseDocument &&
       !hasSameNonPageContent(baseDocument, incoming) &&
       (!inFlightDocument || !hasSameNonPageContent(inFlightDocument, incoming))
     ) {
@@ -240,9 +223,7 @@ export function useVersionedPageDocument({
       }
       pendingRef.current = next;
       onSaveStatusChangeRef.current?.("pending");
-      schedule(
-        previous && !hasSameChildPageProjection(previous, next) ? 0 : 750,
-      );
+      schedule(!hasSameChildPageProjection(previous, next) ? 0 : 750);
     },
     [apply, schedule],
   );

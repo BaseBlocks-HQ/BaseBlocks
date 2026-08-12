@@ -15,12 +15,13 @@ export const metadata: Metadata = {
 };
 
 export default async function AppLayout({ children }: PropsWithChildren) {
-  if (!(await getToken())) {
+  const [token, messages] = await Promise.all([getToken(), getMessages()]);
+
+  if (!token) {
     const locale = await getLocale();
     redirect({ href: "/login", locale });
   }
 
-  const messages = await getMessages();
   return (
     <NextIntlClientProvider
       messages={selectMessages(messages, [
@@ -45,7 +46,9 @@ export default async function AppLayout({ children }: PropsWithChildren) {
       ])}
     >
       <ProductThemeProvider>
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider initialToken={token}>
+          {children}
+        </ConvexClientProvider>
         <Toaster />
       </ProductThemeProvider>
     </NextIntlClientProvider>
