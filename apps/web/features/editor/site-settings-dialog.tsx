@@ -113,12 +113,14 @@ function LogoUploadSection({
   isUploading,
   logoUrl,
   onFilesAccepted,
+  onRemove,
   uploadProgress,
 }: {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   isUploading: boolean;
   logoUrl?: string;
   onFilesAccepted: (files: File[]) => void;
+  onRemove: () => void;
   uploadProgress: number;
 }) {
   if (logoUrl) {
@@ -132,7 +134,7 @@ function LogoUploadSection({
           height={40}
           unoptimized
         />
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -161,6 +163,16 @@ function LogoUploadSection({
             ) : (
               "Replace"
             )}
+          </Button>
+          <Button
+            className="h-8"
+            disabled={isUploading}
+            onClick={onRemove}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            Remove
           </Button>
         </div>
       </div>
@@ -316,21 +328,36 @@ export function SiteSettingsDialog({
   };
 
   const handleSaveName = async () => {
-    if (!site || localName === site.name) {
+    const nextName = localName.trim();
+    if (!site || nextName === site.name) {
       setIsEditingName(false);
       return;
     }
 
-    const newName = localName;
+    if (!nextName) {
+      toast.error("Enter a site name");
+      return;
+    }
+
     try {
       await updateSite({
         siteId,
-        name: newName,
+        name: nextName,
       });
       setIsEditingName(false);
       toast.success("Site name updated");
     } catch (_error) {
       toast.error("Failed to update name");
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!site) return;
+    try {
+      await updateSite({ siteId, clearLogo: true });
+      toast.success("Logo removed");
+    } catch (_error) {
+      toast.error("Failed to remove logo");
     }
   };
 
@@ -454,6 +481,7 @@ export function SiteSettingsDialog({
                       isUploading={isUploading}
                       logoUrl={site.logoUrl}
                       onFilesAccepted={handleLogoUpload}
+                      onRemove={() => void handleRemoveLogo()}
                       uploadProgress={uploadProgress}
                     />
                   </SettingSurface>

@@ -18,7 +18,6 @@ import {
   ArrowDown01Icon,
   Delete01Icon,
   MoreHorizontalIcon,
-  PencilEdit01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -55,7 +54,6 @@ export function SiteNavigationGroup({
   canEdit,
   canManageSites,
   onDeleteSite,
-  onEditSite,
   onSelectActivePage,
   selectedPageId,
   site,
@@ -65,7 +63,6 @@ export function SiteNavigationGroup({
   canEdit: boolean;
   canManageSites: boolean;
   onDeleteSite: (site: SiteManagementTarget) => void;
-  onEditSite: (site: SiteManagementTarget) => void;
   onSelectActivePage: (pageId: string) => void;
   selectedPageId: string | null;
   site: SiteNavigationItem;
@@ -84,13 +81,6 @@ export function SiteNavigationGroup({
     { site: site.name },
   );
   const siteActions = [
-    {
-      id: "edit",
-      icon: PencilEdit01Icon,
-      label: t("sites.editInformation"),
-      onSelect: () => onEditSite(site),
-      destructive: false,
-    },
     {
       id: "delete",
       icon: Delete01Icon,

@@ -71,9 +71,7 @@ export function SiteHeaderMoreActions({
   const tNavigation = useTranslations("navigation");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
-  const [siteManagementAction, setSiteManagementAction] = useState<
-    "delete" | "edit" | null
-  >(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
     <>
@@ -116,12 +114,6 @@ export function SiteHeaderMoreActions({
             <HugeiconsIcon icon={CogIcon} />
             {tNavigation("settings")}
           </DropdownMenuItem>
-          {canManageSites && site ? (
-            <DropdownMenuItem onSelect={() => setSiteManagementAction("edit")}>
-              <HugeiconsIcon icon={PencilEdit01Icon} />
-              {tSites("editInformation")}
-            </DropdownMenuItem>
-          ) : null}
           {analyticsEnabled ? (
             <DropdownMenuItem asChild>
               <Link href={`${getTeamAnalyticsPath(teamSlug)}?site=${siteId}`}>
@@ -182,7 +174,7 @@ export function SiteHeaderMoreActions({
             <>
               {sitePublished && onUnpublish ? null : <DropdownMenuSeparator />}
               <DropdownMenuItem
-                onSelect={() => setSiteManagementAction("delete")}
+                onSelect={() => setDeleteOpen(true)}
                 variant="destructive"
               >
                 <HugeiconsIcon icon={Delete01Icon} />
@@ -195,15 +187,9 @@ export function SiteHeaderMoreActions({
 
       {canManageSites && site ? (
         <SiteManagementDialogs
-          deleteOpen={siteManagementAction === "delete"}
-          editOpen={siteManagementAction === "edit"}
-          onDeleteOpenChange={(open) => {
-            if (!open) setSiteManagementAction(null);
-          }}
+          deleteOpen={deleteOpen}
+          onDeleteOpenChange={setDeleteOpen}
           onDeleted={() => router.replace(getTeamDashboardPath(teamSlug))}
-          onEditOpenChange={(open) => {
-            if (!open) setSiteManagementAction(null);
-          }}
           site={site}
         />
       ) : null}

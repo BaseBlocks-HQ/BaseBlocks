@@ -28,10 +28,8 @@ export function WorkspaceSiteNavigation({
   const { capabilities, team } = useTeamAccess();
   const { selectPage } = useEditorUi();
   const { selectedPageId } = useEditorWorkspace();
-  const [siteManagement, setSiteManagement] = useState<{
-    action: "delete" | "edit";
-    site: SiteManagementTarget;
-  } | null>(null);
+  const [siteManagement, setSiteManagement] =
+    useState<SiteManagementTarget | null>(null);
 
   if (sites === undefined) {
     return (
@@ -49,12 +47,7 @@ export function WorkspaceSiteNavigation({
           activeSiteId={activeSiteId}
           canEdit={capabilities.canEditContent}
           canManageSites={capabilities.canManageSites}
-          onDeleteSite={(target) =>
-            setSiteManagement({ action: "delete", site: target })
-          }
-          onEditSite={(target) =>
-            setSiteManagement({ action: "edit", site: target })
-          }
+          onDeleteSite={(target) => setSiteManagement(target)}
           onSelectActivePage={selectPage}
           selectedPageId={selectedPageId}
           site={site}
@@ -63,20 +56,16 @@ export function WorkspaceSiteNavigation({
       ))}
       {siteManagement ? (
         <SiteManagementDialogs
-          deleteOpen={siteManagement.action === "delete"}
-          editOpen={siteManagement.action === "edit"}
+          deleteOpen
           onDeleteOpenChange={(open) => {
             if (!open) setSiteManagement(null);
           }}
           onDeleted={() => {
-            if (siteManagement.site._id === activeSiteId) {
+            if (siteManagement._id === activeSiteId) {
               router.replace(getTeamDashboardPath(team.slug));
             }
           }}
-          onEditOpenChange={(open) => {
-            if (!open) setSiteManagement(null);
-          }}
-          site={siteManagement.site}
+          site={siteManagement}
         />
       ) : null}
     </>
