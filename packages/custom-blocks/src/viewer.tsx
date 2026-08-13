@@ -60,32 +60,34 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
             </select>
           </label>
         ) : null}
-        <div className="relative max-w-sm">
-          <HugeiconsIcon
-            aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            icon={Search01Icon}
-          />
-          <Input
-            aria-label="Search directory"
-            className="rounded-2xl border-0 bg-card pl-10 shadow-none"
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(0);
-            }}
-            placeholder="Search directory…"
-            type="search"
-            value={query}
-          />
-        </div>
-        <div className="overflow-x-auto rounded-2xl bg-card shadow-xs">
+        {active.rows.length > 5 ? (
+          <div className="relative max-w-sm">
+            <HugeiconsIcon
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              icon={Search01Icon}
+            />
+            <Input
+              aria-label="Search directory"
+              className="rounded-xl pl-10 shadow-none"
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(0);
+              }}
+              placeholder="Search"
+              type="search"
+              value={query}
+            />
+          </div>
+        ) : null}
+        <div className="overflow-x-auto rounded-xl border bg-card">
           <table className="w-full table-fixed text-sm">
             <caption className="sr-only">{active.label}</caption>
             <thead>
-              <tr className="border-b border-border/60">
+              <tr className="border-b border-border/60 bg-muted/30">
                 {active.columnIds.map((columnId, index) => (
                   <th
-                    className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"
+                    className="border-l border-border/60 px-3 py-2 text-left text-xs font-medium text-muted-foreground first:border-l-0"
                     key={columnId}
                     scope="col"
                   >{`Column ${index + 1}`}</th>
@@ -100,7 +102,7 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
                 >
                   {active.columnIds.map((columnId) => (
                     <td
-                      className="whitespace-normal px-3 py-2 align-top [overflow-wrap:anywhere]"
+                      className="whitespace-normal border-l border-border/60 px-3 py-2 align-top first:border-l-0 [overflow-wrap:anywhere]"
                       key={columnId}
                     >
                       {row.cells[columnId] ?? ""}
@@ -175,68 +177,41 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
             ))}
           </select>
         ) : null}
-        <div className="grid min-h-72 gap-3 md:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl bg-card shadow-xs">
-            <div className="flex h-11 items-center border-b border-border/60 px-2">
-              <Button
-                onClick={() => setPath([])}
-                size="compact"
-                type="button"
-                variant={state.path.length ? "ghost" : "secondary"}
-              >
-                Root
-              </Button>
+        <div className="min-h-48 rounded-xl border bg-card p-4">
+          {state.path.length ? (
+            <Button
+              className="mb-4"
+              onClick={() => setPath(state.path.slice(0, -1))}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon aria-hidden icon={ArrowLeft01Icon} />
+              Back
+            </Button>
+          ) : null}
+          {state.activeNode ? (
+            <div className="mb-5">
+              <Document
+                ariaLabel={state.activeNode.name}
+                value={state.activeNode.document}
+              />
             </div>
-            <nav aria-label="Decision path" className="space-y-1.5 p-2">
-              {state.visibleOptions.length ? (
-                state.visibleOptions.map((node) => (
-                  <Button
-                    className="w-full justify-between rounded-xl bg-background/60"
-                    key={node.id}
-                    onClick={() => setPath([...state.path, node.id])}
-                    type="button"
-                    variant="ghost"
-                  >
-                    <span className="truncate">{node.name}</span>
-                    <HugeiconsIcon aria-hidden icon={ArrowRight01Icon} />
-                  </Button>
-                ))
-              ) : (
-                <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  No options on this path.
-                </p>
-              )}
-            </nav>
-          </div>
-          <aside
-            aria-label={
-              state.activeNode
-                ? `${state.activeNode.name} context`
-                : "Decision context"
-            }
-            className="rounded-2xl bg-card p-4 shadow-xs"
-          >
-            {state.activeNode ? (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold">
-                  {state.activeNode.name}
-                </h3>
-                <Document
-                  ariaLabel={`${state.activeNode.name} context`}
-                  value={state.activeNode.document}
-                />
-              </div>
-            ) : (
-              <div className="flex min-h-56 items-center justify-center text-center">
-                <div className="max-w-56 space-y-1.5">
-                  <p className="text-sm font-medium">Choose an option</p>
-                  <p className="text-xs text-muted-foreground">
-                    Its saved context will appear here.
-                  </p>
-                </div>
-              </div>
-            )}
-          </aside>
+          ) : null}
+          <nav aria-label="Decision options" className="grid gap-2">
+            {state.visibleOptions.map((node) => (
+              <Button
+                className="h-auto min-h-11 justify-between whitespace-normal rounded-xl px-4 py-2 text-left"
+                key={node.id}
+                onClick={() => setPath([...state.path, node.id])}
+                type="button"
+                variant="outline"
+              >
+                <span>{node.name}</span>
+                <HugeiconsIcon aria-hidden icon={ArrowRight01Icon} />
+              </Button>
+            ))}
+          </nav>
         </div>
       </BlockShell>
     );
