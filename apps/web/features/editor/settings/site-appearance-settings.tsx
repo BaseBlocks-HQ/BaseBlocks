@@ -5,7 +5,6 @@ import {
   DEFAULT_CUSTOM_BRAND_COLOR,
   DEFAULT_SITE_SIDEBAR_VARIANT,
   getSiteThemePreviewColors,
-  isValidBrandColor,
   normalizeBrandColor,
   resolveSiteTheme,
   type SiteThemePaletteId,
@@ -13,15 +12,7 @@ import {
   type SiteThemeSettings,
   type SiteThemeStyleId,
 } from "@baseblocks/domain";
-import { Button } from "@baseblocks/ui/button";
-import { ColorPicker } from "@baseblocks/ui/color-picker";
 import { Label } from "@baseblocks/ui/label";
-import { Spinner } from "@baseblocks/ui/spinner";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
 import {
   Select,
   SelectContent,
@@ -32,6 +23,8 @@ import {
 import { useMutation } from "convex/react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
+import { CustomBrandColor } from "./custom-brand-color";
+import { SiteSettingsSectionTitle } from "./site-settings-section-title";
 
 const PALETTE_OPTIONS: Array<{
   id: Exclude<SiteThemePaletteId, "custom">;
@@ -81,21 +74,32 @@ export function SiteAppearanceSettings({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const paletteInputId = useId();
+  const styleInputId = useId();
+  const sidebarInputId = useId();
   const customColorInputId = useId();
 
-  const saveTheme = async (nextTheme: SiteThemeSettings) => {
+  const saveAppearance = async (
+    settings:
+      | { theme: SiteThemeSettings }
+      | { sidebarVariant: SiteSidebarVariant },
+    errorMessage = "Unable to update the site appearance. Try again.",
+  ) => {
     if (isSaving) return false;
     setIsSaving(true);
     try {
-      await updateSite({ siteId, settings: { theme: nextTheme } });
+      await updateSite({ siteId, settings });
       return true;
-    } catch (_error) {
-      toast.error("Failed to update site appearance");
+    } catch {
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsSaving(false);
     }
   };
+
+  const saveTheme = (nextTheme: SiteThemeSettings) =>
+    saveAppearance({ theme: nextTheme });
 
   const selectPalette = (palette: SiteThemePaletteId) => {
     if (palette === resolvedTheme.palette) return;
@@ -133,185 +137,118 @@ export function SiteAppearanceSettings({
     )?.label ?? "Standard";
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Brand color</p>
-        <Select
-          disabled={isSaving}
-          onValueChange={(value) => selectPalette(value as SiteThemePaletteId)}
-          value={resolvedTheme.palette}
-        >
-          <SelectTrigger aria-label="Brand color" className="w-full">
-            <SelectValue>
-              <PaletteIndicator
-                brandColor={customColor}
-                palette={resolvedTheme.palette}
-                style={resolvedTheme.style}
-              />
-              {selectedPaletteLabel}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent align="start">
-            {ALL_PALETTE_OPTIONS.map((option) => (
-              <SelectItem key={option.id} value={option.id}>
-                <PaletteIndicator
-                  brandColor={customColor}
-                  palette={option.id}
-                  style={resolvedTheme.style}
-                />
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {resolvedTheme.palette === "custom" ? (
-        <div className="space-y-2">
-          <Label
-            className="text-xs font-medium text-muted-foreground"
-            htmlFor={customColorInputId}
-          >
-            Custom brand color
-          </Label>
-          <Popover
-            onOpenChange={(open) => {
-              if (open) {
-                setCustomColor(
-                  resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
-                );
-              } else if (!isSaving) {
-                setCustomColor(
-                  resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
-                );
+    <div className="space-y-10" aria-busy={isSaving}>
+      <section className="space-y-4">
+        <SiteSettingsSectionTitle>Theme</SiteSettingsSectionTitle>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor={paletteInputId}>Brand color</Label>
+            <Select
+              disabled={isSaving}
+              onValueChange={(value) =>
+                selectPalette(value as SiteThemePaletteId)
               }
-              setIsColorPickerOpen(open);
-            }}
-            open={isColorPickerOpen}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                className="h-10 w-full justify-start px-3 font-normal"
-                disabled={isSaving}
-                id={customColorInputId}
-                type="button"
-                variant="outline"
-              >
-                <span
-                  aria-hidden
-                  className="size-5 rounded-md border border-black/10 shadow-xs dark:border-white/15"
-                  style={{
-                    backgroundColor:
-                      normalizeBrandColor(customColor) ??
-                      DEFAULT_CUSTOM_BRAND_COLOR,
-                  }}
-                />
-                <span className="font-mono text-xs uppercase">
-                  {normalizeBrandColor(customColor) ??
-                    DEFAULT_CUSTOM_BRAND_COLOR}
-                </span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-72 space-y-3 p-3">
-              <ColorPicker
-                disabled={isSaving}
-                onValueChange={setCustomColor}
-                value={
-                  normalizeBrandColor(customColor) ?? DEFAULT_CUSTOM_BRAND_COLOR
-                }
-              />
-              <div className="flex justify-end gap-2 border-t pt-3">
-                <Button
-                  disabled={isSaving}
-                  onClick={() => {
-                    setCustomColor(
-                      resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
-                    );
-                    setIsColorPickerOpen(false);
-                  }}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  disabled={isSaving || !isValidBrandColor(customColor)}
-                  onClick={() => void applyCustomColor()}
-                  size="sm"
-                  type="button"
-                >
-                  {isSaving ? (
-                    <>
-                      <Spinner />
-                      Applying...
-                    </>
-                  ) : (
-                    "Apply"
-                  )}
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
+              value={resolvedTheme.palette}
+            >
+              <SelectTrigger id={paletteInputId} className="w-full">
+                <SelectValue>
+                  <PaletteIndicator
+                    brandColor={customColor}
+                    palette={resolvedTheme.palette}
+                    style={resolvedTheme.style}
+                  />
+                  {selectedPaletteLabel}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="start">
+                {ALL_PALETTE_OPTIONS.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    <PaletteIndicator
+                      brandColor={customColor}
+                      palette={option.id}
+                      style={resolvedTheme.style}
+                    />
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={styleInputId}>Theme style</Label>
+            <Select
+              disabled={isSaving}
+              onValueChange={(value) =>
+                void saveTheme({
+                  ...resolvedTheme,
+                  style: value as SiteThemeStyleId,
+                })
+              }
+              value={resolvedTheme.style}
+            >
+              <SelectTrigger id={styleInputId} className="w-full">
+                <SelectValue>{selectedStyleLabel}</SelectValue>
+              </SelectTrigger>
+              <SelectContent align="start">
+                {STYLE_OPTIONS.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {resolvedTheme.palette === "custom" ? (
+            <CustomBrandColor
+              color={customColor}
+              disabled={isSaving}
+              inputId={customColorInputId}
+              onApply={() => void applyCustomColor()}
+              onColorChange={setCustomColor}
+              onOpenChange={(open) => {
+                setCustomColor(
+                  resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
+                );
+                setIsColorPickerOpen(open);
+              }}
+              open={isColorPickerOpen}
+            />
+          ) : null}
         </div>
-      ) : null}
+      </section>
 
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Theme style</p>
-        <Select
-          disabled={isSaving}
-          onValueChange={(value) =>
-            void saveTheme({
-              ...resolvedTheme,
-              style: value as SiteThemeStyleId,
-            })
-          }
-          value={resolvedTheme.style}
-        >
-          <SelectTrigger aria-label="Theme style" className="w-full">
-            <SelectValue>{selectedStyleLabel}</SelectValue>
-          </SelectTrigger>
-          <SelectContent align="start">
-            {STYLE_OPTIONS.map((option) => (
-              <SelectItem key={option.id} value={option.id}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">
-          Sidebar style
-        </p>
-        <Select
-          disabled={isSaving}
-          onValueChange={(value) => {
-            const nextVariant = value as SiteSidebarVariant;
-            if (nextVariant === resolvedSidebarVariant) return;
-            setIsSaving(true);
-            void updateSite({
-              siteId,
-              settings: { sidebarVariant: nextVariant },
-            })
-              .catch(() => toast.error("Failed to update sidebar style"))
-              .finally(() => setIsSaving(false));
-          }}
-          value={resolvedSidebarVariant}
-        >
-          <SelectTrigger aria-label="Sidebar style" className="w-full">
-            <SelectValue>{selectedSidebarVariantLabel}</SelectValue>
-          </SelectTrigger>
-          <SelectContent align="start">
-            {SIDEBAR_VARIANT_OPTIONS.map((option) => (
-              <SelectItem key={option.id} value={option.id}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <section className="space-y-4">
+        <SiteSettingsSectionTitle>Layout</SiteSettingsSectionTitle>
+        <div className="space-y-2">
+          <Label htmlFor={sidebarInputId}>Sidebar style</Label>
+          <Select
+            disabled={isSaving}
+            onValueChange={(value) =>
+              void saveAppearance(
+                { sidebarVariant: value as SiteSidebarVariant },
+                "Unable to update the sidebar style. Try again.",
+              )
+            }
+            value={resolvedSidebarVariant}
+          >
+            <SelectTrigger id={sidebarInputId} className="w-full">
+              <SelectValue>{selectedSidebarVariantLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent align="start">
+              {SIDEBAR_VARIANT_OPTIONS.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </section>
+      <span className="sr-only" role="status">
+        {isSaving ? "Saving appearance" : ""}
+      </span>
     </div>
   );
 }
