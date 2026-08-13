@@ -158,11 +158,9 @@ function getAuthUrlConfig() {
   const primaryAppUrl = authOrigins[0]!;
   const primaryAppHostname = new URL(primaryAppUrl).hostname;
   const crossSubdomainCookieDomain =
-    primaryAppHostname === "localhost" ||
-    primaryAppHostname === "127.0.0.1" ||
-    primaryAppHostname.endsWith(".vercel.app")
-      ? undefined
-      : primaryAppHostname;
+    primaryAppHostname === new URL(productionAuthOrigin).hostname
+      ? primaryAppHostname
+      : undefined;
 
   return {
     baseURL: {
