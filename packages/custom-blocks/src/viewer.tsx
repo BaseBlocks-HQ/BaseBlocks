@@ -3,6 +3,7 @@
 /* oxlint-disable react-doctor/nextjs-no-img-element -- Managed assets are host-resolved private or blob URLs. This framework-neutral package must not depend on the Next.js image pipeline. */
 
 import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
+import { getDocumentText } from "@openeditor/core";
 import {
   AppWindowIcon,
   ArrowLeft01Icon,
@@ -148,7 +149,7 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
 
 export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
   block: decisionTreeBlock,
-  render: function DecisionTreeViewer({ data, host }) {
+  render: function DecisionTreeViewer({ data }) {
     const [treeId, setTreeId] = useState(data.trees[0]?.id ?? "");
     const [path, setPath] = useState<string[]>([]);
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
@@ -162,7 +163,6 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
       return resolveDecisionTree(nodes, effectivePath);
     }, [tree, path]);
     if (!tree) return null;
-    const Document = host.fields.document;
     return (
       <BlockShell label="Decision tree">
         {data.trees.length > 1 ? (
@@ -199,15 +199,9 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
             </Button>
           ) : null}
           {state.activeNode ? (
-            <div className="baseblocks-document-viewer mb-5 text-center">
-              <h3 className="mb-3 text-balance text-2xl font-semibold leading-tight">
-                {state.activeNode.name}
-              </h3>
-              <Document
-                ariaLabel={state.activeNode.name}
-                value={state.activeNode.document}
-              />
-            </div>
+            <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
+              {getDocumentText(state.activeNode.document) || "Untitled step"}
+            </h3>
           ) : null}
           <nav aria-label="Decision options" className="grid gap-2">
             {state.visibleOptions.map((node) => (

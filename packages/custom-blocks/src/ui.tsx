@@ -24,12 +24,6 @@ export function BlockShell({
 }) {
   return (
     <section aria-label={label} className="not-prose my-4 space-y-3">
-      <style>{`
-        .baseblocks-document-editor .oe-canvas { min-height: 0 !important; }
-        .baseblocks-document-editor .oe-prosemirror { min-height: 7rem !important; }
-        .baseblocks-document-viewer .oe-canvas,
-        .baseblocks-document-viewer .oe-prosemirror { min-height: 0 !important; }
-      `}</style>
       {children}
     </section>
   );

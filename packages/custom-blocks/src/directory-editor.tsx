@@ -191,12 +191,16 @@ function SortableColumn({
 function SortableRow({
   active,
   index,
+  onSelectedChange,
   row,
+  selected,
   updateActive,
 }: {
   active: Directory;
   index: number;
+  onSelectedChange: () => void;
   row: DirectoryRow;
+  selected: boolean;
   updateActive: (next: Directory) => void;
 }) {
   const sortable = useSortable<SortData>({
@@ -210,7 +214,7 @@ function SortableRow({
   });
   return (
     <tr
-      className={`group border-t hover:bg-muted/30 ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`group border-t hover:bg-muted/30 ${selected ? "bg-primary/10" : ""} ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
       <th className="w-10 px-1 text-center" scope="row">
@@ -221,6 +225,15 @@ function SortableRow({
           total={active.rows.length}
         />
       </th>
+      <td className="w-10 px-2 py-1 text-center">
+        <input
+          aria-label={`Select row ${index + 1}`}
+          checked={selected}
+          className="size-4 accent-primary"
+          onChange={onSelectedChange}
+          type="checkbox"
+        />
+      </td>
       {active.columnIds.map((columnId, columnIndex) => (
         <td className="border-l p-0" key={columnId}>
           <Input
@@ -316,6 +329,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
   render: function DirectoryEditor({ data, updateData }) {
     const updateDataJson = (value: unknown) => updateData(value as typeof data);
     const [activeId, setActiveId] = useState(data.directories[0]?.id ?? "");
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
     const active =
       data.directories.find(({ id }) => id === activeId) ?? data.directories[0];
     if (!active) return null;
@@ -460,6 +474,24 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                   <th className="w-10 px-1" scope="col">
                     <span className="sr-only">Row order</span>
                   </th>
+                  <th className="w-10 px-2 py-2" scope="col">
+                    <input
+                      aria-label="Select all rows"
+                      checked={
+                        active.rows.length > 0 &&
+                        selectedRows.length === active.rows.length
+                      }
+                      className="size-4 accent-primary"
+                      onChange={() =>
+                        setSelectedRows(
+                          selectedRows.length === active.rows.length
+                            ? []
+                            : active.rows.map((row) => row.id),
+                        )
+                      }
+                      type="checkbox"
+                    />
+                  </th>
                   {active.columnIds.map((columnId, index) => (
                     <SortableColumn
                       active={active}
@@ -480,7 +512,15 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                     active={active}
                     index={index}
                     key={row.id}
+                    onSelectedChange={() =>
+                      setSelectedRows((current) =>
+                        current.includes(row.id)
+                          ? current.filter((id) => id !== row.id)
+                          : [...current, row.id],
+                      )
+                    }
                     row={row}
+                    selected={selectedRows.includes(row.id)}
                     updateActive={updateActive}
                   />
                 ))}

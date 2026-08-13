@@ -10,16 +10,19 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
+import { Textarea } from "@baseblocks/ui/textarea";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import { DragDropProvider, KeyboardSensor } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
-import type { OpenEditorDocument } from "@openeditor/custom-block";
+import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
 import {
-  defineOpenEditorCustomBlockEditor,
-  type OpenEditorCustomBlockDocumentEditorProps,
-} from "@openeditor/custom-block/editor";
-import { type ComponentType, useMemo, useState } from "react";
+  createDocument,
+  getDocumentText,
+  textBlock,
+  type OpenEditorDocument,
+} from "@openeditor/core";
+import { useMemo, useState } from "react";
 import {
   addDecisionNode,
   addDecisionTree,
@@ -37,7 +40,7 @@ import {
   resolveDecisionTree,
 } from "./decision-tree-navigation";
 import { decisionTreeBlock } from "./index";
-import { ActionMenu, BlockShell, BlockToolbar, selectClassName } from "./ui";
+import { ActionMenu, BlockShell, selectClassName } from "./ui";
 
 const createId = () => crypto.randomUUID();
 const sensors = [
@@ -50,12 +53,11 @@ const sensors = [
 ];
 
 function emptyDocument(): OpenEditorDocument {
-  return {
-    type: "doc",
-    version: 1,
-    content: [{ type: "paragraph", attrs: { "openeditor-id": createId() } }],
-  };
+  return createDocument([textBlock("paragraph", "")]);
 }
+
+const documentFromText = (text: string) =>
+  createDocument([textBlock("paragraph", text)]);
 
 function DecisionAnswer({
   index,
@@ -127,12 +129,10 @@ function DecisionAnswer({
 }
 
 function VisitorFlow({
-  Document,
   path,
   setPath,
   tree,
 }: {
-  Document: ComponentType<OpenEditorCustomBlockDocumentEditorProps>;
   path: string[];
   setPath: (path: string[]) => void;
   tree: DecisionTree;
@@ -166,16 +166,9 @@ function VisitorFlow({
         </Button>
       ) : null}
       {state.activeNode ? (
-        <div className="baseblocks-document-viewer mb-5 text-center">
-          <h3 className="mb-3 text-balance text-2xl font-semibold leading-tight">
-            {state.activeNode.name}
-          </h3>
-          <Document
-            ariaLabel={state.activeNode.name}
-            onChange={() => undefined}
-            value={state.activeNode.document}
-          />
-        </div>
+        <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
+          {getDocumentText(state.activeNode.document) || "Untitled step"}
+        </h3>
       ) : null}
       <div className="grid gap-2">
         {state.visibleOptions.map((node) => (
@@ -200,7 +193,7 @@ function VisitorFlow({
 
 export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
   block: decisionTreeBlock,
-  render: function DecisionTreeEditor({ data, host, updateData }) {
+  render: function DecisionTreeEditor({ data, updateData }) {
     const updateDataJson = (value: unknown) => updateData(value as typeof data);
     const [treeId, setTreeId] = useState(data.trees[0]?.id ?? "");
     const [editorPath, setEditorPath] = useState<string[]>([]);
@@ -217,7 +210,6 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
       return resolveDecisionTree(nodes, effectivePath);
     }, [tree, editorPath]);
     if (!tree) return null;
-    const Document = host.fields.document;
     const updateTree = (next: DecisionTree) =>
       updateDataJson(updateDecisionTree(data, next));
     const addAnswer = () => {
@@ -248,7 +240,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
 
     return (
       <BlockShell label="Edit decision tree">
-        <BlockToolbar>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-2">
           {data.trees.length > 1 ? (
             <select
               aria-label="Decision tree"
@@ -269,7 +261,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
           ) : null}
           <Input
             aria-label="Decision tree name"
-            className="min-w-36 flex-1 rounded-xl border-transparent bg-background/70 font-medium shadow-none"
+            className="min-w-36 flex-1 rounded-lg border-transparent bg-transparent font-semibold shadow-none hover:bg-muted/50 focus-visible:bg-background"
             onChange={(event) =>
               updateDataJson(
                 renameDecisionTree(data, tree.id, event.target.value),
@@ -310,9 +302,9 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
             ]}
             label="Decision tree actions"
           />
-        </BlockToolbar>
+        </div>
 
-        <div className="grid grid-cols-2 overflow-hidden rounded-2xl bg-background shadow-xs">
+        <div className="grid grid-cols-2 overflow-hidden bg-background">
           <section className="bg-muted/25 p-4 sm:p-5">
             <nav
               aria-label="Edit path"
@@ -322,13 +314,15 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                 onClick={() => setEditorPath([])}
                 size="sm"
                 type="button"
-                variant={editorState.path.length ? "ghost" : "secondary"}
+                variant={
+                  editorState.activeNode?.parentId ? "ghost" : "secondary"
+                }
               >
                 Start
               </Button>
               {editorState.path.map((nodeId, index) => {
                 const node = tree.nodes.find(({ id }) => id === nodeId);
-                if (!node) return null;
+                if (!node?.parentId) return null;
                 return (
                   <div className="flex items-center gap-1" key={nodeId}>
                     <span aria-hidden className="text-muted-foreground">
@@ -356,48 +350,65 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
 
             <div className="space-y-5 rounded-2xl bg-card p-4 shadow-xs">
               {editorState.activeNode ? (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      aria-label="Answer"
-                      className="font-medium"
-                      onChange={(event) =>
-                        updateTree({
-                          ...tree,
-                          nodes: tree.nodes.map((node) =>
-                            node.id === editorState.activeNode?.id
-                              ? { ...node, name: event.target.value }
-                              : node,
-                          ),
-                        })
-                      }
-                      value={editorState.activeNode.name}
-                    />
-                    <Button
-                      aria-label={`Delete ${editorState.activeNode.name}`}
-                      onClick={() => removeNode(editorState.activeNode!.id)}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <HugeiconsIcon aria-hidden icon={Delete01Icon} />
-                    </Button>
+                <div className="space-y-4">
+                  <div className="flex items-end gap-2">
+                    {editorState.activeNode.parentId ? (
+                      <label
+                        className="min-w-0 flex-1 text-xs font-medium text-muted-foreground"
+                        htmlFor={`${editorState.activeNode.id}-answer`}
+                      >
+                        Answer shown on the previous step
+                        <Input
+                          aria-label="Answer shown on the previous step"
+                          className="mt-1 bg-background font-medium text-foreground"
+                          id={`${editorState.activeNode.id}-answer`}
+                          onChange={(event) =>
+                            updateTree({
+                              ...tree,
+                              nodes: tree.nodes.map((node) =>
+                                node.id === editorState.activeNode?.id
+                                  ? { ...node, name: event.target.value }
+                                  : node,
+                              ),
+                            })
+                          }
+                          value={editorState.activeNode.name}
+                        />
+                      </label>
+                    ) : null}
+                    {editorState.activeNode.parentId ? (
+                      <Button
+                        aria-label={`Delete ${editorState.activeNode.name}`}
+                        onClick={() => removeNode(editorState.activeNode!.id)}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <HugeiconsIcon aria-hidden icon={Delete01Icon} />
+                      </Button>
+                    ) : null}
                   </div>
-                  <div className="baseblocks-document-editor min-h-36 rounded-xl bg-background p-3">
-                    <Document
-                      ariaLabel={`${editorState.activeNode.name} content`}
-                      onChange={(document) =>
+                  <label
+                    className="block text-xs font-medium text-muted-foreground"
+                    htmlFor={`${editorState.activeNode.id}-prompt`}
+                  >
+                    Question or result
+                    <Textarea
+                      aria-label="Question or result"
+                      className="mt-1 min-h-24 bg-background text-base font-medium text-foreground"
+                      id={`${editorState.activeNode.id}-prompt`}
+                      onChange={(event) =>
                         updateTree(
                           updateDecisionDocument(
                             tree,
                             editorState.activeNode!.id,
-                            document,
+                            documentFromText(event.target.value),
                           ),
                         )
                       }
-                      value={editorState.activeNode.document}
+                      value={getDocumentText(editorState.activeNode.document)}
                     />
-                  </div>
+                  </label>
                 </div>
               ) : null}
 
@@ -461,7 +472,9 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     event.preventDefault();
                     addAnswer();
                   }}
-                  placeholder="Add answer"
+                  placeholder={
+                    editorState.activeNode ? "Add answer" : "Add starting step"
+                  }
                   value={newAnswer}
                 />
                 <Button
@@ -478,7 +491,6 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
           </section>
 
           <VisitorFlow
-            Document={Document}
             path={previewPath}
             setPath={setPreviewPath}
             tree={tree}
