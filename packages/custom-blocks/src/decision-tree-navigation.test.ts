@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  previousDecisionTreePath,
   removeDecisionTreeNodesFromPath,
   reorderDecisionTreeSiblings,
   resolveDecisionTree,
@@ -32,6 +33,12 @@ describe("decision tree navigation", () => {
     expect(
       removeDecisionTreeNodesFromPath(["root-a", "child"], new Set(["child"])),
     ).toEqual(["root-a"]);
+  });
+
+  test("moves back exactly one level, including at the root", () => {
+    expect(previousDecisionTreePath(["root-a", "child"])).toEqual(["root-a"]);
+    expect(previousDecisionTreePath(["root-a"])).toEqual([]);
+    expect(previousDecisionTreePath([])).toEqual([]);
   });
 });
 

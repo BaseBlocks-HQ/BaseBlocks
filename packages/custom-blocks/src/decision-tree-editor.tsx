@@ -61,6 +61,7 @@ import {
   type DecisionTree,
 } from "./decision-tree";
 import {
+  previousDecisionTreePath,
   removeDecisionTreeNodesFromPath,
   reorderDecisionTreeSiblings,
   resolveDecisionTree,
@@ -293,14 +294,10 @@ function VisitorFlow({
   setPath: (path: string[]) => void;
   tree: DecisionTree;
 }) {
-  const state = useMemo(() => {
-    const root = resolveDecisionTree(tree.nodes, []);
-    const effectivePath =
-      path.length === 0 && root.visibleOptions.length === 1
-        ? [root.visibleOptions[0]!.id]
-        : path;
-    return resolveDecisionTree(tree.nodes, effectivePath);
-  }, [tree, path]);
+  const state = useMemo(
+    () => resolveDecisionTree(tree.nodes, path),
+    [tree, path],
+  );
   return (
     <aside
       aria-label="Decision tree preview"
@@ -364,8 +361,7 @@ function VisitorFlow({
         <button
           className="mx-auto mt-4 flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={() => {
-            const next = state.path.slice(0, -1);
-            setPath(next.length === 1 ? [] : next);
+            setPath(previousDecisionTreePath(state.path));
           }}
           type="button"
         >
@@ -393,15 +389,10 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
     const [addingAnswer, setAddingAnswer] = useState(false);
     const suppressMenuClick = useRef(false);
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
-    const editorState = useMemo(() => {
-      const nodes = tree?.nodes ?? [];
-      const root = resolveDecisionTree(nodes, []);
-      const effectivePath =
-        editorPath.length === 0 && root.visibleOptions.length === 1
-          ? [root.visibleOptions[0]!.id]
-          : editorPath;
-      return resolveDecisionTree(nodes, effectivePath);
-    }, [tree, editorPath]);
+    const editorState = useMemo(
+      () => resolveDecisionTree(tree?.nodes ?? [], editorPath),
+      [tree, editorPath],
+    );
     if (!tree) return null;
     const updateTree = (next: DecisionTree) =>
       updateDataJson(updateDecisionTree(data, next));

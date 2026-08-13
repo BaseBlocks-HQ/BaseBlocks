@@ -75,3 +75,7 @@ export function removeDecisionTreeNodesFromPath(
   const removedIndex = path.findIndex((nodeId) => removedNodeIds.has(nodeId));
   return removedIndex === -1 ? path : path.slice(0, removedIndex);
 }
+
+export function previousDecisionTreePath(path: string[]) {
+  return path.slice(0, -1);
+}

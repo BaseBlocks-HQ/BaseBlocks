@@ -19,7 +19,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { OpenEditorCustomBlockViewerHost } from "@openeditor/custom-block/viewer";
 import type { QuickLink } from "./quick-links";
 import { decisionTreeBlock, directoryBlock, quickLinksBlock } from "./index";
-import { resolveDecisionTree } from "./decision-tree-navigation";
+import {
+  previousDecisionTreePath,
+  resolveDecisionTree,
+} from "./decision-tree-navigation";
 import { DecisionTreeState } from "./decision-tree-state";
 import { QuickLinkAssetLoader } from "./quick-link-asset-loader";
 import { destinationLabel } from "./quick-links";
@@ -155,15 +158,10 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
     const [treeId, setTreeId] = useState(data.trees[0]?.id ?? "");
     const [path, setPath] = useState<string[]>([]);
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
-    const state = useMemo(() => {
-      const nodes = tree?.nodes ?? [];
-      const root = resolveDecisionTree(nodes, []);
-      const effectivePath =
-        path.length === 0 && root.visibleOptions.length === 1
-          ? [root.visibleOptions[0]!.id]
-          : path;
-      return resolveDecisionTree(nodes, effectivePath);
-    }, [tree, path]);
+    const state = useMemo(
+      () => resolveDecisionTree(tree?.nodes ?? [], path),
+      [tree, path],
+    );
     if (!tree) return null;
     return (
       <BlockShell label="Decision tree">
@@ -219,8 +217,7 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
             <Button
               className="mx-auto mt-5"
               onClick={() => {
-                const next = state.path.slice(0, -1);
-                setPath(next.length === 1 ? [] : next);
+                setPath(previousDecisionTreePath(state.path));
               }}
               size="sm"
               type="button"
