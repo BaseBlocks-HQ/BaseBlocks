@@ -4,9 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { baseBlocksOpenEditorTheme } from "@/features/openeditor/openeditor-theme";
-import { OpenEditorTabbedPage } from "@/features/openeditor/page-tabs";
-import { readOpenEditorPageTabs } from "@/features/openeditor/page-tabs-model";
-import { publicSiteRenderers } from "@/features/openeditor/renderers";
+import { createBaseBlocksCustomBlockViewerConfiguration } from "@/features/openeditor/custom-block-viewer";
 import { createPublishedImageRuntime } from "@/features/published-sites/image-runtime";
 import { getPageLink } from "@/features/published-sites/urls";
 import { Button } from "@baseblocks/ui/button";
@@ -14,8 +12,8 @@ import type {
   OpenEditorDocument,
   OpenEditorPageRuntime,
 } from "@openeditor/core";
-import { OpenEditorViewer } from "@openeditor/react";
-import { OpenEditorThemeProvider } from "@openeditor/ui";
+import { OpenEditorViewer } from "@openeditor/react/viewer";
+import { OpenEditorThemeProvider } from "@openeditor/ui/viewer";
 import "@openeditor/ui/styles.css";
 import type { PublishedPageTarget } from "./page-targets";
 
@@ -54,6 +52,10 @@ export function PublicPageContent({
     },
     openPage: ({ pageId: targetPageId }) => onOpenPageBlock?.(targetPageId),
   };
+  const customBlocks = createBaseBlocksCustomBlockViewerConfiguration(
+    new Set(imageIds),
+    { imageRuntime, pageRuntime },
+  );
 
   return (
     <div className="h-full min-h-0 min-w-0 overflow-y-auto overflow-x-hidden pt-[var(--bb-header-height)]">
@@ -81,23 +83,13 @@ export function PublicPageContent({
             className="contents"
             theme={baseBlocksOpenEditorTheme}
           >
-            {readOpenEditorPageTabs(content) ? (
-              <OpenEditorTabbedPage
-                document={content}
-                editable={false}
-                imageRuntime={imageRuntime}
-                pageRuntime={pageRuntime}
-                renderers={publicSiteRenderers}
-              />
-            ) : (
-              <OpenEditorViewer
-                className="oe-viewer"
-                document={content}
-                imageRuntime={imageRuntime}
-                pageRuntime={pageRuntime}
-                renderers={publicSiteRenderers}
-              />
-            )}
+            <OpenEditorViewer
+              className="oe-viewer"
+              customBlocks={customBlocks}
+              document={content}
+              imageRuntime={imageRuntime}
+              pageRuntime={pageRuntime}
+            />
           </OpenEditorThemeProvider>
         ) : null}
       </article>

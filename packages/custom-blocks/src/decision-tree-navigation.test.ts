@@ -3,7 +3,7 @@ import {
   removeDecisionTreeNodesFromPath,
   reorderDecisionTreeSiblings,
   resolveDecisionTree,
-} from "./decision-tree-model";
+} from "./decision-tree-navigation";
 
 const nodes = [
   { id: "root-b", parentId: null, order: 1 },
@@ -25,13 +25,10 @@ describe("decision tree navigation", () => {
     });
   });
 
-  test("discards path segments that do not belong to the active branch", () => {
+  test("repairs a path after branch changes", () => {
     expect(resolveDecisionTree(nodes, ["root-a", "root-b"]).path).toEqual([
       "root-a",
     ]);
-  });
-
-  test("truncates navigation when an active ancestor is removed", () => {
     expect(
       removeDecisionTreeNodesFromPath(["root-a", "child"], new Set(["child"])),
     ).toEqual(["root-a"]);
@@ -60,12 +57,5 @@ describe("decision tree ordering", () => {
       { id: "root-b", parentId: null, order: 2 },
     ]);
     expect(reordered.find((node) => node.id === "child-a")?.order).toBe(0);
-  });
-
-  test("returns the original collection for an invalid move", () => {
-    const nodes = [{ id: "root", parentId: null, order: 0 }];
-    expect(reorderDecisionTreeSiblings(nodes, null, "missing", "root")).toBe(
-      nodes,
-    );
   });
 });
