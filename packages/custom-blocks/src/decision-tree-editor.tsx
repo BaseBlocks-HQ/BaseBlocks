@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
+import { MiddleTruncate } from "@baseblocks/ui/middle-truncate";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import { DragDropProvider, KeyboardSensor } from "@dnd-kit/react";
@@ -106,45 +107,47 @@ function DecisionAnswer({
   const label = `Move answer ${index + 1}; position ${index + 1} of ${total}`;
   return (
     <div
-      className={`group flex min-w-0 items-center gap-1 rounded-xl py-0.5 hover:bg-muted/40 ${sortable.isDropTarget ? "bg-muted/60" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`group grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-center rounded-xl hover:bg-muted/40 ${sortable.isDropTarget ? "bg-muted/60" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
-      <ActionMenu
-        items={[
-          {
-            icon: PencilEdit01Icon,
-            label: "Rename answer",
-            onSelect: () => setRenaming(true),
-          },
-          {
-            destructive: true,
-            icon: Delete01Icon,
-            label: "Delete answer",
-            onSelect: onDelete,
-            separatorBefore: true,
-          },
-        ]}
-        label={`Answer ${index + 1} actions`}
-        trigger={
-          <Button
-            aria-label={`${label}. Select for actions.`}
-            className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
-            onClickCapture={(event) => {
-              if (!suppressMenuClick.current) return;
-              event.preventDefault();
-              event.stopPropagation();
-              suppressMenuClick.current = false;
-            }}
-            ref={sortable.handleRef}
-            size="icon-xs"
-            title={`${label}. Select for actions.`}
-            type="button"
-            variant="ghost"
-          >
-            <HugeiconsIcon aria-hidden icon={DragDropVerticalIcon} />
-          </Button>
-        }
-      />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+        <ActionMenu
+          items={[
+            {
+              icon: PencilEdit01Icon,
+              label: "Rename answer",
+              onSelect: () => setRenaming(true),
+            },
+            {
+              destructive: true,
+              icon: Delete01Icon,
+              label: "Delete answer",
+              onSelect: onDelete,
+              separatorBefore: true,
+            },
+          ]}
+          label={`Answer ${index + 1} actions`}
+          trigger={
+            <Button
+              aria-label={`${label}. Select for actions.`}
+              className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+              onClickCapture={(event) => {
+                if (!suppressMenuClick.current) return;
+                event.preventDefault();
+                event.stopPropagation();
+                suppressMenuClick.current = false;
+              }}
+              ref={sortable.handleRef}
+              size="icon-sm"
+              title={`${label}. Select for actions.`}
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon aria-hidden icon={DragDropVerticalIcon} />
+            </Button>
+          }
+        />
+      </div>
       {renaming ? (
         <Input
           aria-label={`Rename ${node.name}`}
@@ -160,11 +163,13 @@ function DecisionAnswer({
         />
       ) : (
         <button
-          className="flex min-h-9 min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={node.name}
+          className="flex h-10 min-w-0 items-center justify-between gap-2 rounded-lg pe-2 ps-1 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onOpen}
+          title={node.name}
           type="button"
         >
-          <span className="truncate">{node.name}</span>
+          <MiddleTruncate className="flex-1" text={node.name} />
           <HugeiconsIcon
             aria-hidden
             className="size-4 shrink-0 text-muted-foreground"
@@ -199,13 +204,11 @@ function DecisionBreadcrumb({
       <BreadcrumbList className="flex-nowrap gap-1 overflow-hidden text-xs sm:gap-1.5">
         <BreadcrumbItem className="min-w-0">
           {atStart ? (
-            <BreadcrumbPage className="px-1.5 py-1 font-medium">
-              Start
-            </BreadcrumbPage>
+            <BreadcrumbPage className="font-medium">Start</BreadcrumbPage>
           ) : (
             <BreadcrumbLink asChild>
               <button
-                className="rounded-md px-1.5 py-1 font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="font-medium underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => setPath([])}
                 type="button"
               >
@@ -255,7 +258,7 @@ function DecisionBreadcrumb({
                 ) : (
                   <BreadcrumbLink asChild>
                     <button
-                      className="max-w-28 truncate rounded-md px-1.5 py-1 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="max-w-28 truncate underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => setPath(path.slice(0, index + 1))}
                       type="button"
                     >
@@ -292,31 +295,36 @@ function VisitorFlow({
   return (
     <aside
       aria-label="Decision tree preview"
-      className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden bg-muted/20 p-4 sm:p-6"
+      className="flex h-[32rem] min-w-0 flex-col overflow-hidden bg-muted/20 p-4 sm:p-6"
     >
-      {state.activeNode ? (
-        <h3 className="mb-4 text-balance text-center text-xl font-semibold leading-tight sm:text-2xl">
-          {getDocumentText(state.activeNode.document) || "Untitled step"}
-        </h3>
-      ) : null}
-      <div className="grid min-w-0 gap-2">
-        {state.visibleOptions.map((node) => (
-          <button
-            className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            key={node.id}
-            onClick={() => setPath([...state.path, node.id])}
-            type="button"
-          >
-            <span className="min-w-0 break-words text-sm font-medium">
-              {node.name}
-            </span>
-            <HugeiconsIcon
-              aria-hidden
-              className="size-4 shrink-0 text-muted-foreground"
-              icon={ArrowRight01Icon}
-            />
-          </button>
-        ))}
+      <div className="flex min-h-0 flex-1 flex-col justify-center">
+        {state.activeNode ? (
+          <h3 className="mb-4 shrink-0 text-balance text-center text-xl font-semibold leading-tight sm:text-2xl">
+            {getDocumentText(state.activeNode.document) || "Untitled step"}
+          </h3>
+        ) : null}
+        <nav
+          aria-label="Decision options"
+          className="grid min-h-0 min-w-0 gap-2 overflow-y-auto overscroll-contain"
+        >
+          {state.visibleOptions.map((node) => (
+            <button
+              className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              key={node.id}
+              onClick={() => setPath([...state.path, node.id])}
+              type="button"
+            >
+              <span className="min-w-0 break-words text-sm font-medium">
+                {node.name}
+              </span>
+              <HugeiconsIcon
+                aria-hidden
+                className="size-4 shrink-0 text-muted-foreground"
+                icon={ArrowRight01Icon}
+              />
+            </button>
+          ))}
+        </nav>
       </div>
       {state.path.length > 1 || path.length > 0 ? (
         <button
@@ -467,8 +475,8 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
         </div>
 
         <div className="grid min-w-0 overflow-hidden rounded-[1.5rem] bg-card lg:grid-cols-2">
-          <section className="min-w-0 bg-card p-3 sm:p-4">
-            <div className="mb-3 min-h-8 px-1 py-0.5">
+          <section className="flex h-[32rem] min-w-0 flex-col overflow-hidden bg-card p-3 sm:p-4">
+            <div className="mb-3 min-h-8 shrink-0 px-1 py-0.5">
               <DecisionBreadcrumb
                 path={editorState.path}
                 setPath={setEditorPath}
@@ -476,9 +484,9 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
               />
             </div>
 
-            <div className="space-y-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
               {editorState.activeNode ? (
-                <div>
+                <div className="shrink-0">
                   <label
                     className="block text-xs font-medium text-muted-foreground"
                     htmlFor={`${editorState.activeNode.id}-prompt`}
@@ -536,7 +544,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                   });
                 }}
               >
-                <div className="grid">
+                <div className="grid min-h-0 flex-1 content-start overflow-y-auto overscroll-contain pe-1">
                   {editorState.visibleOptions.map((node, index) => (
                     <DecisionAnswer
                       index={index}
@@ -561,7 +569,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                 </div>
               </DragDropProvider>
 
-              <div className="flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 <Input
                   aria-label="New answer"
                   onChange={(event) => setNewAnswer(event.target.value)}
