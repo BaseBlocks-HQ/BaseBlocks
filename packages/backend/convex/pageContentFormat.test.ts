@@ -92,6 +92,183 @@ describe("parseOpenEditorDocument", () => {
     expect(document.content[0]?.type).toBe("baseblocksSearch");
   });
 
+  test("reads migrated directory blocks through the rollback contract", () => {
+    const document = parseOpenEditorDocument({
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "customBlock",
+          attrs: {
+            "openeditor-id": "directory-1",
+            blockId: "baseblocks.directory",
+            version: 1,
+            data: {
+              directories: [
+                {
+                  id: "directory",
+                  label: "Directory",
+                  columnIds: ["name"],
+                  rows: [{ id: "row", cells: { name: "Ada" } }],
+                  pageSize: 25,
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+
+    expect(document.content[0]).toEqual({
+      type: "baseblocksDirectory",
+      attrs: {
+        "openeditor-id": "directory-1",
+        directory: {
+          directories: [
+            {
+              id: "directory",
+              label: "Directory",
+              columnIds: ["name"],
+              rows: [{ id: "row", cells: { name: "Ada" } }],
+              pageSize: 25,
+            },
+          ],
+        },
+      },
+    });
+  });
+
+  test("restores every migrated BaseBlocks carrier to its legacy shape", () => {
+    const nestedDocument = {
+      type: "doc",
+      version: 1,
+      content: [{ type: "paragraph", attrs: { "openeditor-id": "nested-1" } }],
+    };
+    const migratedBlocks = [
+      {
+        instanceId: "search-1",
+        blockId: "baseblocks.search",
+        data: {
+          placeholder: "Search",
+          maxResults: 10,
+          showFileType: true,
+        },
+        type: "baseblocksSearch",
+        attribute: "search",
+      },
+      {
+        instanceId: "library-1",
+        blockId: "baseblocks.library",
+        data: { libraryId: "library-1", allowDownloads: true },
+        type: "baseblocksLibrary",
+        attribute: "library",
+      },
+      {
+        instanceId: "tabs-1",
+        blockId: "baseblocks.page-tabs",
+        data: {
+          tabs: [{ id: "tab-1", label: "Tab", document: nestedDocument }],
+        },
+        type: "baseblocksPageTabs",
+        attribute: "tabs",
+      },
+      {
+        instanceId: "tree-1",
+        blockId: "baseblocks.decision-tree",
+        data: {
+          trees: [{ id: "tree-1", label: "Tree", nodes: [] }],
+          tabsMode: "row",
+        },
+        type: "baseblocksDecisionTree",
+        attribute: "decisionTree",
+      },
+      {
+        instanceId: "links-1",
+        blockId: "baseblocks.quick-links",
+        data: {
+          links: [
+            {
+              id: "link-1",
+              title: "Guide",
+              url: "https://example.com",
+              linkType: "website",
+              artwork: { kind: "asset", assetId: "asset-1" },
+            },
+          ],
+        },
+        type: "baseblocksQuickLinks",
+        attribute: "links",
+      },
+    ] as const;
+
+    for (const migrated of migratedBlocks) {
+      const document = parseOpenEditorDocument({
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "customBlock",
+            attrs: {
+              "openeditor-id": migrated.instanceId,
+              blockId: migrated.blockId,
+              version: 1,
+              data: migrated.data,
+            },
+          },
+        ],
+      });
+      const node = document.content[0];
+      expect(node?.type).toBe(migrated.type);
+      expect(node?.attrs?.["openeditor-id"]).toBe(migrated.instanceId);
+      expect(node?.attrs).toHaveProperty(migrated.attribute);
+    }
+
+    const quickLinks = parseOpenEditorDocument({
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "customBlock",
+          attrs: {
+            "openeditor-id": "links-1",
+            blockId: "baseblocks.quick-links",
+            version: 1,
+            data: migratedBlocks[4].data,
+          },
+        },
+      ],
+    });
+    expect(quickLinks.content[0]?.attrs?.links).toEqual([
+      {
+        id: "link-1",
+        title: "Guide",
+        url: "https://example.com",
+        linkType: "website",
+        imageUrl: "/api/files/asset-1",
+      },
+    ]);
+  });
+
+  test("rejects custom block versions that the rollback contract cannot read", () => {
+    expect(() =>
+      parseOpenEditorDocument({
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "customBlock",
+            attrs: {
+              "openeditor-id": "directory-1",
+              blockId: "baseblocks.directory",
+              version: 2,
+              data: { directories: [] },
+            },
+          },
+        ],
+      }),
+    ).toThrow("Unknown node type");
+  });
+
   test("rejects malformed BaseBlocks custom block payloads", () => {
     expect(() =>
       parseOpenEditorDocument({

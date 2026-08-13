@@ -40,12 +40,101 @@ export function hashOpenEditorContent(serialized: string): string {
 
 export function parseOpenEditorDocument(value: unknown): OpenEditorDocument {
   const decoded = typeof value === "string" ? JSON.parse(value) : value;
-  const document = parseOpenEditorDocumentStrict(decoded, {
-    contract: baseBlocksDocumentContract,
-    limits: { requireNodeIds: true },
-  });
+  const document = parseOpenEditorDocumentStrict(
+    restoreLegacyCustomBlockNodes(decoded),
+    {
+      contract: baseBlocksDocumentContract,
+      limits: { requireNodeIds: true },
+    },
+  );
   assertBaseBlocksDocument(document);
   return document;
+}
+
+function restoreLegacyCustomBlockNodes(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(restoreLegacyCustomBlockNodes);
+  if (!value || typeof value !== "object") return value;
+  const record = value as Record<string, unknown>;
+  if (record.type === "customBlock") {
+    const attrs = record.attrs as Record<string, unknown> | undefined;
+    const legacy =
+      typeof attrs?.blockId === "string"
+        ? legacyCustomBlockById[attrs.blockId]
+        : undefined;
+    if (attrs?.version === 1 && legacy) {
+      const data =
+        attrs.blockId === "baseblocks.quick-links"
+          ? restoreLegacyQuickLinks(attrs.data)
+          : restoreLegacyCustomBlockNodes(attrs.data);
+      return {
+        ...record,
+        type: legacy.nodeType,
+        attrs: {
+          "openeditor-id": attrs["openeditor-id"],
+          [legacy.attribute]: data,
+        },
+      };
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(record).map(([key, child]) => [
+      key,
+      restoreLegacyCustomBlockNodes(child),
+    ]),
+  );
+}
+
+const legacyCustomBlockById: Record<
+  string,
+  { nodeType: string; attribute: string }
+> = {
+  "baseblocks.search": {
+    nodeType: "baseblocksSearch",
+    attribute: "search",
+  },
+  "baseblocks.library": {
+    nodeType: "baseblocksLibrary",
+    attribute: "library",
+  },
+  "baseblocks.page-tabs": {
+    nodeType: "baseblocksPageTabs",
+    attribute: "tabs",
+  },
+  "baseblocks.directory": {
+    nodeType: "baseblocksDirectory",
+    attribute: "directory",
+  },
+  "baseblocks.decision-tree": {
+    nodeType: "baseblocksDecisionTree",
+    attribute: "decisionTree",
+  },
+  "baseblocks.quick-links": {
+    nodeType: "baseblocksQuickLinks",
+    attribute: "links",
+  },
+};
+
+function restoreLegacyQuickLinks(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const links = (value as { links?: unknown }).links;
+  if (!Array.isArray(links)) return value;
+  return links.map((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+    const { artwork, ...link } = item as Record<string, unknown>;
+    if (
+      artwork &&
+      typeof artwork === "object" &&
+      !Array.isArray(artwork) &&
+      (artwork as Record<string, unknown>).kind === "asset" &&
+      typeof (artwork as Record<string, unknown>).assetId === "string"
+    ) {
+      return {
+        ...link,
+        imageUrl: `/api/files/${(artwork as Record<string, unknown>).assetId}`,
+      };
+    }
+    return link;
+  });
 }
 
 export function visitOpenEditorNodes(
