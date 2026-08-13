@@ -39,13 +39,7 @@ import {
   type DirectoryRow,
 } from "./directory";
 import { directoryBlock } from "./index";
-import {
-  type ActionItem,
-  ActionMenu,
-  BlockShell,
-  CollectionMenu,
-  selectClassName,
-} from "./ui";
+import { type ActionItem, ActionMenu, BlockShell, CollectionMenu } from "./ui";
 
 const createId = () => crypto.randomUUID();
 const sensors = [
@@ -504,73 +498,29 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               />
             )}
           </div>
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
-            {selectedRows.length > 0 ? (
-              <>
-                <span className="px-2 text-xs font-medium text-muted-foreground tabular-nums">
-                  {selectedRows.length} selected
-                </span>
-                <Button
-                  onClick={() => {
-                    const next = selectedRows.reduce(
-                      (directory, rowId) =>
-                        deleteDirectoryRow(directory, rowId),
-                      active,
-                    );
-                    updateActive(next);
-                    setSelectedRows([]);
-                  }}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <HugeiconsIcon aria-hidden icon={Delete01Icon} />
-                  Delete
-                </Button>
-              </>
-            ) : null}
-            <select
-              aria-label="Rows shown per page in the public view"
-              className={`${selectClassName} max-w-48`}
-              onChange={(event) =>
-                updateActive({
-                  ...active,
-                  pageSize:
-                    event.target.value === "all"
-                      ? null
-                      : Number(event.target.value),
-                })
-              }
-              value={active.pageSize ?? "all"}
-            >
-              {active.pageSize && ![5, 10, 25, 50].includes(active.pageSize) ? (
-                <option
-                  value={active.pageSize}
-                >{`Public view · ${active.pageSize} rows`}</option>
-              ) : null}
-              <option value="all">Public view · All rows</option>
-              {[5, 10, 25, 50].map((count) => (
-                <option
-                  key={count}
-                  value={count}
-                >{`Public view · ${count} rows`}</option>
-              ))}
-            </select>
-            <Button
-              onClick={() => {
-                const last = active.rows.at(-1);
-                if (last)
-                  updateActive(
-                    insertDirectoryRow(active, last.id, true, createId),
+          {selectedRows.length > 0 ? (
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
+              <span className="px-2 text-xs font-medium text-muted-foreground tabular-nums">
+                {selectedRows.length} selected
+              </span>
+              <Button
+                onClick={() => {
+                  const next = selectedRows.reduce(
+                    (directory, rowId) => deleteDirectoryRow(directory, rowId),
+                    active,
                   );
-              }}
-              size="sm"
-              type="button"
-            >
-              <HugeiconsIcon aria-hidden icon={Add01Icon} />
-              Add row
-            </Button>
-          </div>
+                  updateActive(next);
+                  setSelectedRows([]);
+                }}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <HugeiconsIcon aria-hidden icon={Delete01Icon} />
+                Delete
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         <DragDropProvider
@@ -607,7 +557,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               });
           }}
         >
-          <div className="min-h-[30rem] overflow-x-auto bg-card">
+          <div className="overflow-x-auto bg-card">
             <table className="w-full min-w-[42rem] border-collapse text-sm">
               <caption className="sr-only">{active.label}</caption>
               <thead className="bg-muted/70 text-left text-xs text-muted-foreground">

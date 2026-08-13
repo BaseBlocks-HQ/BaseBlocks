@@ -9,7 +9,22 @@ import {
   DragDropVerticalIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@baseblocks/ui/breadcrumb";
 import { Button } from "@baseblocks/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
@@ -22,7 +37,7 @@ import {
   textBlock,
   type OpenEditorDocument,
 } from "@openeditor/core";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   addDecisionNode,
   addDecisionTree,
@@ -87,7 +102,7 @@ function DecisionAnswer({
   const label = `Move answer ${index + 1}; position ${index + 1} of ${total}`;
   return (
     <div
-      className={`flex min-w-0 items-center gap-1 border-b border-border/60 py-2 last:border-b-0 ${sortable.isDropTarget ? "bg-muted/60" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`flex min-w-0 items-center gap-1 py-1 ${sortable.isDropTarget ? "bg-muted/60" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
       <Button
@@ -103,7 +118,7 @@ function DecisionAnswer({
       </Button>
       <Input
         aria-label={`Answer ${index + 1}`}
-        className="min-w-0 flex-1 border-transparent bg-transparent font-medium shadow-none hover:bg-muted/40 focus-visible:bg-background"
+        className="min-w-0 flex-1 border-transparent !bg-transparent font-medium shadow-none hover:!bg-muted/40 focus-visible:!bg-background"
         onChange={(event) => onRename(event.target.value)}
         value={node.name}
       />
@@ -129,6 +144,102 @@ function DecisionAnswer({
   );
 }
 
+function DecisionBreadcrumb({
+  path,
+  setPath,
+  tree,
+}: {
+  path: string[];
+  setPath: (path: string[]) => void;
+  tree: DecisionTree;
+}) {
+  const steps = path.flatMap((nodeId, index) => {
+    const node = tree.nodes.find(({ id }) => id === nodeId);
+    return node?.parentId ? [{ index, node }] : [];
+  });
+  const collapsed = steps.length > 3;
+  const hidden = collapsed ? steps.slice(0, -2) : [];
+  const visible = collapsed ? steps.slice(-2) : steps;
+  const atStart = visible.length === 0;
+
+  return (
+    <Breadcrumb className="min-w-0" aria-label="Edit path">
+      <BreadcrumbList className="flex-nowrap gap-1 overflow-hidden text-xs sm:gap-1.5">
+        <BreadcrumbItem className="min-w-0">
+          {atStart ? (
+            <BreadcrumbPage className="px-1.5 py-1 font-medium">
+              Start
+            </BreadcrumbPage>
+          ) : (
+            <BreadcrumbLink asChild>
+              <button
+                className="rounded-md px-1.5 py-1 font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => setPath([])}
+                type="button"
+              >
+                Start
+              </button>
+            </BreadcrumbLink>
+          )}
+        </BreadcrumbItem>
+        {collapsed ? (
+          <>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    aria-label="Show earlier steps"
+                    className="rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    type="button"
+                  >
+                    <BreadcrumbEllipsis className="size-7" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {hidden.map(({ index, node }) => (
+                    <DropdownMenuItem
+                      key={node.id}
+                      onSelect={() => setPath(path.slice(0, index + 1))}
+                    >
+                      {node.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </BreadcrumbItem>
+          </>
+        ) : null}
+        {visible.map(({ index, node }, visibleIndex) => {
+          const current = visibleIndex === visible.length - 1;
+          return (
+            <Fragment key={node.id}>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem className="min-w-0">
+                {current ? (
+                  <BreadcrumbPage className="max-w-32 truncate font-medium">
+                    {node.name}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <button
+                      className="max-w-28 truncate rounded-md px-1.5 py-1 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => setPath(path.slice(0, index + 1))}
+                      type="button"
+                    >
+                      {node.name}
+                    </button>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </Fragment>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
 function VisitorFlow({
   path,
   setPath,
@@ -149,20 +260,17 @@ function VisitorFlow({
   return (
     <aside
       aria-label="Decision tree preview"
-      className="flex min-h-80 min-w-0 flex-col justify-center overflow-hidden border-t border-border/80 bg-muted/20 p-5 sm:p-8 lg:border-l lg:border-t-0"
+      className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden border-t border-border/70 bg-muted/20 p-4 sm:p-6 lg:border-l lg:border-t-0"
     >
-      <p className="mb-6 text-center text-xs font-medium text-muted-foreground">
-        Preview
-      </p>
       {state.activeNode ? (
-        <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
+        <h3 className="mb-4 text-balance text-center text-xl font-semibold leading-tight sm:text-2xl">
           {getDocumentText(state.activeNode.document) || "Untitled step"}
         </h3>
       ) : null}
       <div className="grid min-w-0 gap-2">
         {state.visibleOptions.map((node) => (
           <button
-            className="flex min-h-14 min-w-0 w-full items-center justify-between gap-3 rounded-xl border border-border/80 bg-background p-4 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             key={node.id}
             onClick={() => setPath([...state.path, node.id])}
             type="button"
@@ -180,7 +288,7 @@ function VisitorFlow({
       </div>
       {state.path.length > 1 || path.length > 0 ? (
         <button
-          className="mx-auto mt-5 flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="mx-auto mt-4 flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={() => {
             const next = state.path.slice(0, -1);
             setPath(next.length === 1 ? [] : next);
@@ -325,52 +433,18 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
         </div>
 
         <div className="grid min-w-0 overflow-hidden bg-card lg:grid-cols-2">
-          <section className="min-w-0 bg-card p-4 sm:p-6">
-            <nav
-              aria-label="Edit path"
-              className="mb-6 flex min-h-10 items-center gap-1 overflow-x-auto border-b border-border/70 pb-3"
-            >
-              <Button
-                onClick={() => setEditorPath([])}
-                size="sm"
-                type="button"
-                variant={
-                  editorState.activeNode?.parentId ? "ghost" : "secondary"
-                }
-              >
-                Start
-              </Button>
-              {editorState.path.map((nodeId, index) => {
-                const node = tree.nodes.find(({ id }) => id === nodeId);
-                if (!node?.parentId) return null;
-                return (
-                  <div className="flex items-center gap-1" key={nodeId}>
-                    <span aria-hidden className="text-muted-foreground">
-                      /
-                    </span>
-                    <Button
-                      className="max-w-40 truncate"
-                      onClick={() =>
-                        setEditorPath(editorState.path.slice(0, index + 1))
-                      }
-                      size="sm"
-                      type="button"
-                      variant={
-                        index === editorState.path.length - 1
-                          ? "secondary"
-                          : "ghost"
-                      }
-                    >
-                      {node.name}
-                    </Button>
-                  </div>
-                );
-              })}
-            </nav>
+          <section className="min-w-0 bg-card p-3 sm:p-4">
+            <div className="mb-3 min-h-8 px-1 py-0.5">
+              <DecisionBreadcrumb
+                path={editorState.path}
+                setPath={setEditorPath}
+                tree={tree}
+              />
+            </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {editorState.activeNode ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-end gap-2">
                     {editorState.activeNode.parentId ? (
                       <label
@@ -459,7 +533,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                   });
                 }}
               >
-                <div className="grid border-y border-border/60">
+                <div className="grid">
                   {editorState.visibleOptions.map((node, index) => (
                     <DecisionAnswer
                       index={index}

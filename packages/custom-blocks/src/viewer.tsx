@@ -182,7 +182,7 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
             ))}
           </select>
         ) : null}
-        <div className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted/20 p-5 sm:p-8">
+        <div className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden rounded-2xl bg-muted/20 p-4 sm:p-6">
           {state.activeNode ? (
             <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
               {getDocumentText(state.activeNode.document) || "Untitled step"}
@@ -191,7 +191,7 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
           <nav aria-label="Decision options" className="grid min-w-0 gap-2">
             {state.visibleOptions.map((node) => (
               <button
-                className="flex min-h-14 min-w-0 w-full items-center justify-between gap-3 rounded-xl border border-border/80 bg-background p-4 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 key={node.id}
                 onClick={() => setPath([...state.path, node.id])}
                 type="button"
