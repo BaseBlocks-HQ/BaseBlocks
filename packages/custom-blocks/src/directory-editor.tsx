@@ -39,7 +39,7 @@ import {
   type DirectoryRow,
 } from "./directory";
 import { directoryBlock } from "./index";
-import { ActionMenu, BlockShell, BlockToolbar, selectClassName } from "./ui";
+import { ActionMenu, BlockShell, selectClassName } from "./ui";
 
 const createId = () => crypto.randomUUID();
 const sensors = [
@@ -107,7 +107,7 @@ function SortableColumn({
   });
   return (
     <th
-      className={`min-w-44 border-l border-border/60 px-2 py-1.5 text-left first:border-l-0 ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`min-w-44 border-l px-2 py-2 text-left first:border-l-0 ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
       scope="col"
     >
@@ -210,7 +210,7 @@ function SortableRow({
   });
   return (
     <tr
-      className={`border-t border-border/60 ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`group border-t hover:bg-muted/30 ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
       <th className="w-10 px-1 text-center" scope="row">
@@ -222,10 +222,10 @@ function SortableRow({
         />
       </th>
       {active.columnIds.map((columnId, columnIndex) => (
-        <td className="border-l border-border/60 p-1" key={columnId}>
+        <td className="border-l p-0" key={columnId}>
           <Input
             aria-label={`Row ${index + 1}, column ${columnIndex + 1}`}
-            className="rounded-md border-transparent bg-transparent shadow-none hover:bg-background focus-visible:bg-background"
+            className="h-10 rounded-none border-0 bg-transparent px-3 shadow-none focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
             onChange={(event) =>
               updateActive({
                 ...active,
@@ -246,7 +246,7 @@ function SortableRow({
           />
         </td>
       ))}
-      <td className="w-10 border-l border-border/60 px-1 text-center">
+      <td className="w-10 border-l px-1 text-center opacity-40 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
         <ActionMenu
           items={[
             {
@@ -328,87 +328,101 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
 
     return (
       <BlockShell label="Edit directory">
-        <BlockToolbar>
-          {data.directories.length > 1 ? (
-            <select
-              aria-label="Directory"
-              className={`${selectClassName} max-w-48`}
-              onChange={(event) => setActiveId(event.target.value)}
-              value={active.id}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {data.directories.length > 1 ? (
+              <select
+                aria-label="Directory"
+                className={`${selectClassName} max-w-48`}
+                onChange={(event) => setActiveId(event.target.value)}
+                value={active.id}
+              >
+                {data.directories.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+            <Input
+              aria-label="Directory name"
+              className="min-w-36 max-w-64 rounded-lg border-transparent bg-transparent font-semibold shadow-none hover:bg-muted/50 focus-visible:bg-background"
+              onChange={(event) =>
+                updateDataJson(
+                  renameDirectory(data, active.id, event.target.value),
+                )
+              }
+              value={active.label}
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Input
+              aria-label="Rows per page"
+              className="w-24 rounded-lg border-transparent bg-muted/50 shadow-none"
+              min={1}
+              onChange={(event) =>
+                updateActive({
+                  ...active,
+                  pageSize: event.target.value
+                    ? Number(event.target.value)
+                    : null,
+                })
+              }
+              placeholder="All rows"
+              type="number"
+              value={active.pageSize ?? ""}
+            />
+            <Button
+              onClick={() => {
+                const last = active.rows.at(-1);
+                if (last)
+                  updateActive(
+                    insertDirectoryRow(active, last.id, true, createId),
+                  );
+              }}
+              size="sm"
+              type="button"
             >
-              {data.directories.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          <Input
-            aria-label="Directory name"
-            className="min-w-36 flex-1 rounded-xl border-transparent bg-background/70 font-medium shadow-none"
-            onChange={(event) =>
-              updateDataJson(
-                renameDirectory(data, active.id, event.target.value),
-              )
-            }
-            value={active.label}
-          />
-          <Input
-            aria-label="Rows per page"
-            className="w-28 rounded-xl border-transparent bg-background/70 shadow-none"
-            min={1}
-            onChange={(event) =>
-              updateActive({
-                ...active,
-                pageSize: event.target.value
-                  ? Number(event.target.value)
-                  : null,
-              })
-            }
-            placeholder="All rows"
-            type="number"
-            value={active.pageSize ?? ""}
-          />
-          <Button
-            onClick={() => {
-              const next = addDirectory(data, createId);
-              updateDataJson(next.content);
-              setActiveId(next.activeId);
-            }}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <HugeiconsIcon aria-hidden icon={Add01Icon} />
-            Directory
-          </Button>
-          <ActionMenu
-            items={[
-              {
-                icon: Copy01Icon,
-                label: "Duplicate directory",
-                onSelect: () => {
-                  const next = duplicateDirectory(data, active.id, createId);
-                  updateDataJson(next.content);
-                  setActiveId(next.activeId);
+              <HugeiconsIcon aria-hidden icon={Add01Icon} />
+              Add row
+            </Button>
+            <ActionMenu
+              items={[
+                {
+                  icon: Add01Icon,
+                  label: "Add directory",
+                  onSelect: () => {
+                    const next = addDirectory(data, createId);
+                    updateDataJson(next.content);
+                    setActiveId(next.activeId);
+                  },
                 },
-              },
-              {
-                destructive: true,
-                disabled: data.directories.length === 1,
-                icon: Delete01Icon,
-                label: "Delete directory",
-                onSelect: () => {
-                  const next = deleteDirectory(data, active.id);
-                  updateDataJson(next.content);
-                  setActiveId(next.activeId);
+                {
+                  icon: Copy01Icon,
+                  label: "Duplicate directory",
+                  onSelect: () => {
+                    const next = duplicateDirectory(data, active.id, createId);
+                    updateDataJson(next.content);
+                    setActiveId(next.activeId);
+                  },
                 },
-                separatorBefore: true,
-              },
-            ]}
-            label="Directory actions"
-          />
-        </BlockToolbar>
+                {
+                  destructive: true,
+                  disabled: data.directories.length === 1,
+                  icon: Delete01Icon,
+                  label: "Delete directory",
+                  onSelect: () => {
+                    const next = deleteDirectory(data, active.id);
+                    updateDataJson(next.content);
+                    setActiveId(next.activeId);
+                  },
+                  separatorBefore: true,
+                },
+              ]}
+              label="Directory actions"
+            />
+          </div>
+        </div>
 
         <DragDropProvider
           sensors={sensors}
@@ -438,10 +452,10 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               });
           }}
         >
-          <div className="overflow-x-auto rounded-xl border bg-card">
+          <div className="overflow-x-auto border-y bg-card">
             <table className="w-full min-w-[38rem] border-collapse text-sm">
               <caption className="sr-only">{active.label}</caption>
-              <thead>
+              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
                 <tr>
                   <th className="w-10 px-1" scope="col">
                     <span className="sr-only">Row order</span>
@@ -455,7 +469,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                       updateActive={updateActive}
                     />
                   ))}
-                  <th className="w-10 border-l border-border/60" scope="col">
+                  <th className="w-10 border-l" scope="col">
                     <span className="sr-only">Row actions</span>
                   </th>
                 </tr>
@@ -475,7 +489,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
           </div>
         </DragDropProvider>
         <Button
-          className="w-fit"
+          className="ml-1 w-fit text-muted-foreground"
           onClick={() => {
             const last = active.rows.at(-1);
             if (last)
@@ -486,7 +500,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
           variant="ghost"
         >
           <HugeiconsIcon aria-hidden icon={Add01Icon} />
-          Add row
+          New record
         </Button>
       </BlockShell>
     );

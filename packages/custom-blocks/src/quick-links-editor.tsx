@@ -3,9 +3,7 @@
 import {
   Add01Icon,
   AppWindowIcon,
-  ArrowDown01Icon,
-  ArrowUp01Icon,
-  Copy01Icon,
+  ArrowUpRight01Icon,
   Delete01Icon,
   ImageAdd01Icon,
   Link02Icon,
@@ -24,13 +22,8 @@ import { Label } from "@baseblocks/ui/label";
 import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
 import { type ReactNode, useState } from "react";
 import { quickLinksBlock } from "./index";
-import {
-  destinationLabel,
-  duplicateQuickLink,
-  moveQuickLink,
-  type QuickLink,
-} from "./quick-links";
-import { ActionMenu, BlockShell, selectClassName } from "./ui";
+import { destinationLabel, type QuickLink } from "./quick-links";
+import { BlockShell, selectClassName } from "./ui";
 
 const createId = () => crypto.randomUUID();
 type LinkDraft = Omit<QuickLink, "id"> & { id: string | null };
@@ -53,13 +46,24 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
 
     return (
       <BlockShell label="Edit quick links">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {data.links.map((link, index) => (
-            <article
-              className="flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3"
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            className="flex min-h-[70px] items-center justify-center gap-2 rounded-2xl border border-dashed text-sm font-medium text-muted-foreground transition-[color,background-color,border-color] hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => setDraft(emptyDraft())}
+            type="button"
+          >
+            <HugeiconsIcon aria-hidden icon={Add01Icon} />
+            Add link
+          </button>
+          {data.links.map((link) => (
+            <button
+              aria-label={`Edit ${link.title}`}
+              className="group flex min-h-[70px] min-w-0 items-center gap-3 rounded-2xl bg-card p-3 text-left transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               key={link.id}
+              onClick={() => setDraft({ ...link })}
+              type="button"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+              <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
                 {link.artwork?.kind === "icon" && host.icons ? (
                   (host.icons.render(link.artwork.id) as ReactNode)
                 ) : link.artwork?.kind === "asset" ? (
@@ -70,74 +74,21 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                   <HugeiconsIcon aria-hidden icon={Link02Icon} />
                 )}
               </span>
-              <button
-                className="min-w-0 flex-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => setDraft({ ...link })}
-                type="button"
-              >
-                <span className="block truncate text-sm font-medium">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold">
                   {link.title}
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                   {destinationLabel(link)}
                 </span>
-              </button>
-              <ActionMenu
-                items={[
-                  {
-                    icon: Copy01Icon,
-                    label: "Duplicate link",
-                    onSelect: () =>
-                      updateDataJson({
-                        links: [
-                          ...data.links.slice(0, index + 1),
-                          duplicateQuickLink(link, createId()),
-                          ...data.links.slice(index + 1),
-                        ],
-                      }),
-                  },
-                  {
-                    disabled: index === 0,
-                    icon: ArrowUp01Icon,
-                    label: "Move up",
-                    onSelect: () =>
-                      updateDataJson({
-                        links: moveQuickLink(data.links, link.id, -1),
-                      }),
-                    separatorBefore: true,
-                  },
-                  {
-                    disabled: index + 1 === data.links.length,
-                    icon: ArrowDown01Icon,
-                    label: "Move down",
-                    onSelect: () =>
-                      updateDataJson({
-                        links: moveQuickLink(data.links, link.id, 1),
-                      }),
-                  },
-                  {
-                    destructive: true,
-                    icon: Delete01Icon,
-                    label: "Delete link",
-                    onSelect: () =>
-                      updateDataJson({
-                        links: data.links.filter(({ id }) => id !== link.id),
-                      }),
-                    separatorBefore: true,
-                  },
-                ]}
-                label={`${link.title} actions`}
+              </span>
+              <HugeiconsIcon
+                aria-hidden
+                className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                icon={ArrowUpRight01Icon}
               />
-            </article>
+            </button>
           ))}
-          <button
-            className="flex min-h-16 items-center justify-center gap-2 rounded-xl border border-dashed text-sm font-medium text-muted-foreground outline-none hover:border-foreground/30 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={() => setDraft(emptyDraft())}
-            type="button"
-          >
-            <HugeiconsIcon aria-hidden icon={Add01Icon} />
-            Add link
-          </button>
         </div>
 
         <Dialog
@@ -147,11 +98,13 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
           open={draft !== null}
         >
           {draft ? (
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="w-[calc(100%-2rem)] max-w-[32rem] overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
               <DialogHeader>
-                <DialogTitle>{draft.id ? "Edit link" : "Add link"}</DialogTitle>
+                <DialogTitle className="px-5 pt-4 text-base">
+                  {draft.id ? "Edit quick link" : "Add quick link"}
+                </DialogTitle>
               </DialogHeader>
-              <div className="grid gap-4">
+              <div className="grid gap-4 px-5">
                 <div className="grid gap-1.5">
                   <Label htmlFor="quick-link-title">Title</Label>
                   <Input
@@ -252,10 +205,10 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                   </Button>
                 ) : null}
               </div>
-              <DialogFooter>
+              <DialogFooter className="px-5 pb-4 sm:justify-between">
                 {draft.id ? (
                   <Button
-                    className="mr-auto"
+                    className="mr-auto text-destructive hover:text-destructive"
                     onClick={() => {
                       updateDataJson({
                         links: data.links.filter(({ id }) => id !== draft.id),
@@ -265,6 +218,7 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                     type="button"
                     variant="ghost"
                   >
+                    <HugeiconsIcon aria-hidden icon={Delete01Icon} />
                     Delete
                   </Button>
                 ) : null}

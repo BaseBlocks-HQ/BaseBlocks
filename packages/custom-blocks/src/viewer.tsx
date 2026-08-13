@@ -152,10 +152,15 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
     const [treeId, setTreeId] = useState(data.trees[0]?.id ?? "");
     const [path, setPath] = useState<string[]>([]);
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
-    const state = useMemo(
-      () => resolveDecisionTree(tree?.nodes ?? [], path),
-      [tree, path],
-    );
+    const state = useMemo(() => {
+      const nodes = tree?.nodes ?? [];
+      const root = resolveDecisionTree(nodes, []);
+      const effectivePath =
+        path.length === 0 && root.visibleOptions.length === 1
+          ? [root.visibleOptions[0]!.id]
+          : path;
+      return resolveDecisionTree(nodes, effectivePath);
+    }, [tree, path]);
     if (!tree) return null;
     const Document = host.fields.document;
     return (
@@ -177,21 +182,27 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
             ))}
           </select>
         ) : null}
-        <div className="min-h-48 rounded-xl border bg-card p-4">
-          {state.path.length ? (
+        <div className="flex min-h-72 flex-col justify-center rounded-2xl bg-background p-5 sm:p-8">
+          {state.path.length > 1 || path.length > 0 ? (
             <Button
-              className="mb-4"
-              onClick={() => setPath(state.path.slice(0, -1))}
+              className="mx-auto order-3 mt-5"
+              onClick={() => {
+                const next = state.path.slice(0, -1);
+                setPath(next.length === 1 ? [] : next);
+              }}
               size="sm"
               type="button"
               variant="ghost"
             >
               <HugeiconsIcon aria-hidden icon={ArrowLeft01Icon} />
-              Back
+              Previous question
             </Button>
           ) : null}
           {state.activeNode ? (
-            <div className="mb-5">
+            <div className="baseblocks-document-viewer mb-5 text-center">
+              <h3 className="mb-3 text-balance text-2xl font-semibold leading-tight">
+                {state.activeNode.name}
+              </h3>
               <Document
                 ariaLabel={state.activeNode.name}
                 value={state.activeNode.document}
@@ -200,16 +211,19 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
           ) : null}
           <nav aria-label="Decision options" className="grid gap-2">
             {state.visibleOptions.map((node) => (
-              <Button
-                className="h-auto min-h-11 justify-between whitespace-normal rounded-xl px-4 py-2 text-left"
+              <button
+                className="group flex min-h-14 w-full items-center justify-between rounded-2xl bg-card p-4 text-left shadow-xs transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 key={node.id}
                 onClick={() => setPath([...state.path, node.id])}
                 type="button"
-                variant="outline"
               >
-                <span>{node.name}</span>
-                <HugeiconsIcon aria-hidden icon={ArrowRight01Icon} />
-              </Button>
+                <span className="text-sm font-medium">{node.name}</span>
+                <HugeiconsIcon
+                  aria-hidden
+                  className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                  icon={ArrowRight01Icon}
+                />
+              </button>
             ))}
           </nav>
         </div>
@@ -233,7 +247,7 @@ export const quickLinksViewer = defineOpenEditorCustomBlockViewer({
             return (
               <li className="m-0 list-none p-0" key={link.id}>
                 <a
-                  className="group flex min-w-0 items-center gap-3 rounded-2xl bg-card p-3 shadow-xs transition-transform hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="group flex min-w-0 items-center gap-3 rounded-2xl bg-card p-3 transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   href={resolved.href}
                   rel={resolved.external ? "noopener noreferrer" : undefined}
                   target={resolved.external ? "_blank" : undefined}

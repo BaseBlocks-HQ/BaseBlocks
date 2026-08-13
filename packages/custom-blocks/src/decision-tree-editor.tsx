@@ -84,7 +84,7 @@ function DecisionAnswer({
   const label = `Move answer ${index + 1}; position ${index + 1} of ${total}`;
   return (
     <div
-      className={`flex items-center gap-1 rounded-lg border bg-background p-1 ${sortable.isDropTarget ? "border-ring bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`flex items-center gap-1 rounded-xl bg-muted/65 p-2 ${sortable.isDropTarget ? "ring-2 ring-ring/50" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
       <Button
@@ -100,7 +100,7 @@ function DecisionAnswer({
       </Button>
       <Input
         aria-label={`Answer ${index + 1}`}
-        className="min-w-0 flex-1 rounded-md border-transparent bg-transparent shadow-none focus-visible:bg-card"
+        className="min-w-0 flex-1 border-transparent bg-transparent font-medium shadow-none hover:bg-background focus-visible:bg-background"
         onChange={(event) => onRename(event.target.value)}
         value={node.name}
       />
@@ -137,29 +137,39 @@ function VisitorFlow({
   setPath: (path: string[]) => void;
   tree: DecisionTree;
 }) {
-  const state = useMemo(
-    () => resolveDecisionTree(tree.nodes, path),
-    [tree, path],
-  );
+  const state = useMemo(() => {
+    const root = resolveDecisionTree(tree.nodes, []);
+    const effectivePath =
+      path.length === 0 && root.visibleOptions.length === 1
+        ? [root.visibleOptions[0]!.id]
+        : path;
+    return resolveDecisionTree(tree.nodes, effectivePath);
+  }, [tree, path]);
   return (
     <aside
       aria-label="Decision tree preview"
-      className="min-h-48 rounded-xl border bg-card p-4"
+      className="flex min-h-72 flex-col justify-center bg-background p-5 sm:p-8"
     >
-      {state.path.length ? (
+      {state.path.length > 1 || path.length > 0 ? (
         <Button
-          className="mb-4"
-          onClick={() => setPath(state.path.slice(0, -1))}
+          className="mx-auto order-3 mt-5"
+          onClick={() => {
+            const next = state.path.slice(0, -1);
+            setPath(next.length === 1 ? [] : next);
+          }}
           size="sm"
           type="button"
           variant="ghost"
         >
           <HugeiconsIcon aria-hidden icon={ArrowLeft01Icon} />
-          Back
+          Previous question
         </Button>
       ) : null}
       {state.activeNode ? (
-        <div className="mb-5">
+        <div className="baseblocks-document-viewer mb-5 text-center">
+          <h3 className="mb-3 text-balance text-2xl font-semibold leading-tight">
+            {state.activeNode.name}
+          </h3>
           <Document
             ariaLabel={state.activeNode.name}
             onChange={() => undefined}
@@ -169,16 +179,19 @@ function VisitorFlow({
       ) : null}
       <div className="grid gap-2">
         {state.visibleOptions.map((node) => (
-          <Button
-            className="h-auto min-h-11 justify-between whitespace-normal rounded-xl px-4 py-2 text-left"
+          <button
+            className="group flex min-h-14 w-full items-center justify-between rounded-2xl bg-card p-4 text-left shadow-xs transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             key={node.id}
             onClick={() => setPath([...state.path, node.id])}
             type="button"
-            variant="outline"
           >
-            <span>{node.name}</span>
-            <HugeiconsIcon aria-hidden icon={ArrowRight01Icon} />
-          </Button>
+            <span className="text-sm font-medium">{node.name}</span>
+            <HugeiconsIcon
+              aria-hidden
+              className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+              icon={ArrowRight01Icon}
+            />
+          </button>
         ))}
       </div>
     </aside>
@@ -194,10 +207,15 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
     const [previewPath, setPreviewPath] = useState<string[]>([]);
     const [newAnswer, setNewAnswer] = useState("");
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
-    const editorState = useMemo(
-      () => resolveDecisionTree(tree?.nodes ?? [], editorPath),
-      [tree, editorPath],
-    );
+    const editorState = useMemo(() => {
+      const nodes = tree?.nodes ?? [];
+      const root = resolveDecisionTree(nodes, []);
+      const effectivePath =
+        editorPath.length === 0 && root.visibleOptions.length === 1
+          ? [root.visibleOptions[0]!.id]
+          : editorPath;
+      return resolveDecisionTree(nodes, effectivePath);
+    }, [tree, editorPath]);
     if (!tree) return null;
     const Document = host.fields.document;
     const updateTree = (next: DecisionTree) =>
@@ -284,11 +302,11 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
           />
         </BlockToolbar>
 
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
-          <div className="overflow-hidden rounded-xl border bg-card">
+        <div className="grid grid-cols-2 overflow-hidden rounded-2xl bg-background shadow-xs">
+          <section className="bg-muted/25 p-4 sm:p-5">
             <nav
               aria-label="Edit path"
-              className="flex min-h-11 items-center gap-1 overflow-x-auto border-b px-2"
+              className="mb-4 flex min-h-11 items-center gap-1 overflow-x-auto rounded-xl bg-card p-2 shadow-xs"
             >
               <Button
                 onClick={() => setEditorPath([])}
@@ -326,7 +344,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
               })}
             </nav>
 
-            <div className="space-y-5 p-3">
+            <div className="space-y-5 rounded-2xl bg-card p-4 shadow-xs">
               {editorState.activeNode ? (
                 <div className="space-y-2">
                   <Input
@@ -344,7 +362,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     }
                     value={editorState.activeNode.name}
                   />
-                  <div className="min-h-36 rounded-lg border bg-background p-3">
+                  <div className="baseblocks-document-editor min-h-36 rounded-xl bg-background p-3">
                     <Document
                       ariaLabel={`${editorState.activeNode.name} content`}
                       onChange={(document) =>
@@ -451,7 +469,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                 </Button>
               </div>
             </div>
-          </div>
+          </section>
 
           <VisitorFlow
             Document={Document}
