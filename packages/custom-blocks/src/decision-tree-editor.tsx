@@ -151,19 +151,21 @@ function VisitorFlow({
       className="flex min-h-72 flex-col justify-center bg-background p-5 sm:p-8"
     >
       {state.path.length > 1 || path.length > 0 ? (
-        <Button
-          className="mx-auto order-3 mt-5"
+        <button
+          className="order-3 mx-auto mt-5 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           onClick={() => {
             const next = state.path.slice(0, -1);
             setPath(next.length === 1 ? [] : next);
           }}
-          size="sm"
           type="button"
-          variant="ghost"
         >
-          <HugeiconsIcon aria-hidden icon={ArrowLeft01Icon} />
+          <HugeiconsIcon
+            aria-hidden
+            className="size-3"
+            icon={ArrowLeft01Icon}
+          />
           Previous question
-        </Button>
+        </button>
       ) : null}
       {state.activeNode ? (
         <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
@@ -239,7 +241,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
     };
 
     return (
-      <BlockShell label="Edit decision tree">
+      <BlockShell label="Edit decision tree" surface>
         <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-2">
           {data.trees.length > 1 ? (
             <select
@@ -304,8 +306,8 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
           />
         </div>
 
-        <div className="grid grid-cols-2 overflow-hidden bg-background">
-          <section className="bg-muted/25 p-4 sm:p-5">
+        <div className="grid min-h-[44rem] overflow-hidden bg-background lg:grid-cols-[minmax(25rem,0.95fr)_minmax(28rem,1.05fr)]">
+          <section className="border-r bg-muted/25 p-4 sm:p-6">
             <nav
               aria-label="Edit path"
               className="mb-4 flex min-h-11 items-center gap-1 overflow-x-auto rounded-xl bg-card p-2 shadow-xs"

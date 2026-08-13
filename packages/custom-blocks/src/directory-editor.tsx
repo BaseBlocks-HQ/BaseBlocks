@@ -70,7 +70,7 @@ function DragHandle({
   return (
     <Button
       aria-label={label}
-      className="cursor-grab touch-none active:cursor-grabbing"
+      className="cursor-grab touch-none text-muted-foreground opacity-40 hover:opacity-100 active:cursor-grabbing"
       ref={handleRef}
       size="icon-xs"
       title={label}
@@ -341,7 +341,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
       });
 
     return (
-      <BlockShell label="Edit directory">
+      <BlockShell label="Edit directory" surface>
         <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {data.directories.length > 1 ? (
@@ -466,8 +466,8 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               });
           }}
         >
-          <div className="overflow-x-auto border-y bg-card">
-            <table className="w-full min-w-[38rem] border-collapse text-sm">
+          <div className="min-h-[30rem] overflow-x-auto border-y bg-background">
+            <table className="w-full min-w-[62rem] border-collapse text-sm">
               <caption className="sr-only">{active.label}</caption>
               <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
                 <tr>
