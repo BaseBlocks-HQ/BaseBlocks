@@ -20,8 +20,7 @@ import {
 import {
   OpenEditorContent,
   OpenEditorViewer,
-  type OpenEditorReactExtension,
-  type OpenEditorViewerRenderer,
+  type OpenEditorReactProps,
   useOpenEditorController,
 } from "@openeditor/react";
 import {
@@ -30,7 +29,7 @@ import {
   OpenEditorSlashMenu,
   OpenEditorTableMenu,
 } from "@openeditor/ui";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import {
   readOpenEditorPageTabs,
   updateOpenEditorPageTabs,
@@ -154,16 +153,16 @@ function ActiveTabEditor({
   attachmentRuntime,
   imageRuntime,
   initialDocument,
-  extensions,
   pageRuntime,
   onChange,
+  customBlocks,
 }: {
   attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
   imageRuntime?: OpenEditorImageRuntime<File>;
   initialDocument: OpenEditorDocument;
-  extensions: readonly OpenEditorReactExtension[];
   pageRuntime: OpenEditorPageRuntime;
   onChange: (document: OpenEditorDocument) => void;
+  customBlocks?: OpenEditorReactProps["customBlocks"];
 }) {
   const onChangeRef = useRef(onChange);
   const locallyEmittedDocumentRef = useRef<OpenEditorDocument | undefined>(
@@ -180,9 +179,9 @@ function ActiveTabEditor({
     initialDocument,
     attachmentRuntime,
     imageRuntime,
-    extensions,
     pageRuntime,
     onChange: handleChange,
+    customBlocks,
   });
   useEffect(() => {
     if (!controller.ready) return;
@@ -216,18 +215,18 @@ export function OpenEditorTabbedPage({
   document,
   imageRuntime,
   editable,
-  extensions = [],
+  editorCustomBlocks,
   pageRuntime,
-  renderers,
+  viewerCustomBlocks,
   onChange,
 }: {
   attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
   document: OpenEditorDocument;
   imageRuntime?: OpenEditorImageRuntime<File>;
   editable: boolean;
-  extensions?: readonly OpenEditorReactExtension[];
+  editorCustomBlocks?: OpenEditorReactProps["customBlocks"];
   pageRuntime: OpenEditorPageRuntime;
-  renderers?: Partial<Record<string, OpenEditorViewerRenderer>>;
+  viewerCustomBlocks?: ComponentProps<typeof OpenEditorViewer>["customBlocks"];
   onChange?: (document: OpenEditorDocument) => void;
 }) {
   const value = readOpenEditorPageTabs(document);
@@ -282,7 +281,7 @@ export function OpenEditorTabbedPage({
       {editable ? (
         <ActiveTabEditor
           attachmentRuntime={attachmentRuntime}
-          extensions={extensions}
+          customBlocks={editorCustomBlocks}
           imageRuntime={imageRuntime}
           initialDocument={active.document}
           key={active.id}
@@ -294,10 +293,9 @@ export function OpenEditorTabbedPage({
           attachmentRuntime={attachmentRuntime}
           className="oe-viewer"
           document={active.document}
-          extensions={extensions}
           imageRuntime={imageRuntime}
           pageRuntime={pageRuntime}
-          renderers={renderers}
+          customBlocks={viewerCustomBlocks}
         />
       )}
     </>

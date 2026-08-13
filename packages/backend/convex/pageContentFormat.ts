@@ -7,8 +7,10 @@ import {
   assertBaseBlocksDocument,
   baseBlocksDocumentContract,
   projectChildPages,
+  validateBaseBlocksNestedDocument,
   type ChildPageProjection,
 } from "@baseblocks/openeditor-contracts";
+import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
@@ -40,101 +42,53 @@ export function hashOpenEditorContent(serialized: string): string {
 
 export function parseOpenEditorDocument(value: unknown): OpenEditorDocument {
   const decoded = typeof value === "string" ? JSON.parse(value) : value;
-  const document = parseOpenEditorDocumentStrict(
-    restoreLegacyCustomBlockNodes(decoded),
-    {
-      contract: baseBlocksDocumentContract,
-      limits: { requireNodeIds: true },
-    },
-  );
+  const document = parseOpenEditorDocumentStrict(decoded, {
+    contract: baseBlocksDocumentContract,
+    limits: { requireNodeIds: true },
+  });
   assertBaseBlocksDocument(document);
+  visitOpenEditorDocuments(document, (nested) => {
+    if (nested === document) return;
+    const validation = validateBaseBlocksNestedDocument(nested);
+    if (!validation.valid)
+      throw new Error(
+        validation.issues
+          .slice(0, 20)
+          .map((issue) => `${issue.path}: ${issue.message}`)
+          .join("\n"),
+      );
+  });
+  visitOpenEditorNodes(document, (node) => {
+    if (node.type !== "customBlock") return;
+    const resolved = baseBlocksBlockRegistry.resolve(node);
+    if (resolved.status !== "ready")
+      throw new Error(
+        `Invalid custom block ${String(node.attrs?.blockId ?? "unknown")}: ${resolved.status}${resolved.diagnostics.length ? `: ${resolved.diagnostics.map((item) => item.message).join(" ")}` : ""}`,
+      );
+  });
   return document;
 }
 
-function restoreLegacyCustomBlockNodes(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(restoreLegacyCustomBlockNodes);
-  if (!value || typeof value !== "object") return value;
-  const record = value as Record<string, unknown>;
-  if (record.type === "customBlock") {
-    const attrs = record.attrs as Record<string, unknown> | undefined;
-    const legacy =
-      typeof attrs?.blockId === "string"
-        ? legacyCustomBlockById[attrs.blockId]
-        : undefined;
-    if (attrs?.version === 1 && legacy) {
-      const data =
-        attrs.blockId === "baseblocks.quick-links"
-          ? restoreLegacyQuickLinks(attrs.data)
-          : restoreLegacyCustomBlockNodes(attrs.data);
-      return {
-        ...record,
-        type: legacy.nodeType,
-        attrs: {
-          "openeditor-id": attrs["openeditor-id"],
-          [legacy.attribute]: data,
-        },
-      };
-    }
+export function visitOpenEditorDocuments(
+  value: unknown,
+  visit: (document: OpenEditorDocument) => void,
+): void {
+  if (Array.isArray(value)) {
+    for (const item of value) visitOpenEditorDocuments(item, visit);
+    return;
   }
-  return Object.fromEntries(
-    Object.entries(record).map(([key, child]) => [
-      key,
-      restoreLegacyCustomBlockNodes(child),
-    ]),
-  );
-}
-
-const legacyCustomBlockById: Record<
-  string,
-  { nodeType: string; attribute: string }
-> = {
-  "baseblocks.search": {
-    nodeType: "baseblocksSearch",
-    attribute: "search",
-  },
-  "baseblocks.library": {
-    nodeType: "baseblocksLibrary",
-    attribute: "library",
-  },
-  "baseblocks.page-tabs": {
-    nodeType: "baseblocksPageTabs",
-    attribute: "tabs",
-  },
-  "baseblocks.directory": {
-    nodeType: "baseblocksDirectory",
-    attribute: "directory",
-  },
-  "baseblocks.decision-tree": {
-    nodeType: "baseblocksDecisionTree",
-    attribute: "decisionTree",
-  },
-  "baseblocks.quick-links": {
-    nodeType: "baseblocksQuickLinks",
-    attribute: "links",
-  },
-};
-
-function restoreLegacyQuickLinks(value: unknown): unknown {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
-  const links = (value as { links?: unknown }).links;
-  if (!Array.isArray(links)) return value;
-  return links.map((item) => {
-    if (!item || typeof item !== "object" || Array.isArray(item)) return item;
-    const { artwork, ...link } = item as Record<string, unknown>;
-    if (
-      artwork &&
-      typeof artwork === "object" &&
-      !Array.isArray(artwork) &&
-      (artwork as Record<string, unknown>).kind === "asset" &&
-      typeof (artwork as Record<string, unknown>).assetId === "string"
-    ) {
-      return {
-        ...link,
-        imageUrl: `/api/files/${(artwork as Record<string, unknown>).assetId}`,
-      };
-    }
-    return link;
-  });
+  if (!value || typeof value !== "object") return;
+  const record = value as Record<string, unknown>;
+  if (
+    record.type === "doc" &&
+    record.version === 1 &&
+    Array.isArray(record.content)
+  )
+    visit(record as OpenEditorDocument);
+  for (const child of Object.values(record)) {
+    if (child && typeof child === "object")
+      visitOpenEditorDocuments(child, visit);
+  }
 }
 
 export function visitOpenEditorNodes(
@@ -182,14 +136,20 @@ export function extractOpenEditorReferences(content: OpenEditorDocument) {
   const imageIds = collectOpenEditorAttributeValues(content, "image", [
     "imageId",
   ]);
+  const customAssetIds = new Set<string>();
+  visitOpenEditorNodes(content, (node) => {
+    if (node.type !== "customBlock") return;
+    for (const reference of baseBlocksBlockRegistry.assets(node.attrs))
+      customAssetIds.add(reference.id);
+  });
   return {
-    libraryIds: collectOpenEditorAttributeValues(content, "baseblocksLibrary", [
-      "library",
+    libraryIds: collectOpenEditorAttributeValues(content, "customBlock", [
+      "data",
       "libraryId",
     ]),
     attachmentIds,
     imageIds,
-    fileIds: new Set([...attachmentIds, ...imageIds]),
+    fileIds: new Set([...attachmentIds, ...imageIds, ...customAssetIds]),
     pageIds: collectOpenEditorAttributeValues(content, "page", ["pageId"]),
   };
 }
@@ -216,6 +176,25 @@ export function extractOpenEditorText(content: OpenEditorDocument): string {
     if (typeof node.text === "string") parts.push(node.text);
     const attrs = node.attrs;
     if (!attrs) return;
+    if (node.type === "customBlock") {
+      const resolved = baseBlocksBlockRegistry.resolve(node);
+      if (resolved.status === "ready")
+        parts.push(baseBlocksBlockRegistry.toText(node));
+      return;
+    }
+    if (node.type === "baseblocksPageTabs") {
+      const tabs = (attrs.tabs as { tabs?: unknown } | undefined)?.tabs;
+      if (Array.isArray(tabs))
+        for (const tab of tabs)
+          if (
+            tab &&
+            typeof tab === "object" &&
+            !Array.isArray(tab) &&
+            typeof (tab as { label?: unknown }).label === "string"
+          )
+            parts.push((tab as { label: string }).label);
+      return;
+    }
     for (const key of ["name", "title", "label", "description", "code"]) {
       if (typeof attrs[key] === "string") parts.push(attrs[key] as string);
     }

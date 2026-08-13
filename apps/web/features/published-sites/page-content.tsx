@@ -4,9 +4,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { baseBlocksOpenEditorTheme } from "@/features/openeditor/openeditor-theme";
+import { createBaseBlocksCustomBlockViewerConfiguration } from "@/features/openeditor/custom-block-viewer";
 import { OpenEditorTabbedPage } from "@/features/openeditor/page-tabs";
 import { readOpenEditorPageTabs } from "@/features/openeditor/page-tabs-model";
-import { publicSiteRenderers } from "@/features/openeditor/renderers";
 import { createPublishedImageRuntime } from "@/features/published-sites/image-runtime";
 import { getPageLink } from "@/features/published-sites/urls";
 import { Button } from "@baseblocks/ui/button";
@@ -54,6 +54,10 @@ export function PublicPageContent({
     },
     openPage: ({ pageId: targetPageId }) => onOpenPageBlock?.(targetPageId),
   };
+  const customBlocks = createBaseBlocksCustomBlockViewerConfiguration(
+    new Set(imageIds),
+    { imageRuntime, pageRuntime },
+  );
 
   return (
     <div className="h-full min-h-0 min-w-0 overflow-y-auto overflow-x-hidden pt-[var(--bb-header-height)]">
@@ -84,18 +88,18 @@ export function PublicPageContent({
             {readOpenEditorPageTabs(content) ? (
               <OpenEditorTabbedPage
                 document={content}
+                viewerCustomBlocks={customBlocks}
                 editable={false}
                 imageRuntime={imageRuntime}
                 pageRuntime={pageRuntime}
-                renderers={publicSiteRenderers}
               />
             ) : (
               <OpenEditorViewer
                 className="oe-viewer"
+                customBlocks={customBlocks}
                 document={content}
                 imageRuntime={imageRuntime}
                 pageRuntime={pageRuntime}
-                renderers={publicSiteRenderers}
               />
             )}
           </OpenEditorThemeProvider>

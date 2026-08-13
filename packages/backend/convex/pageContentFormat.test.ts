@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   extractOpenEditorReferences,
+  extractOpenEditorText,
   hashOpenEditorContent,
   emptyOpenEditorDocument,
   type OpenEditorDocument,
@@ -70,29 +71,7 @@ describe("parseOpenEditorDocument", () => {
     );
   });
 
-  test("accepts BaseBlocks custom blocks through the server contract", () => {
-    const document = parseOpenEditorDocument({
-      type: "doc",
-      version: 1,
-      content: [
-        {
-          type: "baseblocksSearch",
-          attrs: {
-            "openeditor-id": "search-1",
-            search: {
-              placeholder: "Search the handbook",
-              maxResults: 10,
-              showFileType: true,
-            },
-          },
-        },
-      ],
-    });
-
-    expect(document.content[0]?.type).toBe("baseblocksSearch");
-  });
-
-  test("reads migrated directory blocks through the rollback contract", () => {
+  test("accepts registered BaseBlocks blocks through one strict carrier", () => {
     const document = parseOpenEditorDocument({
       type: "doc",
       version: 1,
@@ -119,137 +98,11 @@ describe("parseOpenEditorDocument", () => {
       ],
     });
 
-    expect(document.content[0]).toEqual({
-      type: "baseblocksDirectory",
-      attrs: {
-        "openeditor-id": "directory-1",
-        directory: {
-          directories: [
-            {
-              id: "directory",
-              label: "Directory",
-              columnIds: ["name"],
-              rows: [{ id: "row", cells: { name: "Ada" } }],
-              pageSize: 25,
-            },
-          ],
-        },
-      },
-    });
+    expect(document.content[0]?.type).toBe("customBlock");
+    expect(document.content[0]?.attrs?.blockId).toBe("baseblocks.directory");
   });
 
-  test("restores every migrated BaseBlocks carrier to its legacy shape", () => {
-    const nestedDocument = {
-      type: "doc",
-      version: 1,
-      content: [{ type: "paragraph", attrs: { "openeditor-id": "nested-1" } }],
-    };
-    const migratedBlocks = [
-      {
-        instanceId: "search-1",
-        blockId: "baseblocks.search",
-        data: {
-          placeholder: "Search",
-          maxResults: 10,
-          showFileType: true,
-        },
-        type: "baseblocksSearch",
-        attribute: "search",
-      },
-      {
-        instanceId: "library-1",
-        blockId: "baseblocks.library",
-        data: { libraryId: "library-1", allowDownloads: true },
-        type: "baseblocksLibrary",
-        attribute: "library",
-      },
-      {
-        instanceId: "tabs-1",
-        blockId: "baseblocks.page-tabs",
-        data: {
-          tabs: [{ id: "tab-1", label: "Tab", document: nestedDocument }],
-        },
-        type: "baseblocksPageTabs",
-        attribute: "tabs",
-      },
-      {
-        instanceId: "tree-1",
-        blockId: "baseblocks.decision-tree",
-        data: {
-          trees: [{ id: "tree-1", label: "Tree", nodes: [] }],
-          tabsMode: "row",
-        },
-        type: "baseblocksDecisionTree",
-        attribute: "decisionTree",
-      },
-      {
-        instanceId: "links-1",
-        blockId: "baseblocks.quick-links",
-        data: {
-          links: [
-            {
-              id: "link-1",
-              title: "Guide",
-              url: "https://example.com",
-              linkType: "website",
-              artwork: { kind: "asset", assetId: "asset-1" },
-            },
-          ],
-        },
-        type: "baseblocksQuickLinks",
-        attribute: "links",
-      },
-    ] as const;
-
-    for (const migrated of migratedBlocks) {
-      const document = parseOpenEditorDocument({
-        type: "doc",
-        version: 1,
-        content: [
-          {
-            type: "customBlock",
-            attrs: {
-              "openeditor-id": migrated.instanceId,
-              blockId: migrated.blockId,
-              version: 1,
-              data: migrated.data,
-            },
-          },
-        ],
-      });
-      const node = document.content[0];
-      expect(node?.type).toBe(migrated.type);
-      expect(node?.attrs?.["openeditor-id"]).toBe(migrated.instanceId);
-      expect(node?.attrs).toHaveProperty(migrated.attribute);
-    }
-
-    const quickLinks = parseOpenEditorDocument({
-      type: "doc",
-      version: 1,
-      content: [
-        {
-          type: "customBlock",
-          attrs: {
-            "openeditor-id": "links-1",
-            blockId: "baseblocks.quick-links",
-            version: 1,
-            data: migratedBlocks[4].data,
-          },
-        },
-      ],
-    });
-    expect(quickLinks.content[0]?.attrs?.links).toEqual([
-      {
-        id: "link-1",
-        title: "Guide",
-        url: "https://example.com",
-        linkType: "website",
-        imageUrl: "/api/files/asset-1",
-      },
-    ]);
-  });
-
-  test("rejects custom block versions that the rollback contract cannot read", () => {
+  test("rejects unsupported block versions and malformed block data", () => {
     expect(() =>
       parseOpenEditorDocument({
         type: "doc",
@@ -266,20 +119,19 @@ describe("parseOpenEditorDocument", () => {
           },
         ],
       }),
-    ).toThrow("Unknown node type");
-  });
-
-  test("rejects malformed BaseBlocks custom block payloads", () => {
+    ).toThrow("Stored version 2 is newer");
     expect(() =>
       parseOpenEditorDocument({
         type: "doc",
         version: 1,
         content: [
           {
-            type: "baseblocksSearch",
+            type: "customBlock",
             attrs: {
               "openeditor-id": "search-1",
-              search: {
+              blockId: "baseblocks.search",
+              version: 1,
+              data: {
                 placeholder: "Search",
                 maxResults: 500,
                 showFileType: true,
@@ -288,7 +140,73 @@ describe("parseOpenEditorDocument", () => {
           },
         ],
       }),
-    ).toThrow("Number must be at most 50");
+    ).toThrow("Search maximum results must be between 1 and 50");
+  });
+
+  test("rejects all removed legacy block node types", () => {
+    for (const type of [
+      "baseblocksDirectory",
+      "baseblocksDecisionTree",
+      "baseblocksQuickLinks",
+      "baseblocksSearch",
+      "baseblocksLibrary",
+    ])
+      expect(() =>
+        parseOpenEditorDocument({
+          type: "doc",
+          version: 1,
+          content: [{ type, attrs: { "openeditor-id": `${type}-1` } }],
+        }),
+      ).toThrow("Unknown node type");
+  });
+
+  test("rejects legacy nodes inside custom-block document fields", () => {
+    expect(() =>
+      parseOpenEditorDocument({
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "customBlock",
+            attrs: {
+              "openeditor-id": "tree-1",
+              blockId: "baseblocks.decision-tree",
+              version: 1,
+              data: {
+                tabsMode: "row",
+                trees: [
+                  {
+                    id: "tree",
+                    label: "Tree",
+                    nodes: [
+                      {
+                        id: "node",
+                        parentId: null,
+                        name: "Node",
+                        order: 0,
+                        document: {
+                          type: "doc",
+                          version: 1,
+                          content: [
+                            {
+                              type: "baseblocksDirectory",
+                              attrs: {
+                                "openeditor-id": "legacy-directory",
+                                directory: {},
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ).toThrow();
   });
 
   test("rejects node types that are not in the configured product schema", () => {
@@ -311,6 +229,59 @@ describe("emptyOpenEditorDocument", () => {
   test("has a deterministic stable-node fingerprint", () => {
     expect(fingerprintOpenEditorDocument(emptyOpenEditorDocument())).toBe(
       fingerprintOpenEditorDocument(emptyOpenEditorDocument()),
+    );
+  });
+});
+
+describe("extractOpenEditorText", () => {
+  test("uses block-owned text and does not duplicate nested tab content", () => {
+    const document = parseOpenEditorDocument({
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "baseblocksPageTabs",
+          attrs: {
+            "openeditor-id": "tabs",
+            tabs: {
+              tabs: [
+                {
+                  id: "tab",
+                  label: "Resources",
+                  document: {
+                    type: "doc",
+                    version: 1,
+                    content: [
+                      {
+                        type: "customBlock",
+                        attrs: {
+                          "openeditor-id": "links",
+                          blockId: "baseblocks.quick-links",
+                          version: 1,
+                          data: {
+                            links: [
+                              {
+                                id: "docs",
+                                title: "Documentation",
+                                url: "/docs",
+                                linkType: "website",
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+
+    expect(extractOpenEditorText(document)).toBe(
+      "Resources Documentation: /docs",
     );
   });
 });

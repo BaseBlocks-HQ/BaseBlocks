@@ -1,264 +1,144 @@
 import { describe, expect, test } from "bun:test";
-import { createDocument, textBlock } from "@openeditor/core";
+import { createOpenEditorCustomBlockNode } from "@openeditor/custom-block";
+import { baseBlocksBlockRegistry } from "./block-registry";
 import {
-  baseBlocksBlockSpecs,
-  baseBlocksDefinitions,
   assertBaseBlocksDocument,
-  libraryBlockSpec,
-  searchBlockSpec,
+  baseBlocksDocumentContract,
+  pageTabsBlockSpec,
   validateBaseBlocksDocument,
 } from "./index";
 
-const documentWith = (
-  node: ReturnType<(typeof baseBlocksBlockSpecs)[number]["defaultNode"]>,
-) => createDocument([node]);
+const document = (...content: Array<Record<string, unknown>>) => ({
+  type: "doc" as const,
+  version: 1 as const,
+  content,
+});
 
 describe("BaseBlocks OpenEditor contract", () => {
-  test("allows BaseBlocks blocks at the root and inside columns", () => {
-    const document = createDocument([
-      {
-        type: "columns",
-        content: [
-          {
-            type: "column",
-            content: [libraryBlockSpec.defaultNode()],
-          },
-        ],
-      },
-      searchBlockSpec.defaultNode(),
-    ]);
-
-    expect(validateBaseBlocksDocument(document)).toEqual({
-      valid: true,
-      issues: [],
-    });
-    expect(() => assertBaseBlocksDocument(document)).not.toThrow();
+  test("adds only the structural Page Tabs node to OpenEditor", () => {
+    expect(baseBlocksDocumentContract.nodes.has("customBlock")).toBe(true);
+    expect(baseBlocksDocumentContract.nodes.has("baseblocksPageTabs")).toBe(
+      true,
+    );
+    for (const legacy of [
+      "baseblocksDirectory",
+      "baseblocksDecisionTree",
+      "baseblocksQuickLinks",
+      "baseblocksSearch",
+      "baseblocksLibrary",
+    ])
+      expect(baseBlocksDocumentContract.nodes.has(legacy)).toBe(false);
   });
 
-  test("accepts every custom block default", () => {
-    for (const spec of baseBlocksBlockSpecs) {
-      expect(
-        validateBaseBlocksDocument(documentWith(spec.defaultNode())),
-      ).toEqual({
-        valid: true,
-        issues: [],
-      });
+  test("accepts all registered custom blocks through one node type", () => {
+    for (const definition of baseBlocksBlockRegistry.definitions) {
+      const node = createOpenEditorCustomBlockNode(
+        baseBlocksBlockRegistry,
+        definition.id,
+        undefined,
+        { instanceId: `${definition.id}-1` },
+      );
+      expect(validateBaseBlocksDocument(document(node)).valid).toBe(true);
+      expect(() => assertBaseBlocksDocument(document(node))).not.toThrow();
     }
   });
 
-  test("keeps portable block specs and Tiptap definitions in lockstep", () => {
-    expect(
-      baseBlocksDefinitions.map((definition) => definition.block.nodeType),
-    ).toEqual(baseBlocksBlockSpecs.map((spec) => spec.nodeType));
-  });
-
-  test("validates documents against the real configured Tiptap schema", () => {
-    for (const spec of baseBlocksBlockSpecs) {
-      expect(() =>
-        assertBaseBlocksDocument(documentWith(spec.defaultNode())),
-      ).not.toThrow();
-    }
-
-    const invalidStructure = createDocument([
-      {
-        type: "paragraph",
-        content: [{ type: "paragraph" }],
-      },
-    ]);
-    expect(() => assertBaseBlocksDocument(invalidStructure)).toThrow();
-  });
-
-  test("rejects unknown custom attributes", () => {
-    const document = documentWith({
-      ...baseBlocksBlockSpecs[2].defaultNode(),
-      attrs: {
-        search: {
-          placeholder: "Search",
-          maxResults: 10,
-          showFileType: true,
-          injected: "not allowed",
-        },
-      },
-    });
-    const validation = validateBaseBlocksDocument(document);
-    expect(validation.valid).toBe(false);
-    expect(
-      validation.issues.some((issue) => issue.code === "unknown_attribute"),
-    ).toBe(true);
-  });
-
-  test("rejects duplicate quick-link identities", () => {
-    const document = documentWith({
-      type: "baseblocksQuickLinks",
-      attrs: {
-        links: [
-          { id: "same", title: "One", url: "https://one.example" },
-          { id: "same", title: "Two", url: "https://two.example" },
-        ],
-      },
-    });
-    const validation = validateBaseBlocksDocument(document);
-    expect(validation.valid).toBe(false);
-    expect(
-      validation.issues.some((issue) =>
-        issue.message.includes("Duplicate quick-link ID"),
-      ),
-    ).toBe(true);
-  });
-
-  test("rejects unsafe quick-link protocols", () => {
-    const document = documentWith({
-      type: "baseblocksQuickLinks",
-      attrs: {
-        links: [
+  test("keeps Page Tabs as a page-level container", () => {
+    const tabs = pageTabsBlockSpec.defaultNode();
+    tabs.attrs = {
+      ...tabs.attrs,
+      "openeditor-id": "page-tabs-1",
+      tabs: {
+        tabs: [
           {
-            id: "unsafe",
-            title: "Unsafe",
-            url: "javascript:alert(1)",
-            linkType: "website",
+            id: "tab-1",
+            label: "Tab 1",
+            document: document({
+              type: "paragraph",
+              attrs: { "openeditor-id": "nested-paragraph-1" },
+            }),
           },
         ],
       },
-    });
-    const validation = validateBaseBlocksDocument(document);
-    expect(validation.valid).toBe(false);
-    expect(
-      validation.issues.some((issue) => issue.message.includes("HTTP(S)")),
-    ).toBe(true);
+    };
+    expect(() => assertBaseBlocksDocument(document(tabs))).not.toThrow();
   });
 
-  test("rejects directory rows that reference undeclared columns", () => {
-    const document = documentWith({
-      type: "baseblocksDirectory",
-      attrs: {
-        directory: {
-          directories: [
-            {
-              id: "directory",
-              label: "Directory",
-              columnIds: ["known"],
-              rows: [{ id: "row", cells: { unknown: "value" } }],
-              pageSize: null,
+  test("rejects mixed and nested Page Tabs structures", () => {
+    const tabs = pageTabsBlockSpec.defaultNode();
+    tabs.attrs = {
+      ...tabs.attrs,
+      "openeditor-id": "page-tabs-1",
+      tabs: {
+        tabs: [
+          {
+            id: "tab-1",
+            label: "Tab 1",
+            document: document({
+              ...pageTabsBlockSpec.defaultNode(),
+              attrs: {
+                ...pageTabsBlockSpec.defaultNode().attrs,
+                "openeditor-id": "nested-tabs",
+              },
+            }),
+          },
+        ],
+      },
+    };
+    expect(validateBaseBlocksDocument(document(tabs)).valid).toBe(false);
+    expect(
+      validateBaseBlocksDocument(
+        document(
+          {
+            type: "paragraph",
+            attrs: { "openeditor-id": "paragraph-1" },
+          },
+          {
+            ...pageTabsBlockSpec.defaultNode(),
+            attrs: {
+              ...pageTabsBlockSpec.defaultNode().attrs,
+              "openeditor-id": "page-tabs-2",
             },
-          ],
-        },
-      },
-    });
-    const validation = validateBaseBlocksDocument(document);
-    expect(validation.valid).toBe(false);
-    expect(
-      validation.issues.some((issue) =>
-        issue.message.includes("unknown column"),
-      ),
-    ).toBe(true);
+          },
+        ),
+      ).valid,
+    ).toBe(false);
   });
 
-  test("rejects missing and cyclic decision-tree parents", () => {
-    const nested = createDocument([textBlock("paragraph", "Nested")]);
-    const missingParent = documentWith({
-      type: "baseblocksDecisionTree",
-      attrs: {
-        decisionTree: {
-          tabsMode: "row",
-          trees: [
-            {
-              id: "tree",
-              label: "Tree",
-              nodes: [
-                {
-                  id: "a",
-                  parentId: "missing",
-                  name: "A",
-                  order: 0,
-                  document: nested,
-                },
-              ],
-            },
-          ],
-        },
+  test("rejects duplicate tab IDs and legacy custom node types", () => {
+    const tabs = pageTabsBlockSpec.defaultNode();
+    tabs.attrs = {
+      ...tabs.attrs,
+      "openeditor-id": "page-tabs-1",
+      tabs: {
+        tabs: [
+          {
+            id: "same",
+            label: "One",
+            document: document({
+              type: "paragraph",
+              attrs: { "openeditor-id": "p-1" },
+            }),
+          },
+          {
+            id: "same",
+            label: "Two",
+            document: document({
+              type: "paragraph",
+              attrs: { "openeditor-id": "p-2" },
+            }),
+          },
+        ],
       },
-    });
+    };
+    expect(validateBaseBlocksDocument(document(tabs)).valid).toBe(false);
     expect(
-      validateBaseBlocksDocument(missingParent).issues.some((issue) =>
-        issue.message.includes("missing parent"),
-      ),
-    ).toBe(true);
-
-    const cycle = structuredClone(missingParent);
-    const decisionTree = cycle.content[0]?.attrs?.decisionTree as
-      | {
-          trees: Array<{
-            nodes: Array<{
-              id: string;
-              parentId: string | null;
-              name: string;
-              order: number;
-              document: unknown;
-            }>;
-          }>;
-        }
-      | undefined;
-    const tree = decisionTree?.trees[0];
-    if (!tree) throw new Error("Expected decision tree fixture");
-    tree.nodes = [
-      { id: "a", parentId: "b", name: "A", order: 0, document: nested },
-      { id: "b", parentId: "a", name: "B", order: 0, document: nested },
-    ];
-    expect(
-      validateBaseBlocksDocument(cycle).issues.some((issue) =>
-        issue.message.includes("cycle"),
-      ),
-    ).toBe(true);
-  });
-
-  test("validates nested decision documents against the built-in contract", () => {
-    const document = documentWith({
-      type: "baseblocksDecisionTree",
-      attrs: {
-        decisionTree: {
-          tabsMode: "dropdown",
-          trees: [
-            {
-              id: "tree",
-              label: "Tree",
-              nodes: [
-                {
-                  id: "node",
-                  parentId: null,
-                  name: "Node",
-                  order: 0,
-                  document: createDocument([{ type: "madeUpBlock" }]),
-                },
-              ],
-            },
-          ],
-        },
-      },
-    });
-    const validation = validateBaseBlocksDocument(document);
-    expect(validation.valid).toBe(false);
-    expect(
-      validation.issues.some((issue) =>
-        issue.message.includes("Unknown node type"),
-      ),
-    ).toBe(true);
-  });
-
-  test("bounds search and decision-tree payloads", () => {
-    const search = documentWith({
-      type: "baseblocksSearch",
-      attrs: {
-        search: { placeholder: "Search", maxResults: 51, showFileType: true },
-      },
-    });
-    expect(validateBaseBlocksDocument(search).valid).toBe(false);
-
-    const decisionTree = documentWith({
-      type: "baseblocksDecisionTree",
-      attrs: {
-        decisionTree: { tabsMode: "grid", trees: [] },
-      },
-    });
-    expect(validateBaseBlocksDocument(decisionTree).valid).toBe(false);
+      validateBaseBlocksDocument(
+        document({
+          type: "baseblocksDirectory",
+          attrs: { "openeditor-id": "legacy-1", directory: {} },
+        }),
+      ).valid,
+    ).toBe(false);
   });
 });

@@ -38,7 +38,12 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
-import { openEditorExtensions } from "./extensions";
+import {
+  authorizeBaseBlocksCustomBlockAsset,
+  createBaseBlocksCustomBlockEditorConfiguration,
+  extractBaseBlocksCustomBlockAssetIds,
+} from "./custom-blocks";
+import { createBaseBlocksCustomBlockViewerConfiguration } from "./custom-block-viewer";
 import { useBaseBlocksImageRuntime } from "./image-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
@@ -215,6 +220,11 @@ function OpenEditorTabbedPageEditor({
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
 }) {
+  const customBlocks = useBaseBlocksCustomBlockConfigurations(
+    document,
+    imageRuntime,
+    { attachmentRuntime, imageRuntime, pageRuntime },
+  );
   return (
     <OpenEditorThemeProvider
       className="contents"
@@ -225,11 +235,12 @@ function OpenEditorTabbedPageEditor({
         <OpenEditorTabbedPage
           attachmentRuntime={attachmentRuntime}
           document={document}
+          editorCustomBlocks={customBlocks.editor}
           editable={canEdit && !preview}
-          extensions={openEditorExtensions}
           imageRuntime={imageRuntime}
           onChange={onChange}
           pageRuntime={pageRuntime}
+          viewerCustomBlocks={customBlocks.viewer}
         />
       </div>
     </OpenEditorThemeProvider>
@@ -281,14 +292,19 @@ function OpenEditorDocumentEditor({
       },
     },
   ];
+  const customBlocks = useBaseBlocksCustomBlockConfigurations(
+    document,
+    imageRuntime,
+    { attachmentRuntime, imageRuntime, pageRuntime },
+  );
   const controller = useOpenEditorController({
     initialDocument: document,
     editable: canEdit,
-    extensions: openEditorExtensions,
     pageRuntime,
     attachmentRuntime,
     imageRuntime,
     slashMenuItems,
+    customBlocks: customBlocks.editor,
     onChange: handleChange,
   });
   useEffect(() => {
@@ -320,7 +336,7 @@ function OpenEditorDocumentEditor({
             attachmentRuntime={attachmentRuntime}
             className="oe-viewer"
             document={controller.document}
-            extensions={openEditorExtensions}
+            customBlocks={customBlocks.viewer}
             imageRuntime={imageRuntime}
             pageRuntime={pageRuntime}
           />
@@ -341,6 +357,47 @@ function OpenEditorDocumentEditor({
       </div>
     </OpenEditorThemeProvider>
   );
+}
+
+function useBaseBlocksCustomBlockConfigurations(
+  document: OpenEditorDocument,
+  imageRuntime: OpenEditorImageRuntime<File>,
+  runtimes: {
+    attachmentRuntime: OpenEditorAttachmentRuntime<File>;
+    imageRuntime: OpenEditorImageRuntime<File>;
+    pageRuntime: OpenEditorPageRuntime;
+  },
+) {
+  const authorizedAssetIdsRef = useRef<Set<string>>(
+    extractBaseBlocksCustomBlockAssetIds(document),
+  );
+  authorizedAssetIdsRef.current =
+    extractBaseBlocksCustomBlockAssetIds(document);
+  const authorizedAssetIds = useRef({
+    has: (id: string) => authorizedAssetIdsRef.current.has(id),
+  }).current;
+  const pickAsset = async () => {
+    const input = await imageRuntime.selectImage?.();
+    if (!input || !imageRuntime.uploadImage) return null;
+    const uploaded = await imageRuntime.uploadImage(input);
+    return authorizeBaseBlocksCustomBlockAsset(
+      authorizedAssetIdsRef.current,
+      uploaded.imageId
+        ? { id: uploaded.imageId, kind: "raster" as const, alt: uploaded.alt }
+        : null,
+    );
+  };
+  return {
+    editor: createBaseBlocksCustomBlockEditorConfiguration(
+      authorizedAssetIds,
+      pickAsset,
+      runtimes,
+    ),
+    viewer: createBaseBlocksCustomBlockViewerConfiguration(
+      authorizedAssetIdsRef.current,
+      runtimes,
+    ),
+  };
 }
 
 function OpenEditorPageHeading({

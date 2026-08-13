@@ -4,6 +4,8 @@ import { getFiles } from "@/lib/files/server";
 import { assertStoredChecksum, type PageExportAsset } from "./page-export";
 import { iterableSource, readSource } from "@baseblocks/anydoc/sources";
 import { api } from "@baseblocks/backend";
+import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts";
+import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
 import { isOpenEditorDocument } from "@openeditor/core";
 import {
   createOpenEditorImageAssetResolver,
@@ -105,12 +107,17 @@ export async function GET(
         };
       },
     });
-    const exported = await exportOpenEditorDocument(result.content, {
+    const exportDocument =
+      format === "json"
+        ? result.content
+        : projectBaseBlocksDocumentForPortableExport(result.content);
+    const exported = await exportOpenEditorDocument(exportDocument, {
       format,
       includeTitle: true,
       resolveAsset: assetResolver,
       signal: exportSignal,
       title,
+      customBlocks: baseBlocksBlockRegistry,
     });
     if (
       exported.warnings.some((warning) => ASSET_FAILURE_CODES.has(warning.code))
