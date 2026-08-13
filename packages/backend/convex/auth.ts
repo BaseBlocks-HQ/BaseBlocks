@@ -1,7 +1,7 @@
 import { type GenericCtx, createClient } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
-import { organization } from "better-auth/plugins";
+import { oAuthProxy, organization } from "better-auth/plugins";
 import { internal } from "./_generated/api";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
@@ -20,6 +20,7 @@ import { authPage, type AuthMember } from "./authComponent/model";
 import { parseWorkspaceCreationHint } from "./model/workspaceFoundation";
 
 const defaultAuthOrigin = "http://localhost:3001";
+const productionAuthOrigin = "https://baseblocks.dev";
 
 async function ownedOrganizationLimitReached(
   ctx: GenericCtx<DataModel>,
@@ -164,7 +165,16 @@ function getAuthUrlConfig() {
       : primaryAppHostname;
 
   return {
-    baseURL: primaryAppUrl,
+    baseURL: {
+      allowedHosts: [
+        ...authOrigins.map((origin) => new URL(origin).host),
+        ...(crossSubdomainCookieDomain
+          ? [`*.${crossSubdomainCookieDomain}`]
+          : []),
+      ],
+      fallback: primaryAppUrl,
+      protocol: "auto" as const,
+    },
     trustedOrigins: crossSubdomainCookieDomain
       ? [...authOrigins, `https://*.${crossSubdomainCookieDomain}`]
       : authOrigins,
@@ -241,6 +251,10 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
       },
     },
     plugins: [
+      oAuthProxy({
+        productionURL: productionAuthOrigin,
+        secret: process.env.OAUTH_PROXY_SECRET!,
+      }),
       organization({
         ac: baseBlocksAccessControl,
         roles: baseBlocksRoles,
