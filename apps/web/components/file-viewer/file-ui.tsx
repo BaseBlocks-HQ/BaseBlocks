@@ -30,7 +30,9 @@ export function DropZone({
   children,
   className,
   disabled = false,
+  inputAriaLabel,
   maxSize = defaultMaxSize,
+  multiple = true,
   noClick = false,
   onFilesAccepted,
 }: {
@@ -38,7 +40,9 @@ export function DropZone({
   children?: React.ReactNode;
   className?: string;
   disabled?: boolean;
+  inputAriaLabel?: string;
   maxSize?: number;
+  multiple?: boolean;
   noClick?: boolean;
   onFilesAccepted: (files: File[]) => void;
 }) {
@@ -47,7 +51,7 @@ export function DropZone({
       accept,
       disabled,
       maxSize,
-      multiple: true,
+      multiple,
       noClick,
       useFsAccessApi: false,
       onDrop: (acceptedFiles) => {
@@ -71,7 +75,7 @@ export function DropZone({
         className,
       )}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps({ "aria-label": inputAriaLabel })} />
       {children || (
         <div className="flex flex-col items-center justify-center px-4 py-8">
           <div

@@ -1,16 +1,7 @@
 "use client";
 
-import { useImageUpload } from "@/lib/files/use-image-upload";
-import { DropZone } from "@/components/file-viewer/file-ui";
 import { useEditorWorkspace } from "@/features/editor/editor-state";
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
-import {
-  Image01Icon,
-  Navigation03Icon,
-  PaintBrush01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { api, type Id } from "@baseblocks/backend";
 import {
   DEFAULT_SITE_SIDEBAR_VARIANT,
   DEFAULT_SITE_THEME,
@@ -22,27 +13,26 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@baseblocks/ui/dialog";
-import { Input } from "@baseblocks/ui/input";
-import { Label } from "@baseblocks/ui/label";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { Switch } from "@baseblocks/ui/switch";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-} from "@baseblocks/ui/sidebar";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
+import {
+  ArrowReloadHorizontalIcon,
+  ColorPickerIcon,
+  IdentityCardIcon,
+  SidebarLeftIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMutation } from "convex/react";
-import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { FaviconSettings } from "./settings/favicon-settings";
 import { SiteAppearanceSettings } from "./settings/site-appearance-settings";
+import { SiteBrandSettings } from "./settings/site-brand-settings";
+import { SiteNavigationSettings } from "./settings/site-navigation-settings";
 
 interface SiteSettingsDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -52,225 +42,23 @@ interface SiteSettingsDialogProps {
 
 type SiteSettingsSection = "brand" | "appearance" | "navigation";
 
-function SettingsSection({
-  action,
-  children,
-  title,
-}: {
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  title: string;
-}) {
-  return (
-    <section className="space-y-3">
-      <div className="flex min-h-7 items-center justify-between gap-3 px-0.5">
-        <h4 className="text-sm font-medium">{title}</h4>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function SettingSurface({
-  children,
-  label,
-}: {
-  children: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <div className="rounded-lg bg-muted/25 p-3">
-      <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
-      {children}
-    </div>
-  );
-}
-
-function PanelSettingRow({
-  control,
-  htmlFor,
-  label,
-}: {
-  control: React.ReactNode;
-  htmlFor?: string;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/30">
-      <div className="min-w-0 flex-1 pr-2">
-        <Label className="text-sm font-medium leading-none" htmlFor={htmlFor}>
-          {label}
-        </Label>
-      </div>
-      <div className="shrink-0">{control}</div>
-    </div>
-  );
-}
-
-function LogoUploadSection({
-  fileInputRef,
-  isUploading,
-  logoUrl,
-  onFilesAccepted,
-  onRemove,
-  uploadProgress,
-}: {
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  isUploading: boolean;
-  logoUrl?: string;
-  onFilesAccepted: (files: File[]) => void;
-  onRemove: () => void;
-  uploadProgress: number;
-}) {
-  if (logoUrl) {
-    return (
-      <div className="flex items-center gap-3">
-        <Image
-          src={logoUrl}
-          alt="Site logo"
-          className="h-10 w-10 rounded-md border border-border/60 bg-background object-contain"
-          width={40}
-          height={40}
-          unoptimized
-        />
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(event) => {
-              const files = Array.from(event.target.files || []);
-              if (files.length > 0) {
-                onFilesAccepted(files);
-              }
-              event.target.value = "";
-            }}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <>
-                <Spinner className="mr-1 size-3" />
-                {uploadProgress}%
-              </>
-            ) : (
-              "Replace"
-            )}
-          </Button>
-          <Button
-            className="h-8"
-            disabled={isUploading}
-            onClick={onRemove}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            Remove
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <DropZone
-        onFilesAccepted={onFilesAccepted}
-        accept={{
-          "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
-        }}
-        maxSize={5 * 1024 * 1024}
-        className="border-dashed bg-background/40 py-5"
-      >
-        <div className="flex flex-col items-center justify-center gap-1 text-center">
-          {isUploading ? (
-            <>
-              <Spinner className="size-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
-            </>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Drop an image here, or click to browse
-            </p>
-          )}
-        </div>
-      </DropZone>
-    </div>
-  );
-}
-
-function SiteNameSection({
-  displayName,
-  editValue,
-  isEditing,
-  onCancel,
-  onChange,
-  onEdit,
-  onSave,
-}: {
-  displayName: string;
-  editValue: string;
-  isEditing: boolean;
-  onCancel: () => void;
-  onChange: (value: string) => void;
-  onEdit: () => void;
-  onSave: () => void;
-}) {
-  return (
-    <div>
-      {isEditing ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Input
-            value={editValue}
-            onChange={(event) => onChange(event.target.value)}
-            aria-label="Site name"
-            className="h-8 text-sm sm:min-w-0 sm:flex-1"
-            onKeyDown={(event) => {
-              if (event.key === "Enter") onSave();
-              if (event.key === "Escape") onCancel();
-            }}
-          />
-          <div className="flex shrink-0 gap-2">
-            <Button size="sm" className="h-8" onClick={onSave}>
-              Save
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-sm">
-            {displayName.trim() ? displayName : "Untitled site"}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 shrink-0 px-2 text-xs"
-            onClick={onEdit}
-          >
-            Edit
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
+const SECTIONS = [
+  {
+    id: "brand" as const,
+    icon: IdentityCardIcon,
+    label: "Brand",
+  },
+  {
+    id: "appearance" as const,
+    icon: ColorPickerIcon,
+    label: "Appearance",
+  },
+  {
+    id: "navigation" as const,
+    icon: SidebarLeftIcon,
+    label: "Navigation",
+  },
+];
 
 export function SiteSettingsDialog({
   onOpenChange,
@@ -280,88 +68,12 @@ export function SiteSettingsDialog({
   const { site: workspaceSite } = useEditorWorkspace();
   const site = workspaceSite?._id === siteId ? workspaceSite : null;
   const updateSite = useMutation(api.sites.update);
-  const { uploadImage, uploadState } = useImageUpload();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const [localName, setLocalName] = useState("");
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [isResettingAppearance, setIsResettingAppearance] = useState(false);
+  const sectionTitleRef = useRef<HTMLHeadingElement>(null);
   const [section, setSection] = useState<SiteSettingsSection>("brand");
+  const [isResettingAppearance, setIsResettingAppearance] = useState(false);
+  const activeSection = SECTIONS.find((item) => item.id === section)!;
 
-  const isUploading = uploadState.isUploading;
-  const uploadProgress = uploadState.progress?.percentage || 0;
-
-  const updateSettings = async (settingKey: string, value: boolean) => {
-    if (!site) return;
-    try {
-      await updateSite({
-        siteId,
-        settings: {
-          [settingKey]: value,
-        },
-      });
-    } catch (_error) {
-      toast.error("Failed to update setting");
-    }
-  };
-
-  const handleLogoUpload = async (files: File[]) => {
-    const file = files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
-
-    const result = await uploadImage(file, siteId);
-
-    if (result) {
-      await updateSite({
-        siteId,
-        logoFileId: result.fileId,
-      });
-      toast.success("Logo uploaded");
-    } else if (uploadState.error) {
-      toast.error(uploadState.error);
-    }
-  };
-
-  const handleSaveName = async () => {
-    const nextName = localName.trim();
-    if (!site || nextName === site.name) {
-      setIsEditingName(false);
-      return;
-    }
-
-    if (!nextName) {
-      toast.error("Enter a site name");
-      return;
-    }
-
-    try {
-      await updateSite({
-        siteId,
-        name: nextName,
-      });
-      setIsEditingName(false);
-      toast.success("Site name updated");
-    } catch (_error) {
-      toast.error("Failed to update name");
-    }
-  };
-
-  const handleRemoveLogo = async () => {
-    if (!site) return;
-    try {
-      await updateSite({ siteId, clearLogo: true });
-      toast.success("Logo removed");
-    } catch (_error) {
-      toast.error("Failed to remove logo");
-    }
-  };
-
-  const handleResetAppearance = async () => {
+  const resetAppearance = async () => {
     setIsResettingAppearance(true);
     try {
       await updateSite({
@@ -371,216 +83,116 @@ export function SiteSettingsDialog({
           theme: DEFAULT_SITE_THEME,
         },
       });
-    } catch (_error) {
-      toast.error("Failed to reset site appearance");
+    } catch {
+      toast.error("Unable to reset the appearance. Try again.");
     } finally {
       setIsResettingAppearance(false);
     }
   };
 
-  const showLogo = site?.settings.showLogo !== false;
-  const showSiteName = site?.settings.showSiteName !== false;
-  const showHeaderSearch = site?.settings.showHeaderSearch === true;
-  const expandNavigationByDefault =
-    site?.settings.expandNavigationByDefault === true;
-
-  const navigation = [
-    { id: "brand" as const, icon: Image01Icon, label: "Brand" },
-    {
-      id: "appearance" as const,
-      icon: PaintBrush01Icon,
-      label: "Appearance",
-    },
-    {
-      id: "navigation" as const,
-      icon: Navigation03Icon,
-      label: "Navigation",
-    },
-  ];
-
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent
-        className="h-[min(88vh,42rem)] w-[calc(100%-2rem)] max-w-[56rem] overflow-hidden rounded-[1.5rem] border-sidebar-border bg-background p-0 text-foreground shadow-2xl sm:max-w-[56rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        className="h-[min(88vh,40rem)] w-[calc(100%-1.5rem)] max-w-[52rem] grid-rows-[minmax(0,1fr)] gap-0 overflow-hidden rounded-2xl border-0 bg-background/70 p-0 text-foreground shadow-2xl backdrop-blur-xl backdrop-saturate-150 sm:max-w-[52rem] [&_[data-slot='dialog-close']]:top-2 [&_[data-slot='dialog-close']]:right-2 [&_[data-slot='dialog-close']]:flex [&_[data-slot='dialog-close']]:size-8 [&_[data-slot='dialog-close']]:items-center [&_[data-slot='dialog-close']]:justify-center [&_[data-slot='dialog-close']]:rounded-lg"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
-          titleRef.current?.focus();
+          sectionTitleRef.current?.focus();
         }}
         returnFocusTo={returnFocusTo}
       >
         <DialogDescription className="sr-only">
           Configure the site brand, appearance, and navigation.
         </DialogDescription>
-        <SidebarProvider
-          className="h-full min-h-0 items-stretch"
-          cookieName={null}
-        >
-          <Sidebar
-            className="w-40 border-e border-sidebar-border sm:w-52"
-            collapsible="none"
-          >
-            <SidebarHeader className="h-16 shrink-0 justify-center px-4">
-              <DialogTitle
-                className="text-sm font-semibold focus:outline-none"
-                ref={titleRef}
-                tabIndex={-1}
-              >
-                Site settings
-              </DialogTitle>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarGroup className="p-2">
-                <SidebarGroupContent>
-                  <SidebarMenu aria-label="Site settings sections">
-                    {navigation.map((item) => (
-                      <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton
-                          aria-pressed={section === item.id}
-                          isActive={section === item.id}
-                          onClick={() => setSection(item.id)}
-                        >
-                          <HugeiconsIcon icon={item.icon} />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-          </Sidebar>
+        <DialogTitle className="sr-only">Site settings</DialogTitle>
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[11rem_minmax(0,1fr)] md:grid-rows-1">
+          <aside className="bg-sidebar/35 p-2 pe-12 md:pe-2">
+            <nav
+              aria-label="Site settings sections"
+              className="flex gap-1 md:flex-col"
+            >
+              {SECTIONS.map((item) => (
+                <button
+                  aria-current={section === item.id ? "page" : undefined}
+                  className={cn(
+                    "flex h-8 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-1.5 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 sm:flex-none sm:px-2.5 sm:text-sm md:w-full md:flex-auto md:justify-start",
+                    section === item.id
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                  )}
+                  key={item.id}
+                  onClick={() => setSection(item.id)}
+                  type="button"
+                >
+                  <HugeiconsIcon
+                    aria-hidden
+                    className="hidden size-4 sm:block"
+                    icon={item.icon}
+                  />
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </aside>
 
-          <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-5 py-6 sm:px-7">
+          <main className="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-5 pb-6 sm:px-6">
             {!site ? (
               <div className="flex min-h-full items-center justify-center">
                 <Spinner className="size-5 text-muted-foreground" />
+                <span className="sr-only">Loading site settings</span>
               </div>
-            ) : section === "brand" ? (
-              <SettingsSection title="Brand">
-                <div className="space-y-2">
-                  <SettingSurface label="Site name">
-                    <SiteNameSection
-                      displayName={site.name}
-                      editValue={localName}
-                      isEditing={isEditingName}
-                      onCancel={() => {
-                        setLocalName(site.name);
-                        setIsEditingName(false);
-                      }}
-                      onChange={setLocalName}
-                      onEdit={() => {
-                        setLocalName(site.name);
-                        setIsEditingName(true);
-                      }}
-                      onSave={handleSaveName}
-                    />
-                  </SettingSurface>
-                  <SettingSurface label="Logo">
-                    <LogoUploadSection
-                      fileInputRef={fileInputRef}
-                      isUploading={isUploading}
-                      logoUrl={site.logoUrl}
-                      onFilesAccepted={handleLogoUpload}
-                      onRemove={() => void handleRemoveLogo()}
-                      uploadProgress={uploadProgress}
-                    />
-                  </SettingSurface>
-                  <SettingSurface label="Favicon">
-                    <FaviconSettings
-                      favicon={site.settings.favicon}
-                      siteId={siteId}
-                      onChange={async (favicon) => {
-                        await updateSite(
-                          favicon
-                            ? { siteId, settings: { favicon } }
-                            : { siteId, clearFavicon: true },
-                        );
-                      }}
-                    />
-                  </SettingSurface>
-                </div>
-              </SettingsSection>
-            ) : section === "appearance" ? (
-              <SettingsSection
-                title="Appearance"
-                action={
-                  <Button
-                    className="h-7 px-2 text-xs"
-                    disabled={isResettingAppearance}
-                    onClick={() => void handleResetAppearance()}
-                    size="sm"
-                    variant="ghost"
-                  >
-                    Reset
-                  </Button>
-                }
-              >
-                <SiteAppearanceSettings
-                  sidebarVariant={site.settings.sidebarVariant}
-                  siteId={siteId}
-                  theme={site.settings.theme}
-                />
-              </SettingsSection>
             ) : (
-              <SettingsSection title="Navigation">
-                <div className="space-y-0.5">
-                  <PanelSettingRow
-                    htmlFor="show-site-name"
-                    label="Show site name"
-                    control={
-                      <Switch
-                        id="show-site-name"
-                        checked={showSiteName}
-                        onCheckedChange={(checked) =>
-                          updateSettings("showSiteName", checked)
-                        }
-                      />
-                    }
-                  />
-                  <PanelSettingRow
-                    htmlFor="show-logo"
-                    label="Show logo"
-                    control={
-                      <Switch
-                        id="show-logo"
-                        checked={showLogo}
-                        onCheckedChange={(checked) =>
-                          updateSettings("showLogo", checked)
-                        }
-                      />
-                    }
-                  />
-                  <PanelSettingRow
-                    htmlFor="show-header-search"
-                    label="Search in header"
-                    control={
-                      <Switch
-                        id="show-header-search"
-                        checked={showHeaderSearch}
-                        onCheckedChange={(checked) =>
-                          updateSettings("showHeaderSearch", checked)
-                        }
-                      />
-                    }
-                  />
-                  <PanelSettingRow
-                    htmlFor="expand-navigation-by-default"
-                    label="Expand pages by default"
-                    control={
-                      <Switch
-                        id="expand-navigation-by-default"
-                        checked={expandNavigationByDefault}
-                        onCheckedChange={(checked) =>
-                          updateSettings("expandNavigationByDefault", checked)
-                        }
-                      />
-                    }
-                  />
+              <div className="space-y-6">
+                <div className="flex min-h-12 items-center justify-between gap-3 pe-8">
+                  <h3
+                    className="brand-display text-2xl leading-none font-normal tracking-[-0.025em] focus:outline-none"
+                    ref={sectionTitleRef}
+                    tabIndex={-1}
+                  >
+                    {activeSection.label}
+                  </h3>
+                  {section === "appearance" ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          aria-label="Reset appearance"
+                          disabled={isResettingAppearance}
+                          onClick={() => void resetAppearance()}
+                          size="icon-sm"
+                          variant="ghost"
+                        >
+                          {isResettingAppearance ? (
+                            <Spinner className="size-3.5" />
+                          ) : (
+                            <HugeiconsIcon
+                              aria-hidden
+                              className="size-4"
+                              icon={ArrowReloadHorizontalIcon}
+                            />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={6}>
+                        Reset appearance
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : null}
                 </div>
-              </SettingsSection>
+
+                {section === "brand" ? (
+                  <SiteBrandSettings site={site} />
+                ) : section === "appearance" ? (
+                  <SiteAppearanceSettings
+                    sidebarVariant={site.settings.sidebarVariant}
+                    siteId={siteId}
+                    theme={site.settings.theme}
+                  />
+                ) : (
+                  <SiteNavigationSettings site={site} />
+                )}
+              </div>
             )}
           </main>
-        </SidebarProvider>
+        </div>
       </DialogContent>
     </Dialog>
   );
