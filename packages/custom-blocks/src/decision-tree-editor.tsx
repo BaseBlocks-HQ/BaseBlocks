@@ -235,6 +235,16 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
       setNewAnswer("");
       setEditorPath([...editorState.path, id]);
     };
+    const removeNode = (nodeId: string) => {
+      const deleted = deleteDecisionNode(tree, nodeId);
+      updateTree(deleted.tree);
+      setEditorPath((path) =>
+        removeDecisionTreeNodesFromPath(path, deleted.removed),
+      );
+      setPreviewPath((path) =>
+        removeDecisionTreeNodesFromPath(path, deleted.removed),
+      );
+    };
 
     return (
       <BlockShell label="Edit decision tree">
@@ -347,21 +357,32 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
             <div className="space-y-5 rounded-2xl bg-card p-4 shadow-xs">
               {editorState.activeNode ? (
                 <div className="space-y-2">
-                  <Input
-                    aria-label="Answer"
-                    className="font-medium"
-                    onChange={(event) =>
-                      updateTree({
-                        ...tree,
-                        nodes: tree.nodes.map((node) =>
-                          node.id === editorState.activeNode?.id
-                            ? { ...node, name: event.target.value }
-                            : node,
-                        ),
-                      })
-                    }
-                    value={editorState.activeNode.name}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="Answer"
+                      className="font-medium"
+                      onChange={(event) =>
+                        updateTree({
+                          ...tree,
+                          nodes: tree.nodes.map((node) =>
+                            node.id === editorState.activeNode?.id
+                              ? { ...node, name: event.target.value }
+                              : node,
+                          ),
+                        })
+                      }
+                      value={editorState.activeNode.name}
+                    />
+                    <Button
+                      aria-label={`Delete ${editorState.activeNode.name}`}
+                      onClick={() => removeNode(editorState.activeNode!.id)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <HugeiconsIcon aria-hidden icon={Delete01Icon} />
+                    </Button>
+                  </div>
                   <div className="baseblocks-document-editor min-h-36 rounded-xl bg-background p-3">
                     <Document
                       ariaLabel={`${editorState.activeNode.name} content`}
@@ -413,22 +434,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                       index={index}
                       key={node.id}
                       node={node}
-                      onDelete={() => {
-                        const deleted = deleteDecisionNode(tree, node.id);
-                        updateTree(deleted.tree);
-                        setEditorPath((path) =>
-                          removeDecisionTreeNodesFromPath(
-                            path,
-                            deleted.removed,
-                          ),
-                        );
-                        setPreviewPath((path) =>
-                          removeDecisionTreeNodesFromPath(
-                            path,
-                            deleted.removed,
-                          ),
-                        );
-                      }}
+                      onDelete={() => removeNode(node.id)}
                       onOpen={() =>
                         setEditorPath([...editorState.path, node.id])
                       }
