@@ -20,6 +20,8 @@ import type { OpenEditorCustomBlockViewerHost } from "@openeditor/custom-block/v
 import type { QuickLink } from "./quick-links";
 import { decisionTreeBlock, directoryBlock, quickLinksBlock } from "./index";
 import { resolveDecisionTree } from "./decision-tree-navigation";
+import { DecisionTreeState } from "./decision-tree-state";
+import { QuickLinkAssetLoader } from "./quick-link-asset-loader";
 import { destinationLabel } from "./quick-links";
 import { BlockShell, selectClassName } from "./ui";
 
@@ -188,25 +190,31 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
               {getDocumentText(state.activeNode.document) || "Untitled step"}
             </h3>
           ) : null}
-          <nav aria-label="Decision options" className="grid min-w-0 gap-2">
-            {state.visibleOptions.map((node) => (
-              <button
-                className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                key={node.id}
-                onClick={() => setPath([...state.path, node.id])}
-                type="button"
-              >
-                <span className="min-w-0 break-words text-sm font-medium">
-                  {node.name}
-                </span>
-                <HugeiconsIcon
-                  aria-hidden
-                  className="size-4 shrink-0 text-muted-foreground"
-                  icon={ArrowRight01Icon}
-                />
-              </button>
-            ))}
-          </nav>
+          {state.visibleOptions.length > 0 ? (
+            <nav aria-label="Decision options" className="grid min-w-0 gap-2">
+              {state.visibleOptions.map((node) => (
+                <button
+                  className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  key={node.id}
+                  onClick={() => setPath([...state.path, node.id])}
+                  type="button"
+                >
+                  <span className="min-w-0 break-words text-sm font-medium">
+                    {node.name}
+                  </span>
+                  <HugeiconsIcon
+                    aria-hidden
+                    className="size-4 shrink-0 text-muted-foreground"
+                    icon={ArrowRight01Icon}
+                  />
+                </button>
+              ))}
+            </nav>
+          ) : (
+            <DecisionTreeState
+              variant={state.activeNode ? "result" : "preview"}
+            />
+          )}
           {state.path.length > 1 || path.length > 0 ? (
             <Button
               className="mx-auto mt-5"
@@ -299,8 +307,8 @@ function QuickLinkArtwork({
     <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
       {asset ? (
         <img
-          className="size-full object-cover outline -outline-offset-1 outline-black/10 dark:outline-white/10"
           alt={asset.alt}
+          className="size-full object-cover"
           src={asset.src}
         />
       ) : link.linkType === "app" ? (
@@ -310,35 +318,6 @@ function QuickLinkArtwork({
       )}
     </span>
   );
-}
-
-/** Keeps stale or unauthorized managed-asset results out of rendered links. */
-export class QuickLinkAssetLoader {
-  private generation = 0;
-
-  cancel() {
-    this.generation += 1;
-  }
-
-  load(
-    assetId: string | null,
-    host: OpenEditorCustomBlockViewerHost,
-    update: (asset: { src: string; alt: string } | null) => void,
-  ) {
-    const generation = ++this.generation;
-    update(null);
-    if (!assetId) return;
-    void host.assets
-      ?.resolve(assetId)
-      .then((resolved) => {
-        if (generation !== this.generation) return;
-        const src = resolved ? host.resolveUrl(resolved.src, "asset") : null;
-        update(resolved && src ? { ...resolved, src } : null);
-      })
-      .catch(() => {
-        if (generation === this.generation) update(null);
-      });
-  }
 }
 
 export const baseBlocksCustomBlockViewers = [

@@ -40,5 +40,8 @@
     "apps/*",
     "packages/*",
     "tooling/*"
-  ]
+  ],
+  "patchedDependencies": {
+    "@openeditor/react@0.0.47": "patches/@openeditor%2Freact@0.0.47.patch"
+  }
 }

@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  FolderLibraryIcon,
+  GitForkIcon,
+  LayoutTable01Icon,
+  LinkSquare02Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import { OpenEditorContent, useOpenEditorController } from "@openeditor/react";
 import { baseBlocksCustomBlockEditors } from "@baseblocks/custom-blocks/editor";
 import { extractOpenEditorCustomBlockAssetReferences } from "@openeditor/custom-block";
@@ -15,7 +22,16 @@ import { searchEditor } from "./extensions/search";
 
 import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 import { createBaseBlocksCustomBlockHost } from "./custom-block-host";
+import { createOpenEditorIcon } from "./slash-menu";
 export { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
+
+const customBlockSlashMenuIcons = {
+  "baseblocks.decision-tree": createOpenEditorIcon(GitForkIcon),
+  "baseblocks.directory": createOpenEditorIcon(LayoutTable01Icon),
+  "baseblocks.library": createOpenEditorIcon(FolderLibraryIcon),
+  "baseblocks.quick-links": createOpenEditorIcon(LinkSquare02Icon),
+  "baseblocks.search": createOpenEditorIcon(Search01Icon),
+} as const;
 
 export function extractBaseBlocksCustomBlockAssetIds(
   document: OpenEditorDocument,
@@ -118,6 +134,7 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
   return {
     registry: baseBlocksCustomBlockRegistry,
     editors: [...baseBlocksCustomBlockEditors, searchEditor, libraryEditor],
+    icons: customBlockSlashMenuIcons,
     host: {
       ...createBaseBlocksCustomBlockHost(authorizedAssetIds, pickAsset),
       fields: { document: DocumentEditor },

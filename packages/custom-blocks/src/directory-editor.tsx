@@ -54,6 +54,10 @@ const sensors = [
 type SortData =
   | { kind: "directory-column"; id: string }
   | { kind: "directory-row"; id: string };
+type DirectoryClipboard =
+  | { kind: "column"; values: string[] }
+  | { kind: "row"; values: string[] }
+  | null;
 
 function DragHandle({
   actions,
@@ -108,12 +112,16 @@ function SortableColumn({
   columnId,
   index,
   suppressMenuClick,
+  clipboard,
+  setClipboard,
   updateActive,
 }: {
   active: Directory;
   columnId: string;
   index: number;
   suppressMenuClick: RefObject<boolean>;
+  clipboard: DirectoryClipboard;
+  setClipboard: (clipboard: DirectoryClipboard) => void;
   updateActive: (next: Directory) => void;
 }) {
   const sortable = useSortable<SortData>({
@@ -196,27 +204,32 @@ function SortableColumn({
             {
               icon: Copy01Icon,
               label: "Copy column",
-              onSelect: () =>
-                navigator.clipboard.writeText(
-                  active.rows
-                    .map((row) => row.cells[columnId] ?? "")
-                    .join("\n"),
-                ),
+              onSelect: () => {
+                const values = active.rows.map(
+                  (row) => row.cells[columnId] ?? "",
+                );
+                setClipboard({ kind: "column", values });
+                return navigator.clipboard.writeText(values.join("\n"));
+              },
               separatorBefore: true,
             },
-            {
-              icon: FilePasteIcon,
-              label: "Paste column",
-              onSelect: async () =>
-                updateActive(
-                  pasteDirectoryColumn(
-                    active,
-                    columnId,
-                    (await navigator.clipboard.readText()).split(/\r?\n/),
-                    createId,
-                  ),
-                ),
-            },
+            ...(clipboard?.kind === "column"
+              ? [
+                  {
+                    icon: FilePasteIcon,
+                    label: "Paste column",
+                    onSelect: () =>
+                      updateActive(
+                        pasteDirectoryColumn(
+                          active,
+                          columnId,
+                          clipboard.values,
+                          createId,
+                        ),
+                      ),
+                  },
+                ]
+              : []),
             {
               destructive: true,
               disabled: active.columnIds.length === 1,
@@ -249,6 +262,8 @@ function SortableRow({
   row,
   selected,
   suppressMenuClick,
+  clipboard,
+  setClipboard,
   updateActive,
 }: {
   active: Directory;
@@ -258,6 +273,8 @@ function SortableRow({
   row: DirectoryRow;
   selected: boolean;
   suppressMenuClick: RefObject<boolean>;
+  clipboard: DirectoryClipboard;
+  setClipboard: (clipboard: DirectoryClipboard) => void;
   updateActive: (next: Directory) => void;
 }) {
   const sortable = useSortable<SortData>({
@@ -329,27 +346,32 @@ function SortableRow({
             {
               icon: Copy01Icon,
               label: "Copy row",
-              onSelect: () =>
-                navigator.clipboard.writeText(
-                  active.columnIds
-                    .map((columnId) => row.cells[columnId] ?? "")
-                    .join("\t"),
-                ),
+              onSelect: () => {
+                const values = active.columnIds.map(
+                  (columnId) => row.cells[columnId] ?? "",
+                );
+                setClipboard({ kind: "row", values });
+                return navigator.clipboard.writeText(values.join("\t"));
+              },
               separatorBefore: true,
             },
-            {
-              icon: FilePasteIcon,
-              label: "Paste row",
-              onSelect: async () =>
-                updateActive(
-                  pasteDirectoryRow(
-                    active,
-                    row.id,
-                    (await navigator.clipboard.readText()).split("\t"),
-                    createId,
-                  ),
-                ),
-            },
+            ...(clipboard?.kind === "row"
+              ? [
+                  {
+                    icon: FilePasteIcon,
+                    label: "Paste row",
+                    onSelect: () =>
+                      updateActive(
+                        pasteDirectoryRow(
+                          active,
+                          row.id,
+                          clipboard.values,
+                          createId,
+                        ),
+                      ),
+                  },
+                ]
+              : []),
             {
               destructive: true,
               disabled: active.rows.length === 1,
@@ -414,6 +436,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
     const [activeId, setActiveId] = useState(data.directories[0]?.id ?? "");
     const [renaming, setRenaming] = useState(false);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    const [clipboard, setClipboard] = useState<DirectoryClipboard>(null);
     const suppressMenuClick = useRef(false);
     const active =
       data.directories.find(({ id }) => id === activeId) ?? data.directories[0];
@@ -588,10 +611,12 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                   {active.columnIds.map((columnId, index) => (
                     <SortableColumn
                       active={active}
+                      clipboard={clipboard}
                       columnId={columnId}
                       index={index}
                       key={columnId}
                       suppressMenuClick={suppressMenuClick}
+                      setClipboard={setClipboard}
                       updateActive={updateActive}
                     />
                   ))}
@@ -601,6 +626,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                 {active.rows.map((row, index) => (
                   <SortableRow
                     active={active}
+                    clipboard={clipboard}
                     index={index}
                     key={row.id}
                     onDeleted={() =>
@@ -618,25 +644,63 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                     row={row}
                     selected={selectedRows.includes(row.id)}
                     suppressMenuClick={suppressMenuClick}
+                    setClipboard={setClipboard}
                     updateActive={updateActive}
                   />
                 ))}
               </tbody>
             </table>
           </div>
-          <DragOverlay
-            disabled={(source) =>
-              (source?.data as SortData | undefined)?.kind !==
-              "directory-column"
-            }
-          >
+          <DragOverlay>
             {(source) => {
               const sourceData = source.data as SortData | undefined;
-              if (sourceData?.kind !== "directory-column") return null;
+              if (!sourceData) return null;
+              const previewClassName =
+                "overflow-hidden rounded-xl bg-card text-sm shadow-xl";
+
+              if (sourceData.kind === "directory-row") {
+                const rowIndex = active.rows.findIndex(
+                  (row) => row.id === sourceData.id,
+                );
+                const row = active.rows[rowIndex];
+                if (!row) return null;
+                return (
+                  <div
+                    className={`${previewClassName} flex h-10 min-w-[42rem] items-stretch`}
+                  >
+                    <div className="flex w-10 shrink-0 items-center justify-center bg-muted/35 text-muted-foreground">
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="size-3.5"
+                        icon={DragDropVerticalIcon}
+                      />
+                    </div>
+                    <div className="flex w-10 shrink-0 items-center justify-center bg-muted/35">
+                      <input
+                        aria-hidden
+                        checked={selectedRows.includes(row.id)}
+                        className="size-4 accent-primary"
+                        readOnly
+                        tabIndex={-1}
+                        type="checkbox"
+                      />
+                    </div>
+                    {active.columnIds.map((columnId) => (
+                      <div
+                        className="flex min-w-44 flex-1 items-center truncate border-l border-border/60 px-3"
+                        key={columnId}
+                      >
+                        {row.cells[columnId] ?? ""}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+
               const columnIndex = active.columnIds.indexOf(sourceData.id);
               return (
-                <div className="w-44 overflow-hidden rounded-xl bg-card text-sm shadow-xl">
-                  <div className="flex h-10 items-center gap-2 bg-muted/70 px-3 text-xs font-medium text-muted-foreground">
+                <div className={`${previewClassName} w-44`}>
+                  <div className="flex h-10 items-center gap-1 bg-muted/70 px-2 py-2 text-xs font-medium text-muted-foreground">
                     <HugeiconsIcon
                       aria-hidden
                       className="size-3.5"

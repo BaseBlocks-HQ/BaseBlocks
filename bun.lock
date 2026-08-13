@@ -212,6 +212,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "@openeditor/react@0.0.47": "patches/@openeditor%2Freact@0.0.47.patch",
+  },
   "overrides": {
     "@convex-dev/better-auth": "0.12.5",
     "@radix-ui/react-presence": "1.1.6",

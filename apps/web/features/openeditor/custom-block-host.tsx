@@ -8,15 +8,10 @@ const iconCatalog = [
   { id: "app", label: "App" },
 ] as const;
 
-const safeUrl = (value: string, context: "navigation" | "asset") => {
+const safeUrl = (value: string, _context: "navigation" | "asset") => {
   const trimmed = value.trim();
   if (!trimmed) return null;
-  if (
-    context === "navigation" &&
-    trimmed.startsWith("/") &&
-    !trimmed.startsWith("//")
-  )
-    return trimmed;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
   try {
     const url = new URL(trimmed);
     return url.protocol === "http:" || url.protocol === "https:"

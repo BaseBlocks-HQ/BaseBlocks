@@ -1,0 +1,24 @@
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 7eec8927755a5ed9d91e581ef38b0aecd46e8845..efb39192f1fbe050853a93f7757f3ce4ba9d79cf 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -272,6 +272,7 @@ type OpenEditorReactProps = OpenEditorAuthoringCapabilities & {
+         registry: OpenEditorCustomBlockRegistry;
+         editors: readonly OpenEditorCustomBlockEditorAdapter[];
+         host: OpenEditorCustomBlockEditorHost;
++        icons?: Readonly<Record<string, OpenEditorSlashMenuIcon>>;
+     };
+ };
+ type OpenEditorReactConfig = OpenEditorReactProps;
+diff --git a/dist/index.js b/dist/index.js
+index aeefe880b3d38ececcca8a4e251cc6bf39298d93..a8dfc2ccf8e9657a476acf89cc17ecde13db47f1 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2696,6 +2696,7 @@ var useOpenEditorController = ({
+         key: definition.id,
+         label: definition.label,
+         group: "embed",
++        icon: customBlocks.icons?.[definition.id],
+         order: 1e4 + index,
+         execute: ({ range }) => Boolean(editor?.chain().focus().deleteRange(range).insertContent(createOpenEditorCustomBlockNode(customBlocks.registry, definition.id)).run())
+       })) ?? [],

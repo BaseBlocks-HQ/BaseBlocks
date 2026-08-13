@@ -20,8 +20,10 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
-import { type ReactNode, useState } from "react";
+import type { OpenEditorCustomBlockEditorHost } from "@openeditor/custom-block/editor";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { quickLinksBlock } from "./index";
+import { QuickLinkAssetLoader } from "./quick-link-asset-loader";
 import { destinationLabel, type QuickLink } from "./quick-links";
 import { BlockShell, selectClassName } from "./ui";
 
@@ -67,7 +69,10 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                 {link.artwork?.kind === "icon" && host.icons ? (
                   (host.icons.render(link.artwork.id) as ReactNode)
                 ) : link.artwork?.kind === "asset" ? (
-                  <HugeiconsIcon aria-hidden icon={ImageAdd01Icon} />
+                  <QuickLinkEditorAsset
+                    assetId={link.artwork.assetId}
+                    host={host}
+                  />
                 ) : link.linkType === "app" ? (
                   <HugeiconsIcon aria-hidden icon={AppWindowIcon} />
                 ) : (
@@ -261,3 +266,23 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
     );
   },
 });
+
+function QuickLinkEditorAsset({
+  assetId,
+  host,
+}: {
+  assetId: string;
+  host: OpenEditorCustomBlockEditorHost;
+}) {
+  const [asset, setAsset] = useState<{ src: string; alt: string } | null>(null);
+  const loader = useRef(new QuickLinkAssetLoader());
+  useEffect(() => {
+    loader.current.load(assetId, host, setAsset);
+    return () => loader.current.cancel();
+  }, [assetId, host]);
+  return asset ? (
+    <img alt={asset.alt} className="size-full object-cover" src={asset.src} />
+  ) : (
+    <HugeiconsIcon aria-hidden icon={ImageAdd01Icon} />
+  );
+}

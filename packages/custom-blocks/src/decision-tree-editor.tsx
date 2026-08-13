@@ -4,10 +4,13 @@ import {
   Add01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  Cancel01Icon,
   Copy01Icon,
   Delete01Icon,
   DragDropVerticalIcon,
+  InformationCircleIcon,
   PencilEdit01Icon,
+  Tick01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -28,6 +31,11 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
 import { MiddleTruncate } from "@baseblocks/ui/middle-truncate";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import { DragDropProvider, KeyboardSensor } from "@dnd-kit/react";
@@ -58,6 +66,7 @@ import {
   resolveDecisionTree,
 } from "./decision-tree-navigation";
 import { decisionTreeBlock } from "./index";
+import { DecisionTreeState } from "./decision-tree-state";
 import { ActionMenu, BlockShell, CollectionMenu } from "./ui";
 
 const createId = () => crypto.randomUUID();
@@ -297,34 +306,59 @@ function VisitorFlow({
       aria-label="Decision tree preview"
       className="flex h-[32rem] min-w-0 flex-col overflow-hidden bg-muted/20 p-4 sm:p-6"
     >
+      <div className="flex shrink-0 justify-end">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label="About preview"
+              className="text-muted-foreground"
+              size="icon-xs"
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon aria-hidden icon={InformationCircleIcon} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            This shows what visitors see on the published site.
+          </TooltipContent>
+        </Tooltip>
+      </div>
       <div className="flex min-h-0 flex-1 flex-col justify-center">
         {state.activeNode ? (
           <h3 className="mb-4 shrink-0 text-balance text-center text-xl font-semibold leading-tight sm:text-2xl">
             {getDocumentText(state.activeNode.document) || "Untitled step"}
           </h3>
         ) : null}
-        <nav
-          aria-label="Decision options"
-          className="grid min-h-0 min-w-0 gap-2 overflow-y-auto overscroll-contain"
-        >
-          {state.visibleOptions.map((node) => (
-            <button
-              className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              key={node.id}
-              onClick={() => setPath([...state.path, node.id])}
-              type="button"
-            >
-              <span className="min-w-0 break-words text-sm font-medium">
-                {node.name}
-              </span>
-              <HugeiconsIcon
-                aria-hidden
-                className="size-4 shrink-0 text-muted-foreground"
-                icon={ArrowRight01Icon}
-              />
-            </button>
-          ))}
-        </nav>
+        {state.visibleOptions.length > 0 ? (
+          <nav
+            aria-label="Decision options"
+            className="grid min-h-0 min-w-0 gap-2 overflow-y-auto overscroll-contain"
+          >
+            {state.visibleOptions.map((node) => (
+              <button
+                className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                key={node.id}
+                onClick={() => setPath([...state.path, node.id])}
+                type="button"
+              >
+                <span className="min-w-0 break-words text-sm font-medium">
+                  {node.name}
+                </span>
+                <HugeiconsIcon
+                  aria-hidden
+                  className="size-4 shrink-0 text-muted-foreground"
+                  icon={ArrowRight01Icon}
+                />
+              </button>
+            ))}
+          </nav>
+        ) : (
+          <DecisionTreeState
+            className="min-h-0 flex-1"
+            variant={state.activeNode ? "result" : "preview"}
+          />
+        )}
       </div>
       {state.path.length > 1 || path.length > 0 ? (
         <button
@@ -512,7 +546,8 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     />
                     {!isQuestion ? (
                       <span className="mt-1.5 block text-xs font-normal text-muted-foreground">
-                        Add an answer to turn this result into a question.
+                        With no answers, this step is the final result. Add an
+                        answer to make it a question.
                       </span>
                     ) : null}
                   </label>
@@ -553,36 +588,43 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                 }}
               >
                 <div className="grid min-h-0 flex-1 content-start overflow-y-auto overscroll-contain pe-1">
-                  {editorState.visibleOptions.map((node, index) => (
-                    <DecisionAnswer
-                      index={index}
-                      key={node.id}
-                      node={node}
-                      onDelete={() => removeNode(node.id)}
-                      onOpen={() =>
-                        setEditorPath([...editorState.path, node.id])
-                      }
-                      onRename={(name) =>
-                        updateTree({
-                          ...tree,
-                          nodes: tree.nodes.map((item) =>
-                            item.id === node.id ? { ...item, name } : item,
-                          ),
-                        })
-                      }
-                      suppressMenuClick={suppressMenuClick}
-                      total={editorState.visibleOptions.length}
+                  {editorState.visibleOptions.length > 0 ? (
+                    editorState.visibleOptions.map((node, index) => (
+                      <DecisionAnswer
+                        index={index}
+                        key={node.id}
+                        node={node}
+                        onDelete={() => removeNode(node.id)}
+                        onOpen={() =>
+                          setEditorPath([...editorState.path, node.id])
+                        }
+                        onRename={(name) =>
+                          updateTree({
+                            ...tree,
+                            nodes: tree.nodes.map((item) =>
+                              item.id === node.id ? { ...item, name } : item,
+                            ),
+                          })
+                        }
+                        suppressMenuClick={suppressMenuClick}
+                        total={editorState.visibleOptions.length}
+                      />
+                    ))
+                  ) : (
+                    <DecisionTreeState
+                      className="min-h-full"
+                      variant={editorState.activeNode ? "answers" : "steps"}
                     />
-                  ))}
+                  )}
                 </div>
               </DragDropProvider>
 
               {addingAnswer ? (
-                <div className="flex shrink-0 items-center gap-1 rounded-xl bg-muted/35 p-1">
+                <div className="relative shrink-0 rounded-xl bg-muted/35 p-1">
                   <Input
                     aria-label="New answer"
                     autoFocus
-                    className="border-0 bg-transparent shadow-none focus-visible:bg-background"
+                    className="border-0 bg-transparent pe-20 shadow-none focus-visible:bg-background"
                     onChange={(event) => setNewAnswer(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Escape") {
@@ -601,25 +643,33 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     }
                     value={newAnswer}
                   />
-                  <Button
-                    onClick={() => {
-                      setNewAnswer("");
-                      setAddingAnswer(false);
-                    }}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    disabled={!newAnswer.trim()}
-                    onClick={addAnswer}
-                    size="sm"
-                    type="button"
-                  >
-                    {editorState.activeNode ? "Add answer" : "Add step"}
-                  </Button>
+                  <div className="absolute inset-y-1 end-1 flex items-center gap-0.5">
+                    <Button
+                      aria-label="Cancel"
+                      onClick={() => {
+                        setNewAnswer("");
+                        setAddingAnswer(false);
+                      }}
+                      size="icon-sm"
+                      title="Cancel"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <HugeiconsIcon aria-hidden icon={Cancel01Icon} />
+                    </Button>
+                    <Button
+                      aria-label={
+                        editorState.activeNode ? "Add answer" : "Add step"
+                      }
+                      disabled={!newAnswer.trim()}
+                      onClick={addAnswer}
+                      size="icon-sm"
+                      title={editorState.activeNode ? "Add answer" : "Add step"}
+                      type="button"
+                    >
+                      <HugeiconsIcon aria-hidden icon={Tick01Icon} />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <button
