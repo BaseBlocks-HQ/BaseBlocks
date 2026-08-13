@@ -4,13 +4,13 @@ import {
   Add01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  Copy01Icon,
   Delete01Icon,
   DragDropVerticalIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
-import { Textarea } from "@baseblocks/ui/textarea";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import { DragDropProvider, KeyboardSensor } from "@dnd-kit/react";
@@ -28,6 +28,7 @@ import {
   addDecisionTree,
   deleteDecisionNode,
   deleteDecisionTree,
+  duplicateDecisionTree,
   renameDecisionTree,
   updateDecisionDocument,
   updateDecisionTree,
@@ -40,7 +41,7 @@ import {
   resolveDecisionTree,
 } from "./decision-tree-navigation";
 import { decisionTreeBlock } from "./index";
-import { ActionMenu, BlockShell, selectClassName } from "./ui";
+import { BlockShell, CollectionMenu } from "./ui";
 
 const createId = () => crypto.randomUUID();
 const sensors = [
@@ -86,7 +87,7 @@ function DecisionAnswer({
   const label = `Move answer ${index + 1}; position ${index + 1} of ${total}`;
   return (
     <div
-      className={`flex items-center gap-1 rounded-xl bg-muted/65 p-2 ${sortable.isDropTarget ? "ring-2 ring-ring/50" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`flex min-w-0 items-center gap-1 border-b border-border/60 py-2 last:border-b-0 ${sortable.isDropTarget ? "bg-muted/60" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
       <Button
@@ -102,7 +103,7 @@ function DecisionAnswer({
       </Button>
       <Input
         aria-label={`Answer ${index + 1}`}
-        className="min-w-0 flex-1 border-transparent bg-transparent font-medium shadow-none hover:bg-background focus-visible:bg-background"
+        className="min-w-0 flex-1 border-transparent bg-transparent font-medium shadow-none hover:bg-muted/40 focus-visible:bg-background"
         onChange={(event) => onRename(event.target.value)}
         value={node.name}
       />
@@ -148,11 +149,38 @@ function VisitorFlow({
   return (
     <aside
       aria-label="Decision tree preview"
-      className="flex min-h-72 flex-col justify-center bg-background p-5 sm:p-8"
+      className="flex min-h-80 min-w-0 flex-col justify-center overflow-hidden border-t border-border/80 bg-muted/20 p-5 sm:p-8 lg:border-l lg:border-t-0"
     >
+      <p className="mb-6 text-center text-xs font-medium text-muted-foreground">
+        Preview
+      </p>
+      {state.activeNode ? (
+        <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
+          {getDocumentText(state.activeNode.document) || "Untitled step"}
+        </h3>
+      ) : null}
+      <div className="grid min-w-0 gap-2">
+        {state.visibleOptions.map((node) => (
+          <button
+            className="flex min-h-14 min-w-0 w-full items-center justify-between gap-3 rounded-xl border border-border/80 bg-background p-4 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            key={node.id}
+            onClick={() => setPath([...state.path, node.id])}
+            type="button"
+          >
+            <span className="min-w-0 break-words text-sm font-medium">
+              {node.name}
+            </span>
+            <HugeiconsIcon
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground"
+              icon={ArrowRight01Icon}
+            />
+          </button>
+        ))}
+      </div>
       {state.path.length > 1 || path.length > 0 ? (
         <button
-          className="order-3 mx-auto mt-5 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="mx-auto mt-5 flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={() => {
             const next = state.path.slice(0, -1);
             setPath(next.length === 1 ? [] : next);
@@ -167,28 +195,6 @@ function VisitorFlow({
           Previous question
         </button>
       ) : null}
-      {state.activeNode ? (
-        <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
-          {getDocumentText(state.activeNode.document) || "Untitled step"}
-        </h3>
-      ) : null}
-      <div className="grid gap-2">
-        {state.visibleOptions.map((node) => (
-          <button
-            className="group flex min-h-14 w-full items-center justify-between rounded-2xl bg-card p-4 text-left shadow-xs transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            key={node.id}
-            onClick={() => setPath([...state.path, node.id])}
-            type="button"
-          >
-            <span className="text-sm font-medium">{node.name}</span>
-            <HugeiconsIcon
-              aria-hidden
-              className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-              icon={ArrowRight01Icon}
-            />
-          </button>
-        ))}
-      </div>
     </aside>
   );
 }
@@ -198,6 +204,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
   render: function DecisionTreeEditor({ data, updateData }) {
     const updateDataJson = (value: unknown) => updateData(value as typeof data);
     const [treeId, setTreeId] = useState(data.trees[0]?.id ?? "");
+    const [renaming, setRenaming] = useState(false);
     const [editorPath, setEditorPath] = useState<string[]>([]);
     const [previewPath, setPreviewPath] = useState<string[]>([]);
     const [newAnswer, setNewAnswer] = useState("");
@@ -242,75 +249,86 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
 
     return (
       <BlockShell label="Edit decision tree" surface>
-        <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-2">
-          {data.trees.length > 1 ? (
-            <select
-              aria-label="Decision tree"
-              className={`${selectClassName} max-w-48`}
-              onChange={(event) => {
-                setTreeId(event.target.value);
+        <div className="flex min-w-0 items-center border-b border-border/70 bg-muted/35 px-3 py-2">
+          {renaming ? (
+            <Input
+              aria-label="Decision tree name"
+              autoFocus
+              className="min-w-36 max-w-72 bg-background font-semibold"
+              onBlur={() => setRenaming(false)}
+              onChange={(event) =>
+                updateDataJson(
+                  renameDecisionTree(data, tree.id, event.target.value),
+                )
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === "Escape")
+                  setRenaming(false);
+              }}
+              value={tree.label}
+            />
+          ) : (
+            <CollectionMenu
+              currentId={tree.id}
+              items={[
+                {
+                  icon: Add01Icon,
+                  label: "Add tree",
+                  onSelect: () => {
+                    const next = addDecisionTree(data, createId());
+                    updateDataJson(next.value);
+                    setTreeId(next.activeId);
+                    setEditorPath([]);
+                    setPreviewPath([]);
+                  },
+                },
+                {
+                  label: "Rename tree",
+                  onSelect: () => setRenaming(true),
+                },
+                {
+                  icon: Copy01Icon,
+                  label: "Duplicate tree",
+                  onSelect: () => {
+                    const next = duplicateDecisionTree(data, tree.id, createId);
+                    updateDataJson(next.value);
+                    setTreeId(next.activeId);
+                    setEditorPath([]);
+                    setPreviewPath([]);
+                  },
+                },
+                {
+                  destructive: true,
+                  disabled: data.trees.length === 1,
+                  icon: Delete01Icon,
+                  label: "Delete tree",
+                  onSelect: () => {
+                    const next = deleteDecisionTree(data, tree.id);
+                    updateDataJson(next.value);
+                    setTreeId(next.activeId);
+                    setEditorPath([]);
+                    setPreviewPath([]);
+                  },
+                  separatorBefore: true,
+                },
+              ]}
+              label="Decision trees"
+              onChange={(id) => {
+                setTreeId(id);
                 setEditorPath([]);
                 setPreviewPath([]);
               }}
-              value={tree.id}
-            >
-              {data.trees.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          <Input
-            aria-label="Decision tree name"
-            className="min-w-36 flex-1 rounded-lg border-transparent bg-transparent font-semibold shadow-none hover:bg-muted/50 focus-visible:bg-background"
-            onChange={(event) =>
-              updateDataJson(
-                renameDecisionTree(data, tree.id, event.target.value),
-              )
-            }
-            value={tree.label}
-          />
-          <Button
-            onClick={() => {
-              const next = addDecisionTree(data, createId());
-              updateDataJson(next.value);
-              setTreeId(next.activeId);
-              setEditorPath([]);
-              setPreviewPath([]);
-            }}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <HugeiconsIcon aria-hidden icon={Add01Icon} />
-            Tree
-          </Button>
-          <ActionMenu
-            items={[
-              {
-                destructive: true,
-                disabled: data.trees.length === 1,
-                icon: Delete01Icon,
-                label: "Delete tree",
-                onSelect: () => {
-                  const next = deleteDecisionTree(data, tree.id);
-                  updateDataJson(next.value);
-                  setTreeId(next.activeId);
-                  setEditorPath([]);
-                  setPreviewPath([]);
-                },
-              },
-            ]}
-            label="Decision tree actions"
-          />
+              options={data.trees}
+              valueLabel={tree.label}
+            />
+          )}
         </div>
 
-        <div className="grid min-h-[44rem] overflow-hidden bg-background lg:grid-cols-[minmax(25rem,0.95fr)_minmax(28rem,1.05fr)]">
-          <section className="border-r bg-muted/25 p-4 sm:p-6">
+        <div className="grid min-w-0 overflow-hidden bg-card lg:grid-cols-2">
+          <section className="min-w-0 bg-card p-4 sm:p-6">
             <nav
               aria-label="Edit path"
-              className="mb-4 flex min-h-11 items-center gap-1 overflow-x-auto rounded-xl bg-card p-2 shadow-xs"
+              className="mb-6 flex min-h-10 items-center gap-1 overflow-x-auto border-b border-border/70 pb-3"
             >
               <Button
                 onClick={() => setEditorPath([])}
@@ -350,7 +368,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
               })}
             </nav>
 
-            <div className="space-y-5 rounded-2xl bg-card p-4 shadow-xs">
+            <div className="space-y-6">
               {editorState.activeNode ? (
                 <div className="space-y-4">
                   <div className="flex items-end gap-2">
@@ -395,9 +413,9 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     htmlFor={`${editorState.activeNode.id}-prompt`}
                   >
                     Question or result
-                    <Textarea
+                    <Input
                       aria-label="Question or result"
-                      className="mt-1 min-h-24 bg-background text-base font-medium text-foreground"
+                      className="mt-1 bg-background text-base font-medium text-foreground"
                       id={`${editorState.activeNode.id}-prompt`}
                       onChange={(event) =>
                         updateTree(
@@ -441,7 +459,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                   });
                 }}
               >
-                <div className="grid gap-2">
+                <div className="grid border-y border-border/60">
                   {editorState.visibleOptions.map((node, index) => (
                     <DecisionAnswer
                       index={index}

@@ -182,10 +182,34 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
             ))}
           </select>
         ) : null}
-        <div className="flex min-h-72 flex-col justify-center rounded-2xl bg-background p-5 sm:p-8">
+        <div className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted/20 p-5 sm:p-8">
+          {state.activeNode ? (
+            <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
+              {getDocumentText(state.activeNode.document) || "Untitled step"}
+            </h3>
+          ) : null}
+          <nav aria-label="Decision options" className="grid min-w-0 gap-2">
+            {state.visibleOptions.map((node) => (
+              <button
+                className="flex min-h-14 min-w-0 w-full items-center justify-between gap-3 rounded-xl border border-border/80 bg-background p-4 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                key={node.id}
+                onClick={() => setPath([...state.path, node.id])}
+                type="button"
+              >
+                <span className="min-w-0 break-words text-sm font-medium">
+                  {node.name}
+                </span>
+                <HugeiconsIcon
+                  aria-hidden
+                  className="size-4 shrink-0 text-muted-foreground"
+                  icon={ArrowRight01Icon}
+                />
+              </button>
+            ))}
+          </nav>
           {state.path.length > 1 || path.length > 0 ? (
             <Button
-              className="mx-auto order-3 mt-5"
+              className="mx-auto mt-5"
               onClick={() => {
                 const next = state.path.slice(0, -1);
                 setPath(next.length === 1 ? [] : next);
@@ -198,28 +222,6 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
               Previous question
             </Button>
           ) : null}
-          {state.activeNode ? (
-            <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
-              {getDocumentText(state.activeNode.document) || "Untitled step"}
-            </h3>
-          ) : null}
-          <nav aria-label="Decision options" className="grid gap-2">
-            {state.visibleOptions.map((node) => (
-              <button
-                className="group flex min-h-14 w-full items-center justify-between rounded-2xl bg-card p-4 text-left shadow-xs transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                key={node.id}
-                onClick={() => setPath([...state.path, node.id])}
-                type="button"
-              >
-                <span className="text-sm font-medium">{node.name}</span>
-                <HugeiconsIcon
-                  aria-hidden
-                  className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                  icon={ArrowRight01Icon}
-                />
-              </button>
-            ))}
-          </nav>
         </div>
       </BlockShell>
     );

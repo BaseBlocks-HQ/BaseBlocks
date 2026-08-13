@@ -122,6 +122,30 @@ export function renameDecisionTree(
   };
 }
 
+export function duplicateDecisionTree(
+  value: DecisionTreeValue,
+  treeId: string,
+  createId: () => string,
+): { value: DecisionTreeValue; activeId: string } {
+  const source = value.trees.find(({ id }) => id === treeId);
+  if (!source) return { value, activeId: treeId };
+  const nodeIds = new Map(source.nodes.map((node) => [node.id, createId()]));
+  const id = createId();
+  const tree: DecisionTree = {
+    id,
+    label: `${source.label} copy`,
+    nodes: source.nodes.map((node) => ({
+      ...node,
+      id: nodeIds.get(node.id)!,
+      parentId: node.parentId ? (nodeIds.get(node.parentId) ?? null) : null,
+    })),
+  };
+  return {
+    value: { ...value, trees: [...value.trees, tree] },
+    activeId: id,
+  };
+}
+
 export function deleteDecisionTree(
   value: DecisionTreeValue,
   treeId: string,

@@ -17,10 +17,10 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
-import { DragDropProvider, KeyboardSensor } from "@dnd-kit/react";
+import { DragDropProvider } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
-import { useState } from "react";
+import { type RefObject, useRef, useState } from "react";
 import {
   addDirectory,
   deleteDirectory,
@@ -39,7 +39,13 @@ import {
   type DirectoryRow,
 } from "./directory";
 import { directoryBlock } from "./index";
-import { ActionMenu, BlockShell, selectClassName } from "./ui";
+import {
+  type ActionItem,
+  ActionMenu,
+  BlockShell,
+  CollectionMenu,
+  selectClassName,
+} from "./ui";
 
 const createId = () => crypto.randomUUID();
 const sensors = [
@@ -48,7 +54,6 @@ const sensors = [
       new PointerActivationConstraints.Distance({ value: 5 }),
     ],
   }),
-  KeyboardSensor,
 ];
 
 type SortData =
@@ -56,32 +61,50 @@ type SortData =
   | { kind: "directory-row"; id: string };
 
 function DragHandle({
+  actions,
   axis,
   handleRef,
   index,
+  suppressMenuClick,
   total,
 }: {
+  actions: ActionItem[];
   axis: "column" | "row";
   handleRef: (element: Element | null) => void;
   index: number;
+  suppressMenuClick: RefObject<boolean>;
   total: number;
 }) {
   const label = `${axis === "column" ? "Move column" : "Move row"} ${index + 1}; position ${index + 1} of ${total}`;
   return (
-    <Button
-      aria-label={label}
-      className="cursor-grab touch-none text-muted-foreground opacity-40 hover:opacity-100 active:cursor-grabbing"
-      ref={handleRef}
-      size="icon-xs"
-      title={label}
-      type="button"
-      variant="ghost"
-    >
-      <HugeiconsIcon
-        aria-hidden
-        icon={axis === "column" ? DragDropHorizontalIcon : DragDropVerticalIcon}
-      />
-    </Button>
+    <ActionMenu
+      items={actions}
+      label={`${axis === "column" ? "Column" : "Row"} ${index + 1} actions`}
+      trigger={
+        <Button
+          aria-label={`${label}. Select for actions.`}
+          className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+          onClickCapture={(event) => {
+            if (!suppressMenuClick.current) return;
+            event.preventDefault();
+            event.stopPropagation();
+            suppressMenuClick.current = false;
+          }}
+          ref={handleRef}
+          size="icon-xs"
+          title={`${label}. Select for actions.`}
+          type="button"
+          variant="ghost"
+        >
+          <HugeiconsIcon
+            aria-hidden
+            icon={
+              axis === "column" ? DragDropHorizontalIcon : DragDropVerticalIcon
+            }
+          />
+        </Button>
+      }
+    />
   );
 }
 
@@ -89,11 +112,13 @@ function SortableColumn({
   active,
   columnId,
   index,
+  suppressMenuClick,
   updateActive,
 }: {
   active: Directory;
   columnId: string;
   index: number;
+  suppressMenuClick: RefObject<boolean>;
   updateActive: (next: Directory) => void;
 }) {
   const sortable = useSortable<SortData>({
@@ -107,22 +132,47 @@ function SortableColumn({
   });
   return (
     <th
-      className={`min-w-44 border-l px-2 py-2 text-left first:border-l-0 ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`min-w-44 border-l border-border/70 px-2 py-2 text-left first:border-l-0 ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
       scope="col"
     >
       <div className="flex items-center gap-1">
         <DragHandle
-          axis="column"
-          handleRef={sortable.handleRef}
-          index={index}
-          total={active.columnIds.length}
-        />
-        <span className="min-w-0 flex-1 text-xs font-medium text-muted-foreground">
-          {`Column ${index + 1}`}
-        </span>
-        <ActionMenu
-          items={[
+          actions={[
+            {
+              disabled: index === 0,
+              icon: ArrowLeft01Icon,
+              label: "Move left",
+              onSelect: () => {
+                const target = active.columnIds[index - 1];
+                if (target)
+                  updateActive({
+                    ...active,
+                    columnIds: moveDirectoryItem(
+                      active.columnIds,
+                      columnId,
+                      target,
+                    ),
+                  });
+              },
+            },
+            {
+              disabled: index === active.columnIds.length - 1,
+              icon: ArrowRight01Icon,
+              label: "Move right",
+              onSelect: () => {
+                const target = active.columnIds[index + 1];
+                if (target)
+                  updateActive({
+                    ...active,
+                    columnIds: moveDirectoryItem(
+                      active.columnIds,
+                      columnId,
+                      target,
+                    ),
+                  });
+              },
+            },
             {
               icon: ArrowLeft01Icon,
               label: "Insert before",
@@ -130,6 +180,7 @@ function SortableColumn({
                 updateActive(
                   insertDirectoryColumn(active, columnId, false, createId),
                 ),
+              separatorBefore: true,
             },
             {
               icon: ArrowRight01Icon,
@@ -181,8 +232,15 @@ function SortableColumn({
               separatorBefore: true,
             },
           ]}
-          label={`Column ${index + 1} actions`}
+          axis="column"
+          handleRef={sortable.handleRef}
+          index={index}
+          suppressMenuClick={suppressMenuClick}
+          total={active.columnIds.length}
         />
+        <span className="min-w-0 flex-1 text-xs font-medium text-muted-foreground">
+          {`Column ${index + 1}`}
+        </span>
       </div>
     </th>
   );
@@ -191,16 +249,20 @@ function SortableColumn({
 function SortableRow({
   active,
   index,
+  onDeleted,
   onSelectedChange,
   row,
   selected,
+  suppressMenuClick,
   updateActive,
 }: {
   active: Directory;
   index: number;
+  onDeleted: () => void;
   onSelectedChange: () => void;
   row: DirectoryRow;
   selected: boolean;
+  suppressMenuClick: RefObject<boolean>;
   updateActive: (next: Directory) => void;
 }) {
   const sortable = useSortable<SortData>({
@@ -214,54 +276,38 @@ function SortableRow({
   });
   return (
     <tr
-      className={`group border-t hover:bg-muted/30 ${selected ? "bg-primary/10" : ""} ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`group border-t border-border/60 hover:bg-muted/20 ${selected ? "bg-primary/10" : ""} ${sortable.isDropTarget ? "bg-muted" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
-      <th className="w-10 px-1 text-center" scope="row">
+      <th className="w-10 bg-muted/35 px-1 text-center" scope="row">
         <DragHandle
-          axis="row"
-          handleRef={sortable.handleRef}
-          index={index}
-          total={active.rows.length}
-        />
-      </th>
-      <td className="w-10 px-2 py-1 text-center">
-        <input
-          aria-label={`Select row ${index + 1}`}
-          checked={selected}
-          className="size-4 accent-primary"
-          onChange={onSelectedChange}
-          type="checkbox"
-        />
-      </td>
-      {active.columnIds.map((columnId, columnIndex) => (
-        <td className="border-l p-0" key={columnId}>
-          <Input
-            aria-label={`Row ${index + 1}, column ${columnIndex + 1}`}
-            className="h-10 rounded-none border-0 bg-transparent px-3 shadow-none focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
-            onChange={(event) =>
-              updateActive({
-                ...active,
-                rows: active.rows.map((item) =>
-                  item.id === row.id
-                    ? {
-                        ...item,
-                        cells: {
-                          ...item.cells,
-                          [columnId]: event.target.value,
-                        },
-                      }
-                    : item,
-                ),
-              })
-            }
-            value={row.cells[columnId] ?? ""}
-          />
-        </td>
-      ))}
-      <td className="w-10 border-l px-1 text-center opacity-40 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-        <ActionMenu
-          items={[
+          actions={[
+            {
+              disabled: index === 0,
+              icon: ArrowUp01Icon,
+              label: "Move up",
+              onSelect: () => {
+                const target = active.rows[index - 1];
+                if (target)
+                  updateActive({
+                    ...active,
+                    rows: moveDirectoryItem(active.rows, row.id, target.id),
+                  });
+              },
+            },
+            {
+              disabled: index === active.rows.length - 1,
+              icon: ArrowDown01Icon,
+              label: "Move down",
+              onSelect: () => {
+                const target = active.rows[index + 1];
+                if (target)
+                  updateActive({
+                    ...active,
+                    rows: moveDirectoryItem(active.rows, row.id, target.id),
+                  });
+              },
+            },
             {
               icon: ArrowUp01Icon,
               label: "Insert above",
@@ -269,6 +315,7 @@ function SortableRow({
                 updateActive(
                   insertDirectoryRow(active, row.id, false, createId),
                 ),
+              separatorBefore: true,
             },
             {
               icon: ArrowDown01Icon,
@@ -313,13 +360,54 @@ function SortableRow({
               disabled: active.rows.length === 1,
               icon: Delete01Icon,
               label: "Delete row",
-              onSelect: () => updateActive(deleteDirectoryRow(active, row.id)),
+              onSelect: () => {
+                updateActive(deleteDirectoryRow(active, row.id));
+                onDeleted();
+              },
               separatorBefore: true,
             },
           ]}
-          label={`Row ${index + 1} actions`}
+          axis="row"
+          handleRef={sortable.handleRef}
+          index={index}
+          suppressMenuClick={suppressMenuClick}
+          total={active.rows.length}
+        />
+      </th>
+      <td className="w-10 bg-muted/35 px-2 py-1 text-center">
+        <input
+          aria-label={`Select row ${index + 1}`}
+          checked={selected}
+          className="size-4 accent-primary"
+          onChange={onSelectedChange}
+          type="checkbox"
         />
       </td>
+      {active.columnIds.map((columnId, columnIndex) => (
+        <td className="border-l p-0" key={columnId}>
+          <Input
+            aria-label={`Row ${index + 1}, column ${columnIndex + 1}`}
+            className="h-10 rounded-none border-0 bg-transparent px-3 shadow-none focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+            onChange={(event) =>
+              updateActive({
+                ...active,
+                rows: active.rows.map((item) =>
+                  item.id === row.id
+                    ? {
+                        ...item,
+                        cells: {
+                          ...item.cells,
+                          [columnId]: event.target.value,
+                        },
+                      }
+                    : item,
+                ),
+              })
+            }
+            value={row.cells[columnId] ?? ""}
+          />
+        </td>
+      ))}
     </tr>
   );
 }
@@ -329,7 +417,9 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
   render: function DirectoryEditor({ data, updateData }) {
     const updateDataJson = (value: unknown) => updateData(value as typeof data);
     const [activeId, setActiveId] = useState(data.directories[0]?.id ?? "");
+    const [renaming, setRenaming] = useState(false);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    const suppressMenuClick = useRef(false);
     const active =
       data.directories.find(({ id }) => id === activeId) ?? data.directories[0];
     if (!active) return null;
@@ -342,50 +432,130 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
 
     return (
       <BlockShell label="Edit directory" surface>
-        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 bg-muted/35 px-3 py-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            {data.directories.length > 1 ? (
-              <select
-                aria-label="Directory"
-                className={`${selectClassName} max-w-48`}
-                onChange={(event) => setActiveId(event.target.value)}
-                value={active.id}
-              >
-                {data.directories.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            ) : null}
-            <Input
-              aria-label="Directory name"
-              className="min-w-36 max-w-64 rounded-lg border-transparent bg-transparent font-semibold shadow-none hover:bg-muted/50 focus-visible:bg-background"
-              onChange={(event) =>
-                updateDataJson(
-                  renameDirectory(data, active.id, event.target.value),
-                )
-              }
-              value={active.label}
-            />
+            {renaming ? (
+              <Input
+                aria-label="Directory name"
+                autoFocus
+                className="min-w-36 max-w-72 bg-background font-semibold"
+                onBlur={() => setRenaming(false)}
+                onChange={(event) =>
+                  updateDataJson(
+                    renameDirectory(data, active.id, event.target.value),
+                  )
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === "Escape")
+                    setRenaming(false);
+                }}
+                value={active.label}
+              />
+            ) : (
+              <CollectionMenu
+                currentId={active.id}
+                items={[
+                  {
+                    icon: Add01Icon,
+                    label: "Add directory",
+                    onSelect: () => {
+                      const next = addDirectory(data, createId);
+                      updateDataJson(next.content);
+                      setActiveId(next.activeId);
+                    },
+                  },
+                  {
+                    label: "Rename directory",
+                    onSelect: () => setRenaming(true),
+                  },
+                  {
+                    icon: Copy01Icon,
+                    label: "Duplicate directory",
+                    onSelect: () => {
+                      const next = duplicateDirectory(
+                        data,
+                        active.id,
+                        createId,
+                      );
+                      updateDataJson(next.content);
+                      setActiveId(next.activeId);
+                    },
+                  },
+                  {
+                    destructive: true,
+                    disabled: data.directories.length === 1,
+                    icon: Delete01Icon,
+                    label: "Delete directory",
+                    onSelect: () => {
+                      const next = deleteDirectory(data, active.id);
+                      updateDataJson(next.content);
+                      setActiveId(next.activeId);
+                    },
+                    separatorBefore: true,
+                  },
+                ]}
+                label="Directories"
+                onChange={(id) => {
+                  setActiveId(id);
+                  setSelectedRows([]);
+                }}
+                options={data.directories}
+                valueLabel={active.label}
+              />
+            )}
           </div>
-          <div className="flex items-center gap-1">
-            <Input
-              aria-label="Rows per page"
-              className="w-24 rounded-lg border-transparent bg-muted/50 shadow-none"
-              min={1}
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
+            {selectedRows.length > 0 ? (
+              <>
+                <span className="px-2 text-xs font-medium text-muted-foreground tabular-nums">
+                  {selectedRows.length} selected
+                </span>
+                <Button
+                  onClick={() => {
+                    const next = selectedRows.reduce(
+                      (directory, rowId) =>
+                        deleteDirectoryRow(directory, rowId),
+                      active,
+                    );
+                    updateActive(next);
+                    setSelectedRows([]);
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <HugeiconsIcon aria-hidden icon={Delete01Icon} />
+                  Delete
+                </Button>
+              </>
+            ) : null}
+            <select
+              aria-label="Rows shown per page in the public view"
+              className={`${selectClassName} max-w-48`}
               onChange={(event) =>
                 updateActive({
                   ...active,
-                  pageSize: event.target.value
-                    ? Number(event.target.value)
-                    : null,
+                  pageSize:
+                    event.target.value === "all"
+                      ? null
+                      : Number(event.target.value),
                 })
               }
-              placeholder="All rows"
-              type="number"
-              value={active.pageSize ?? ""}
-            />
+              value={active.pageSize ?? "all"}
+            >
+              {active.pageSize && ![5, 10, 25, 50].includes(active.pageSize) ? (
+                <option
+                  value={active.pageSize}
+                >{`Public view · ${active.pageSize} rows`}</option>
+              ) : null}
+              <option value="all">Public view · All rows</option>
+              {[5, 10, 25, 50].map((count) => (
+                <option
+                  key={count}
+                  value={count}
+                >{`Public view · ${count} rows`}</option>
+              ))}
+            </select>
             <Button
               onClick={() => {
                 const last = active.rows.at(-1);
@@ -400,47 +570,18 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               <HugeiconsIcon aria-hidden icon={Add01Icon} />
               Add row
             </Button>
-            <ActionMenu
-              items={[
-                {
-                  icon: Add01Icon,
-                  label: "Add directory",
-                  onSelect: () => {
-                    const next = addDirectory(data, createId);
-                    updateDataJson(next.content);
-                    setActiveId(next.activeId);
-                  },
-                },
-                {
-                  icon: Copy01Icon,
-                  label: "Duplicate directory",
-                  onSelect: () => {
-                    const next = duplicateDirectory(data, active.id, createId);
-                    updateDataJson(next.content);
-                    setActiveId(next.activeId);
-                  },
-                },
-                {
-                  destructive: true,
-                  disabled: data.directories.length === 1,
-                  icon: Delete01Icon,
-                  label: "Delete directory",
-                  onSelect: () => {
-                    const next = deleteDirectory(data, active.id);
-                    updateDataJson(next.content);
-                    setActiveId(next.activeId);
-                  },
-                  separatorBefore: true,
-                },
-              ]}
-              label="Directory actions"
-            />
           </div>
         </div>
 
         <DragDropProvider
           sensors={sensors}
+          onDragStart={() => {
+            suppressMenuClick.current = true;
+          }}
           onDragEnd={(event) => {
+            window.setTimeout(() => {
+              suppressMenuClick.current = false;
+            }, 250);
             if (event.canceled || !isSortable(event.operation.source)) return;
             const source = event.operation.source;
             const data = source.data as SortData | undefined;
@@ -466,15 +607,15 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               });
           }}
         >
-          <div className="min-h-[30rem] overflow-x-auto border-y bg-background">
-            <table className="w-full min-w-[62rem] border-collapse text-sm">
+          <div className="min-h-[30rem] overflow-x-auto bg-card">
+            <table className="w-full min-w-[42rem] border-collapse text-sm">
               <caption className="sr-only">{active.label}</caption>
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="bg-muted/70 text-left text-xs text-muted-foreground">
                 <tr>
-                  <th className="w-10 px-1" scope="col">
+                  <th className="w-10 bg-muted/70 px-1" scope="col">
                     <span className="sr-only">Row order</span>
                   </th>
-                  <th className="w-10 px-2 py-2" scope="col">
+                  <th className="w-10 bg-muted/70 px-2 py-2" scope="col">
                     <input
                       aria-label="Select all rows"
                       checked={
@@ -498,12 +639,10 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                       columnId={columnId}
                       index={index}
                       key={columnId}
+                      suppressMenuClick={suppressMenuClick}
                       updateActive={updateActive}
                     />
                   ))}
-                  <th className="w-10 border-l" scope="col">
-                    <span className="sr-only">Row actions</span>
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -512,6 +651,11 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                     active={active}
                     index={index}
                     key={row.id}
+                    onDeleted={() =>
+                      setSelectedRows((current) =>
+                        current.filter((id) => id !== row.id),
+                      )
+                    }
                     onSelectedChange={() =>
                       setSelectedRows((current) =>
                         current.includes(row.id)
@@ -521,6 +665,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                     }
                     row={row}
                     selected={selectedRows.includes(row.id)}
+                    suppressMenuClick={suppressMenuClick}
                     updateActive={updateActive}
                   />
                 ))}
@@ -528,20 +673,6 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
             </table>
           </div>
         </DragDropProvider>
-        <Button
-          className="ml-1 w-fit text-muted-foreground"
-          onClick={() => {
-            const last = active.rows.at(-1);
-            if (last)
-              updateActive(insertDirectoryRow(active, last.id, true, createId));
-          }}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          <HugeiconsIcon aria-hidden icon={Add01Icon} />
-          New record
-        </Button>
       </BlockShell>
     );
   },
