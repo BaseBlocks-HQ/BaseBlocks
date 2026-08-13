@@ -66,23 +66,23 @@ function LibrarySettings({
   );
   const libraryId = value.libraryId as LibraryId | undefined;
 
-  const create = async () => {
+  const create = () => {
     const name = newName.trim();
     if (!name || !siteId || creating) return;
     setCreating(true);
     setError(null);
-    try {
-      const nextLibraryId = await createLibrary({ siteId, name });
-      onChange({ ...value, libraryId: nextLibraryId });
-      setNewName("");
-      onComplete?.();
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Could not create library.",
-      );
-    } finally {
-      setCreating(false);
-    }
+    void createLibrary({ siteId, name })
+      .then((nextLibraryId) => {
+        onChange({ ...value, libraryId: nextLibraryId });
+        setNewName("");
+        onComplete?.();
+      })
+      .catch((cause: unknown) => {
+        setError(
+          cause instanceof Error ? cause.message : "Could not create library.",
+        );
+      })
+      .finally(() => setCreating(false));
   };
 
   if (!siteId) {
@@ -136,6 +136,7 @@ function LibrarySettings({
               setError(null);
             }}
             onKeyDown={(event) => {
+              if (event.nativeEvent.isComposing) return;
               if (event.key === "Enter") void create();
             }}
             placeholder="Library name"

@@ -23,6 +23,7 @@ import {
   type OpenEditorNodeViewProps,
   useOpenEditorBlockTarget,
 } from "@openeditor/react";
+import { useId } from "react";
 
 const SearchMenuIcon = createOpenEditorIcon(Search01Icon);
 
@@ -60,6 +61,9 @@ function SearchNode({ node }: OpenEditorNodeViewProps) {
 
 function SearchSettingsPanel({ target }: OpenEditorBlockPanelProps) {
   const block = useOpenEditorBlockTarget(target);
+  const placeholderId = useId();
+  const maxResultsId = useId();
+  const fileTypesId = useId();
   if (!block) return null;
   const value = readSearch(block.attributes.search);
   const update = (patch: Partial<SearchContent>) =>
@@ -71,24 +75,24 @@ function SearchSettingsPanel({ target }: OpenEditorBlockPanelProps) {
       <div className="grid gap-4">
         <Label
           className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
-          htmlFor="search-placeholder"
+          htmlFor={placeholderId}
         >
           Placeholder
           <Input
             className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
-            id="search-placeholder"
+            id={placeholderId}
             onChange={(event) => update({ placeholder: event.target.value })}
             value={value.placeholder}
           />
         </Label>
         <Label
           className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
-          htmlFor="search-max-results"
+          htmlFor={maxResultsId}
         >
           Maximum results
           <Input
             className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
-            id="search-max-results"
+            id={maxResultsId}
             max={50}
             min={1}
             onChange={(event) =>
@@ -99,12 +103,12 @@ function SearchSettingsPanel({ target }: OpenEditorBlockPanelProps) {
           />
         </Label>
         <div className="flex items-center justify-between gap-4">
-          <Label className="text-sm" htmlFor="search-file-types">
+          <Label className="text-sm" htmlFor={fileTypesId}>
             Show file types
           </Label>
           <Switch
             checked={value.showFileType}
-            id="search-file-types"
+            id={fileTypesId}
             onCheckedChange={(checked) => update({ showFileType: checked })}
           />
         </div>
