@@ -65,11 +65,11 @@ export function TeamPage() {
     return "?";
   };
 
-  const getRoleBadgeVariant = (role: string) => {
-    if (role === "owner") return "secondary";
+  const getRoleBadgeVariant = (role: OrganizationRole) => {
+    if (role === "owner") return "default";
     if (role === "admin") return "secondary";
-    if (role === "editor") return "default";
-    return "outline";
+    if (role === "editor") return "outline";
+    return "ghost";
   };
 
   if (!team) {
