@@ -1,9 +1,13 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, LayoutTopIcon } from "@hugeicons/core-free-icons";
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
 import { api, type Doc, type Id } from "@baseblocks/backend";
 import { generateSlug } from "@baseblocks/domain";
 import type { SaveStatus } from "@baseblocks/domain";
@@ -17,9 +21,10 @@ import type {
 import {
   OpenEditorContent,
   OpenEditorPageHeader,
+  type OpenEditorSlashMenuItem,
+  OpenEditorViewer,
   useOpenEditorController,
 } from "@openeditor/react";
-import { OpenEditorViewer } from "@openeditor/react/viewer";
 import {
   OpenEditorBlockMenu,
   OpenEditorSelectionBubble,
@@ -33,16 +38,19 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
-import {
-  authorizeBaseBlocksCustomBlockAsset,
-  createBaseBlocksCustomBlockEditorConfiguration,
-  extractBaseBlocksCustomBlockAssetIds,
-} from "./custom-blocks";
-import { createBaseBlocksCustomBlockViewerConfiguration } from "./custom-block-viewer";
+import { openEditorExtensions } from "./extensions";
 import { useBaseBlocksImageRuntime } from "./image-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
+import { OpenEditorTabbedPage } from "./page-tabs";
 import { useVersionedPageDocument } from "./use-versioned-page-document";
 import type { VersionedDocument } from "./versioned-document";
+import {
+  createOpenEditorPageTabs,
+  deleteOpenEditorTextRange,
+  readOpenEditorPageTabs,
+} from "./page-tabs-model";
+
+const PageTabsMenuIcon = createOpenEditorIcon(LayoutTopIcon);
 
 export function OpenEditorPageEditor({
   authoritativeRefreshRevision,
@@ -161,17 +169,70 @@ export function OpenEditorPageEditor({
 
   return (
     <SiteRenderActionsProvider actions={{ siteId }}>
-      <OpenEditorDocumentEditor
-        attachmentRuntime={attachmentRuntime}
-        canEdit={canEdit}
-        imageRuntime={imageRuntime}
-        document={document}
-        onChange={onChange}
-        pageHeading={pageHeading}
-        pageRuntime={pageRuntime}
-        preview={preview}
-      />
+      {readOpenEditorPageTabs(document) ? (
+        <OpenEditorTabbedPageEditor
+          attachmentRuntime={attachmentRuntime}
+          canEdit={canEdit}
+          imageRuntime={imageRuntime}
+          document={document}
+          onChange={onChange}
+          pageHeading={pageHeading}
+          pageRuntime={pageRuntime}
+          preview={preview}
+        />
+      ) : (
+        <OpenEditorDocumentEditor
+          attachmentRuntime={attachmentRuntime}
+          canEdit={canEdit}
+          imageRuntime={imageRuntime}
+          document={document}
+          onChange={onChange}
+          pageHeading={pageHeading}
+          pageRuntime={pageRuntime}
+          preview={preview}
+        />
+      )}
     </SiteRenderActionsProvider>
+  );
+}
+
+function OpenEditorTabbedPageEditor({
+  attachmentRuntime,
+  canEdit,
+  document,
+  imageRuntime,
+  onChange,
+  pageHeading,
+  pageRuntime,
+  preview,
+}: {
+  attachmentRuntime: OpenEditorAttachmentRuntime<File>;
+  canEdit: boolean;
+  document: OpenEditorDocument;
+  imageRuntime: OpenEditorImageRuntime<File>;
+  onChange: (document: OpenEditorDocument) => void;
+  pageHeading: ReactNode;
+  pageRuntime: OpenEditorPageRuntime;
+  preview: boolean;
+}) {
+  return (
+    <OpenEditorThemeProvider
+      className="contents"
+      theme={baseBlocksOpenEditorTheme}
+    >
+      <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
+        {pageHeading}
+        <OpenEditorTabbedPage
+          attachmentRuntime={attachmentRuntime}
+          document={document}
+          editable={canEdit && !preview}
+          extensions={openEditorExtensions}
+          imageRuntime={imageRuntime}
+          onChange={onChange}
+          pageRuntime={pageRuntime}
+        />
+      </div>
+    </OpenEditorThemeProvider>
   );
 }
 
@@ -201,37 +262,34 @@ function OpenEditorDocumentEditor({
     locallyEmittedDocumentRef.current = nextDocument;
     onChange(nextDocument);
   };
-  const authorizedAssetIdsRef = useRef<Set<string>>(
-    extractBaseBlocksCustomBlockAssetIds(document),
-  );
-  authorizedAssetIdsRef.current =
-    extractBaseBlocksCustomBlockAssetIds(document);
-  const authorizedAssetIds = useRef({
-    has: (id: string) => authorizedAssetIdsRef.current.has(id),
-  }).current;
-  const pickAsset = async () => {
-    const input = await imageRuntime.selectImage?.();
-    if (!input || !imageRuntime.uploadImage) return null;
-    const uploaded = await imageRuntime.uploadImage(input);
-    return authorizeBaseBlocksCustomBlockAsset(
-      authorizedAssetIdsRef.current,
-      uploaded.imageId
-        ? { id: uploaded.imageId, kind: "raster" as const, alt: uploaded.alt }
-        : null,
-    );
-  };
+  const slashMenuItems: readonly OpenEditorSlashMenuItem[] = [
+    {
+      key: "baseblocksPageTabs",
+      label: "Tabs",
+      group: "structure",
+      icon: PageTabsMenuIcon,
+      keywords: ["tabs", "sections", "organize"],
+      order: baseBlocksSlashMenuOrder.tabs,
+      execute: ({ controller: current, range }) => {
+        if (!current.ready) return false;
+        const nextDocument = createOpenEditorPageTabs(
+          deleteOpenEditorTextRange(current.getContent(), range),
+          crypto.randomUUID(),
+        );
+        handleChange(nextDocument);
+        return true;
+      },
+    },
+  ];
   const controller = useOpenEditorController({
     initialDocument: document,
     editable: canEdit,
+    extensions: openEditorExtensions,
     pageRuntime,
     attachmentRuntime,
     imageRuntime,
+    slashMenuItems,
     onChange: handleChange,
-    customBlocks: createBaseBlocksCustomBlockEditorConfiguration(
-      authorizedAssetIds,
-      pickAsset,
-      { attachmentRuntime, imageRuntime, pageRuntime },
-    ),
   });
   useEffect(() => {
     if (!controller.ready) return;
@@ -262,12 +320,9 @@ function OpenEditorDocumentEditor({
             attachmentRuntime={attachmentRuntime}
             className="oe-viewer"
             document={controller.document}
+            extensions={openEditorExtensions}
             imageRuntime={imageRuntime}
             pageRuntime={pageRuntime}
-            customBlocks={createBaseBlocksCustomBlockViewerConfiguration(
-              authorizedAssetIdsRef.current,
-              { attachmentRuntime, imageRuntime, pageRuntime },
-            )}
           />
         ) : (
           <OpenEditorContent

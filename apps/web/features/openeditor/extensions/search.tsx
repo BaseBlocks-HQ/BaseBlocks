@@ -1,28 +1,31 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { CogIcon } from "@hugeicons/core-free-icons";
+import { CogIcon, Search01Icon } from "@hugeicons/core-free-icons";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
 import {
   readSearch,
   SearchViewer,
 } from "@/features/openeditor/renderers/search";
 import { SearchBox } from "@/features/search";
 import type { SearchContent } from "@baseblocks/domain";
-import { searchBlock } from "@baseblocks/openeditor-contracts/core-blocks";
-import { Button } from "@baseblocks/ui/button";
+import { searchDefinition } from "@baseblocks/openeditor-contracts";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
 import { Switch } from "@baseblocks/ui/switch";
-import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
-import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
+import {
+  defineOpenEditorReactNode,
+  NodeViewWrapper,
+  type OpenEditorBlockPanelProps,
+  type OpenEditorNodeViewProps,
+  useOpenEditorBlockTarget,
+} from "@openeditor/react";
+import { useId } from "react";
+
+const SearchMenuIcon = createOpenEditorIcon(Search01Icon);
 
 function SearchPreview({ value }: { value: Required<SearchContent> }) {
   const { siteId } = useSiteRenderActions();
@@ -45,99 +48,95 @@ function SearchPreview({ value }: { value: Required<SearchContent> }) {
   );
 }
 
-function SearchEditor({
-  value,
-  onChange,
-}: {
-  value: Required<SearchContent>;
-  onChange: (value: Required<SearchContent>) => void;
-}) {
-  const update = (patch: Partial<SearchContent>) =>
-    onChange({ ...value, ...patch });
+function SearchNode({ node }: OpenEditorNodeViewProps) {
+  const value = readSearch(node.attrs.search);
   return (
-    <section className="not-prose my-4 flex items-start gap-2">
-      <div className="min-w-0 flex-1">
+    <NodeViewWrapper contentEditable={false}>
+      <section className="not-prose my-4">
         <SearchPreview value={value} />
-      </div>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            aria-label="Configure search"
-            className="shrink-0 rounded-2xl border-0 bg-card shadow-none hover:bg-muted/60"
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <HugeiconsIcon icon={CogIcon} className="size-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          align="end"
-          className="w-72 rounded-[1.25rem] border-sidebar-border bg-sidebar p-4 text-sidebar-foreground shadow-2xl"
-        >
-          <PopoverHeader className="mb-4">
-            <PopoverTitle>Search settings</PopoverTitle>
-          </PopoverHeader>
-          <div className="grid gap-4">
-            <Label
-              className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
-              htmlFor="search-placeholder"
-            >
-              Placeholder
-              <Input
-                className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
-                id="search-placeholder"
-                onChange={(event) =>
-                  update({ placeholder: event.target.value })
-                }
-                value={value.placeholder}
-              />
-            </Label>
-            <Label
-              className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
-              htmlFor="search-max-results"
-            >
-              Maximum results
-              <Input
-                className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
-                id="search-max-results"
-                max={50}
-                min={1}
-                onChange={(event) =>
-                  update({ maxResults: Number(event.target.value) })
-                }
-                type="number"
-                value={value.maxResults}
-              />
-            </Label>
-            <div className="flex items-center justify-between gap-4">
-              <Label className="text-sm" htmlFor="search-file-types">
-                Show file types
-              </Label>
-              <Switch
-                checked={value.showFileType}
-                id="search-file-types"
-                onCheckedChange={(checked) => update({ showFileType: checked })}
-              />
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </section>
+      </section>
+    </NodeViewWrapper>
   );
 }
 
-export const searchEditor = defineOpenEditorCustomBlockEditor({
-  block: searchBlock,
-  render: ({ data, updateData }) => (
-    <SearchEditor
-      value={readSearch(data)}
-      onChange={(value) => updateData(value)}
-    />
-  ),
-});
+function SearchSettingsPanel({ target }: OpenEditorBlockPanelProps) {
+  const block = useOpenEditorBlockTarget(target);
+  const placeholderId = useId();
+  const maxResultsId = useId();
+  const fileTypesId = useId();
+  if (!block) return null;
+  const value = readSearch(block.attributes.search);
+  const update = (patch: Partial<SearchContent>) =>
+    target.commands.updateAttributes({ search: { ...value, ...patch } });
 
-export const searchViewer = defineOpenEditorCustomBlockViewer({
-  block: searchBlock,
-  render: ({ data }) => <SearchViewer value={readSearch(data)} />,
+  return (
+    <div className="w-72 p-4">
+      <h2 className="mb-4 font-medium text-sm">Search settings</h2>
+      <div className="grid gap-4">
+        <Label
+          className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
+          htmlFor={placeholderId}
+        >
+          Placeholder
+          <Input
+            className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
+            id={placeholderId}
+            onChange={(event) => update({ placeholder: event.target.value })}
+            value={value.placeholder}
+          />
+        </Label>
+        <Label
+          className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
+          htmlFor={maxResultsId}
+        >
+          Maximum results
+          <Input
+            className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
+            id={maxResultsId}
+            max={50}
+            min={1}
+            onChange={(event) =>
+              update({ maxResults: Number(event.target.value) })
+            }
+            type="number"
+            value={value.maxResults}
+          />
+        </Label>
+        <div className="flex items-center justify-between gap-4">
+          <Label className="text-sm" htmlFor={fileTypesId}>
+            Show file types
+          </Label>
+          <Switch
+            checked={value.showFileType}
+            id={fileTypesId}
+            onCheckedChange={(checked) => update({ showFileType: checked })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const searchExtension = defineOpenEditorReactNode({
+  definition: searchDefinition,
+  component: SearchNode,
+  blockMenu: {
+    configure: {
+      icon: CogIcon,
+      panel: SearchSettingsPanel,
+    },
+  },
+  insertMenu: {
+    icon: SearchMenuIcon,
+    keywords: ["find", "query", "documents"],
+    order: baseBlocksSlashMenuOrder.search,
+  },
+  viewer: ({ node }) => <SearchViewer value={readSearch(node.attrs?.search)} />,
+  exporters: {
+    html: {
+      baseblocksSearch: ({ node, escapeAttribute }) =>
+        `<div data-baseblocks-search data-placeholder="${escapeAttribute(readSearch(node.attrs?.search).placeholder)}"></div>`,
+    },
+    text: { baseblocksSearch: () => "[Site search]" },
+  },
 });

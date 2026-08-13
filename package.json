@@ -22,7 +22,6 @@
     "vercel": "58.5.1"
   },
   "resolutions": {
-    "@tiptap/extension-list": "3.29.2",
     "@convex-dev/better-auth": "0.12.5",
     "@radix-ui/react-presence": "1.1.6",
     "better-auth": "1.6.23",

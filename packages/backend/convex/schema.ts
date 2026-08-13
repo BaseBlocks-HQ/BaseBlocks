@@ -101,8 +101,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"])
-    .index("by_revision", ["revisionId"]),
+    .index("by_page", ["pageId"]),
 
   draftChanges: defineTable({
     siteId: v.id("sites"),
@@ -396,7 +395,6 @@ export default defineSchema({
   })
     .index("by_release", ["releaseId"])
     .index("by_release_page", ["releaseId", "pageId"])
-    .index("by_content_revision", ["contentRevisionId"])
     .index("by_release_parent_order", ["releaseId", "parentId", "order"])
     .index("by_release_parent_slug", ["releaseId", "parentId", "slug"]),
 

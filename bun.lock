@@ -21,7 +21,6 @@
         "@aws-sdk/s3-request-presigner": "^3.1084.0",
         "@baseblocks/anydoc": "0.1.0-alpha.13",
         "@baseblocks/backend": "workspace:*",
-        "@baseblocks/custom-blocks": "workspace:*",
         "@baseblocks/domain": "workspace:*",
         "@baseblocks/i18n": "workspace:*",
         "@baseblocks/openeditor-contracts": "workspace:*",
@@ -33,13 +32,12 @@
         "@flags-sdk/vercel": "^1.4.6",
         "@hugeicons/core-free-icons": "^4.2.3",
         "@hugeicons/react": "^1.1.9",
-        "@openeditor/core": "0.0.46",
-        "@openeditor/custom-block": "0.0.46",
-        "@openeditor/emoji": "0.0.46",
-        "@openeditor/exporters": "0.0.46",
-        "@openeditor/react": "0.0.46",
-        "@openeditor/ui": "0.0.46",
-        "@openeditor/workspace": "0.0.46",
+        "@openeditor/core": "0.0.45",
+        "@openeditor/emoji": "0.0.45",
+        "@openeditor/exporters": "0.0.45",
+        "@openeditor/react": "0.0.45",
+        "@openeditor/ui": "0.0.45",
+        "@openeditor/workspace": "0.0.45",
         "@vercel/analytics": "^2.0.1",
         "@vercel/sdk": "^1.28.8",
         "ai": "7.0.49",
@@ -83,16 +81,14 @@
         "@aws-sdk/s3-presigned-post": "^3.1084.0",
         "@aws-sdk/s3-request-presigner": "^3.1084.0",
         "@baseblocks/anydoc-convex": "0.1.0-alpha.13",
-        "@baseblocks/custom-blocks": "workspace:*",
         "@baseblocks/domain": "workspace:*",
         "@baseblocks/openeditor-contracts": "workspace:*",
         "@convex-dev/better-auth": "^0.12.5",
         "@convex-dev/workflow": "^0.4.4",
         "@convex-dev/workpool": "^0.4.9",
         "@noble/hashes": "2.0.1",
-        "@openeditor/core": "0.0.46",
-        "@openeditor/custom-block": "0.0.46",
-        "@openeditor/workspace": "0.0.46",
+        "@openeditor/core": "0.0.45",
+        "@openeditor/workspace": "0.0.45",
         "@polar-sh/sdk": "0.49.0",
         "ai": "7.0.49",
         "better-auth": "^1.6.23",
@@ -105,20 +101,6 @@
       },
       "peerDependencies": {
         "typescript": ">=5 <8",
-      },
-    },
-    "packages/custom-blocks": {
-      "name": "@baseblocks/custom-blocks",
-      "version": "0.0.0",
-      "dependencies": {
-        "@openeditor/custom-block": "0.0.46",
-        "react": "19.2.7",
-      },
-      "devDependencies": {
-        "@baseblocks/tsconfig": "workspace:*",
-        "@types/bun": "1.3.14",
-        "@types/react": "19.2.17",
-        "typescript": "7.0.2",
       },
     },
     "packages/domain": {
@@ -143,14 +125,12 @@
       "version": "0.0.0",
       "dependencies": {
         "@baseblocks/domain": "workspace:*",
-        "@openeditor/core": "0.0.46",
-        "@openeditor/custom-block": "0.0.46",
-        "@openeditor/embedded-runtime": "0.0.46",
-        "@openeditor/extensions": "0.0.46",
-        "@openeditor/tiptap": "0.0.46",
+        "@openeditor/core": "0.0.45",
+        "@openeditor/embedded-runtime": "0.0.45",
+        "@openeditor/extensions": "0.0.45",
+        "@openeditor/tiptap": "0.0.45",
       },
       "devDependencies": {
-        "@baseblocks/custom-blocks": "workspace:*",
         "@baseblocks/tsconfig": "workspace:*",
         "@types/bun": "1.3.14",
         "typescript": "7.0.2",
@@ -208,7 +188,6 @@
   "overrides": {
     "@convex-dev/better-auth": "0.12.5",
     "@radix-ui/react-presence": "1.1.6",
-    "@tiptap/extension-list": "3.29.2",
     "better-auth": "1.6.23",
     "convex": "^1.42.1",
     "defu": "6.1.7",
@@ -297,8 +276,6 @@
     "@baseblocks/anydoc-spreadsheet-viewer": ["@baseblocks/anydoc-spreadsheet-viewer@0.1.0-alpha.13", "", { "dependencies": { "@baseblocks/anydoc-contracts": "0.1.0-alpha.13", "@baseblocks/anydoc-spreadsheet-engine": "0.1.0-alpha.13" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-rfqeSvGvj1bgkh/prsEJssKvdtC//HKmCnAC61JUkYMQ3Fr0QQI9AgI+pKB5itvdUZ1HB0H7CfqnXGyk1xhS4g=="],
 
     "@baseblocks/backend": ["@baseblocks/backend@workspace:packages/backend"],
-
-    "@baseblocks/custom-blocks": ["@baseblocks/custom-blocks@workspace:packages/custom-blocks"],
 
     "@baseblocks/domain": ["@baseblocks/domain@workspace:packages/domain"],
 
@@ -646,27 +623,25 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@openeditor/core": ["@openeditor/core@0.0.46", "", {}, "sha512-F4h1CWUSwjf94SF5r3DiVkczF1Y7K2qBdB1lYgwDxHcX7O1xXg9Y4FX567BWlln4W/jbho0NsHDXPvj4uYZqcA=="],
+    "@openeditor/core": ["@openeditor/core@0.0.45", "", {}, "sha512-HVAvBtwIhqY4qVeIoKLtO+OnMTmCOf2ysojcBTxhXZ6Om3x1Ki64oA3vS/k8mpe0cqLYDQPeF5MtnFSso0kjgQ=="],
 
-    "@openeditor/custom-block": ["@openeditor/custom-block@0.0.46", "", { "dependencies": { "@openeditor/core": "0.0.46", "@openeditor/extensions": "0.0.46" }, "peerDependencies": { "@tiptap/core": ">=3.29.2", "@tiptap/react": ">=3.29.2", "react": ">=19" }, "optionalPeers": ["@tiptap/core", "@tiptap/react"] }, "sha512-N/lKR0hVnvNgrpZwaElreTxexEt/gYsNHYzz+GfpgzHAvifie2+lPNXCPFv5Ex9B34c7HSB/za8ka9u26HSXZA=="],
+    "@openeditor/embedded-runtime": ["@openeditor/embedded-runtime@0.0.45", "", { "dependencies": { "@openeditor/core": "0.0.45", "@openeditor/extensions": "0.0.45", "@openeditor/tiptap": "0.0.45", "@tiptap/core": "3.29.2", "@tiptap/extension-image": "3.29.2", "@tiptap/extension-link": "3.29.2", "@tiptap/extension-table": "3.29.2", "@tiptap/extension-task-item": "3.29.2", "@tiptap/extension-task-list": "3.29.2", "@tiptap/extension-text-align": "3.29.2", "@tiptap/extension-underline": "3.29.2", "@tiptap/extension-unique-id": "3.29.2", "@tiptap/pm": "3.29.2", "@tiptap/starter-kit": "3.29.2" } }, "sha512-pE5b5CmoBTS+9tiXqAC7zPbn38W2AXDKsbxou45rvQqdHWW8LAJOJxvE4phCQBVA2sTkduVqT4Pv1IotYdZ+Cg=="],
 
-    "@openeditor/embedded-runtime": ["@openeditor/embedded-runtime@0.0.46", "", { "dependencies": { "@openeditor/core": "0.0.46", "@openeditor/custom-block": "0.0.46", "@openeditor/extensions": "0.0.46", "@openeditor/tiptap": "0.0.46", "@tiptap/core": "3.29.2", "@tiptap/extension-image": "3.29.2", "@tiptap/extension-link": "3.29.2", "@tiptap/extension-table": "3.29.2", "@tiptap/extension-task-item": "3.29.2", "@tiptap/extension-task-list": "3.29.2", "@tiptap/extension-text-align": "3.29.2", "@tiptap/extension-underline": "3.29.2", "@tiptap/extension-unique-id": "3.29.2", "@tiptap/pm": "3.29.2", "@tiptap/starter-kit": "3.29.2" } }, "sha512-F5RWSd1jyd9+Kzw6fIB+8ufpuGjnN3aHP8NDk7tUvQ6HH46mtSBxU/47f9tGTQOulVz9h3DH0wVmfLwOaRp6fQ=="],
+    "@openeditor/emoji": ["@openeditor/emoji@0.0.45", "", { "dependencies": { "@base-ui/react": "^1.6.0", "emojibase-data": "16.0.2", "frimousse": "0.3.0" }, "peerDependencies": { "react": ">=19" } }, "sha512-XlGve8+G3EI2DpjvgGXsZ71CS5wG2s6WmyziOWAwSuswmWgGqxIFneGsAJ12rr5SDY1M/N6xwDAX1PDS3jxurQ=="],
 
-    "@openeditor/emoji": ["@openeditor/emoji@0.0.46", "", { "dependencies": { "@base-ui/react": "^1.6.0", "emojibase-data": "16.0.2", "frimousse": "0.3.0" }, "peerDependencies": { "react": ">=19" } }, "sha512-AxQv6vG53pUhmcPntgkaOIsc1H8b/DGd/pKffd/neqeTstQkWEzJlbAOvhzBHd6P/JBZB30ACKp5YLLbsOHtEw=="],
+    "@openeditor/exporters": ["@openeditor/exporters@0.0.45", "", { "dependencies": { "@openeditor/core": "0.0.45", "docx": "^9.7.1", "jszip": "^3.10.1", "parse5": "^7.3.0" } }, "sha512-zV9xaHlOgzJMuVYgy5+eW3uQreyyrR9A3jvZ5kcImMWsDZYrb2EbeZcuiei3+SPWwUjgE3DAJXMtrC3v8xJu8Q=="],
 
-    "@openeditor/exporters": ["@openeditor/exporters@0.0.46", "", { "dependencies": { "@openeditor/core": "0.0.46", "@openeditor/custom-block": "0.0.46", "docx": "^9.7.1", "jszip": "^3.10.1", "parse5": "^7.3.0" } }, "sha512-Mo0p1by0dJsGE3n8L3YzJVyWBjD6Ut/MDl8+PboamFWCyiC9v/faXjvDxG1TMs8Drok778A5bop0NwHNZ84TcQ=="],
+    "@openeditor/extensions": ["@openeditor/extensions@0.0.45", "", { "dependencies": { "@openeditor/core": "0.0.45" } }, "sha512-Cxt0tJBWvYGlhwbtRe56tyoDyGyFc6G5FRoKzDdUB2X0Obx2E8+JjJISzqxW8GHlxWHlI+9pQtqiQ43u58hWqQ=="],
 
-    "@openeditor/extensions": ["@openeditor/extensions@0.0.46", "", { "dependencies": { "@openeditor/core": "0.0.46" } }, "sha512-D1jXZUQDNAf7TB5GkTKtOlpyMVmN0qtvYd8yaCOOGnSSezD4B5w8DMvCRop8/sFRpVTG2ZxnlbJ7OaBTAieARA=="],
+    "@openeditor/icons": ["@openeditor/icons@0.0.45", "", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.3" } }, "sha512-7tWciOVRTroWOUZVkJtt8IvSWgsOLCc/455FKPkK25QuzyTf6tqtUUjxo74j5jt8JneDZW78Y7SNgEtyPljTdQ=="],
 
-    "@openeditor/icons": ["@openeditor/icons@0.0.46", "", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.3" } }, "sha512-od1cLcuyRlS+OGxeVe0JhyWFTi/QgtHjCRF4OnAAfQ2Uiyy8EqeqUjswds2obQwdHeNiyOkZA+BwaQswlzqOWg=="],
+    "@openeditor/react": ["@openeditor/react@0.0.45", "", { "dependencies": { "@floating-ui/dom": "^1.7.4", "@hugeicons/react": "^1.1.9", "@openeditor/core": "0.0.45", "@openeditor/embedded-runtime": "0.0.45", "@openeditor/emoji": "0.0.45", "@openeditor/exporters": "0.0.45", "@openeditor/extensions": "0.0.45", "@openeditor/icons": "0.0.45", "@openeditor/tiptap": "0.0.45", "@tiptap/core": "3.29.2", "@tiptap/extension-link": "3.29.2", "@tiptap/extension-placeholder": "3.29.2", "@tiptap/extension-table": "3.29.2", "@tiptap/extension-task-item": "3.29.2", "@tiptap/extension-task-list": "3.29.2", "@tiptap/extension-underline": "3.29.2", "@tiptap/pm": "3.29.2", "@tiptap/react": "3.29.2", "@tiptap/starter-kit": "3.29.2", "@tiptap/suggestion": "3.29.2", "beautiful-mermaid": "1.1.3", "use-sync-external-store": "1.6.0" }, "peerDependencies": { "react": ">=19", "react-dom": ">=19" } }, "sha512-QqLhKma1w26xq6zwg7JlksQao+56QZJ6YbNNwImfE/O5DpN9Pyo7ZQq5YTsaWMkzpV9iGSP/x3NW8/X9TAPuXw=="],
 
-    "@openeditor/react": ["@openeditor/react@0.0.46", "", { "dependencies": { "@floating-ui/dom": "^1.7.4", "@hugeicons/react": "^1.1.9", "@openeditor/core": "0.0.46", "@openeditor/custom-block": "0.0.46", "@openeditor/embedded-runtime": "0.0.46", "@openeditor/emoji": "0.0.46", "@openeditor/exporters": "0.0.46", "@openeditor/extensions": "0.0.46", "@openeditor/icons": "0.0.46", "@openeditor/tiptap": "0.0.46", "@tiptap/core": "3.29.2", "@tiptap/extension-link": "3.29.2", "@tiptap/extension-placeholder": "3.29.2", "@tiptap/extension-table": "3.29.2", "@tiptap/extension-task-item": "3.29.2", "@tiptap/extension-task-list": "3.29.2", "@tiptap/extension-underline": "3.29.2", "@tiptap/pm": "3.29.2", "@tiptap/react": "3.29.2", "@tiptap/starter-kit": "3.29.2", "@tiptap/suggestion": "3.29.2", "beautiful-mermaid": "1.1.3", "use-sync-external-store": "1.6.0" }, "peerDependencies": { "react": ">=19", "react-dom": ">=19" } }, "sha512-aDHjOm75bqoGHaAgjfuB1ueNK7NTvw0mujJPIgNvkQHbSSAfgGP6qOdpsFUgJp4eLKytynXbhe0cctoiWf2A9g=="],
+    "@openeditor/tiptap": ["@openeditor/tiptap@0.0.45", "", { "dependencies": { "@openeditor/core": "0.0.45", "@tiptap/core": "3.29.2", "@tiptap/pm": "3.29.2" } }, "sha512-YJ2Vckj1d+lGj6V66o56TqLYHSQCj33M+RzeoAYqIR6EIhCfv1TMV5QttO4tw1maFqUdUn5E53H+BxDmJLMv/A=="],
 
-    "@openeditor/tiptap": ["@openeditor/tiptap@0.0.46", "", { "dependencies": { "@openeditor/core": "0.0.46", "@tiptap/core": "3.29.2", "@tiptap/pm": "3.29.2" } }, "sha512-yuLvh4jiQE3Rn5wG85F98SwmitjLTpdkCQ5PotfOmMm1I7fngzFC/CPim1BFu0aWQyhubLUS4FF/9qzHrYsFTQ=="],
+    "@openeditor/ui": ["@openeditor/ui@0.0.45", "", { "dependencies": { "@base-ui/react": "^1.6.0", "@hugeicons/react": "^1.1.9", "@openeditor/emoji": "0.0.45", "@openeditor/icons": "0.0.45", "@openeditor/react": "0.0.45" }, "peerDependencies": { "react": ">=19", "react-dom": ">=19" } }, "sha512-lGhl4C7vsHuXe+zqmXwoPiWGp151pycvutEa1vP59o/uvLWex7o9zub7aZvGg2O3gyH3FSkePXQM8EIoP111pA=="],
 
-    "@openeditor/ui": ["@openeditor/ui@0.0.46", "", { "dependencies": { "@base-ui/react": "^1.6.0", "@hugeicons/react": "^1.1.9", "@openeditor/emoji": "0.0.46", "@openeditor/icons": "0.0.46", "@openeditor/react": "0.0.46" }, "peerDependencies": { "react": ">=19", "react-dom": ">=19" } }, "sha512-iQ1EDC9D2sXCeO07gaqrOhOW9wgxch6w53XIkR1GFI+GDAVQt2Vt/9rq8cvAu79puCxS/yxelKshn3vLrN2kvQ=="],
-
-    "@openeditor/workspace": ["@openeditor/workspace@0.0.46", "", { "dependencies": { "@openeditor/core": "0.0.46" } }, "sha512-EydxFRU3Vz9mQCMXEysD1aEhW2obUogDBalNhWmyHrIQcOfAmGQ9r9YfowklK4YCuKe32zXSXU9nbsdgkb3psQ=="],
+    "@openeditor/workspace": ["@openeditor/workspace@0.0.45", "", { "dependencies": { "@openeditor/core": "0.0.45" } }, "sha512-17gigCG6H2XtNaOTG+Fd125uZszFCZYOLIyvjbKWEpWYVm+NSBq2okmWsWrcZ3vWndQH5lvpcvD9aZPxxdY4cA=="],
 
     "@opentelemetry/api": ["@opentelemetry/api@1.9.1", "", {}, "sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q=="],
 

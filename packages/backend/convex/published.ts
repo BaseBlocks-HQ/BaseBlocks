@@ -161,25 +161,24 @@ export const getPage = query({
     const revisionFileIds = new Map(
       (revision?.fileIds ?? []).map((fileId) => [String(fileId), fileId]),
     );
-    const references = extractOpenEditorReferences(content);
     const imageIds = (
       await Promise.all(
-        Array.from(
-          new Set([...references.imageIds, ...references.customAssetIds]),
-        ).map(async (imageId) => {
-          const fileId = revisionFileIds.get(imageId);
-          if (!fileId) return null;
-          const asset = await ctx.db
-            .query("releaseFiles")
-            .withIndex("by_release_file", (q) =>
-              q.eq("releaseId", releaseId).eq("fileId", fileId),
-            )
-            .unique();
-          return asset?.kind === "siteAsset" &&
-            asset.contentType.toLowerCase().startsWith("image/")
-            ? imageId
-            : null;
-        }),
+        Array.from(extractOpenEditorReferences(content).imageIds).map(
+          async (imageId) => {
+            const fileId = revisionFileIds.get(imageId);
+            if (!fileId) return null;
+            const asset = await ctx.db
+              .query("releaseFiles")
+              .withIndex("by_release_file", (q) =>
+                q.eq("releaseId", releaseId).eq("fileId", fileId),
+              )
+              .unique();
+            return asset?.kind === "siteAsset" &&
+              asset.contentType.toLowerCase().startsWith("image/")
+              ? imageId
+              : null;
+          },
+        ),
       )
     ).filter((imageId): imageId is string => imageId !== null);
 
@@ -398,10 +397,7 @@ export const getPageExport = query({
     const revision = page.contentRevisionId
       ? await ctx.db.get(page.contentRevisionId)
       : null;
-    const references = extractOpenEditorReferences(content);
-    const imageIds = [
-      ...new Set([...references.imageIds, ...references.customAssetIds]),
-    ];
+    const imageIds = [...extractOpenEditorReferences(content).imageIds];
     if (imageIds.length > MAX_PAGE_EXPORT_ASSETS) {
       throw new Error(
         `Page export exceeds the ${MAX_PAGE_EXPORT_ASSETS}-image limit`,

@@ -6,10 +6,10 @@ import { internalMutation, query } from "./_generated/server";
 import { assertDraftReadable } from "./model/draft";
 import { readPageContent } from "./model/pageDocuments";
 import {
+  extractOpenEditorText,
   parseOpenEditorDocument,
   type OpenEditorDocument,
 } from "./pageContentFormat";
-import { extractOpenEditorText } from "./customBlockIndexing";
 import { isOrganizationMember } from "./permissions";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 

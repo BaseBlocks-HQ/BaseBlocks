@@ -25,7 +25,6 @@ minimumReleaseAgeExcludes = [
   "@firecrawl/anydoc-wasm",
   "@firecrawl/anydoc-win32-x64-msvc",
   "@openeditor/core",
-  "@openeditor/custom-block",
   "@openeditor/workspace",
   "@openeditor/embedded-runtime",
   "@openeditor/emoji",
