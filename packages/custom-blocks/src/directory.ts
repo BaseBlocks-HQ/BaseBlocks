@@ -44,6 +44,7 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
     });
     if (new Set(columnIds).size !== columnIds.length)
       throw new Error("Directory column IDs must be unique.");
+    const columnIdSet = new Set(columnIds);
     if (!Array.isArray(input.rows) || input.rows.length < 1)
       throw new Error("Each directory needs at least one row.");
     const rowIds = new Set<string>();
@@ -57,7 +58,7 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
       const rawCells = object(row.cells);
       if (
         Object.keys(rawCells).length !== columnIds.length ||
-        Object.keys(rawCells).some((id) => !columnIds.includes(id))
+        Object.keys(rawCells).some((id) => !columnIdSet.has(id))
       )
         throw new Error("Directory cells must match the directory columns.");
       const cells = Object.fromEntries(

@@ -1,5 +1,7 @@
 "use client";
 
+/* oxlint-disable react-doctor/react-compiler-no-manual-memoization, react-doctor/no-derived-state-effect -- This hook is a synchronization boundary for a versioned remote document. Stable callbacks protect queued writes, and the effect reconciles an external revision with unsaved local edits rather than deriving presentation state. */
+
 import type { Id } from "@baseblocks/backend";
 import {
   hasSameChildPageProjection,
