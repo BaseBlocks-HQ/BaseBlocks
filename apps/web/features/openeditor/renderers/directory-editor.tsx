@@ -13,7 +13,6 @@ import {
   DragDropVerticalIcon,
   FilePasteIcon,
   MoreHorizontalIcon,
-  CogIcon,
   TaskDone01Icon,
 } from "@hugeicons/core-free-icons";
 import {
@@ -51,13 +50,6 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { Label } from "@baseblocks/ui/label";
 import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -85,73 +77,54 @@ type Axis = "column" | "row";
 type Action = "copy" | "paste" | "before" | "after" | "remove";
 type SortData = { axis: Axis; itemId: string };
 
-function DirectoryConfig({
+export function DirectorySettings({
+  id = "directory-page-size",
   onPageSizeChange,
   pageSize,
 }: {
+  id?: string;
   onPageSizeChange: (pageSize: number | null) => void;
   pageSize: number | null;
 }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          aria-label="Configure directory"
-          className="shrink-0 rounded-2xl border-0 bg-card shadow-none hover:bg-muted/60"
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <HugeiconsIcon icon={CogIcon} className="size-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        className="w-72 rounded-[1.25rem] border-sidebar-border bg-sidebar p-4 text-sidebar-foreground shadow-2xl"
+    <div className="grid gap-1.5">
+      <Label
+        className="text-xs font-medium tracking-wide text-sidebar-foreground/55"
+        htmlFor={id}
       >
-        <PopoverHeader className="mb-4">
-          <PopoverTitle>Directory settings</PopoverTitle>
-        </PopoverHeader>
-        <div className="grid gap-1.5">
-          <Label
-            className="text-xs font-medium tracking-wide text-sidebar-foreground/55"
-            htmlFor="directory-page-size"
+        Rows displayed
+      </Label>
+      <Select
+        onValueChange={(value) =>
+          onPageSizeChange(value === "all" ? null : Number(value))
+        }
+        value={pageSize === null ? "all" : String(pageSize)}
+      >
+        <SelectTrigger
+          className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
+          id={id}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+          <SelectItem
+            className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+            value="all"
           >
-            Rows displayed
-          </Label>
-          <Select
-            onValueChange={(value) =>
-              onPageSizeChange(value === "all" ? null : Number(value))
-            }
-            value={pageSize === null ? "all" : String(pageSize)}
-          >
-            <SelectTrigger
-              className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
-              id="directory-page-size"
+            Show all rows
+          </SelectItem>
+          {PAGE_SIZES.map((size) => (
+            <SelectItem
+              className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+              key={size}
+              value={String(size)}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-              <SelectItem
-                className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
-                value="all"
-              >
-                Show all rows
-              </SelectItem>
-              {PAGE_SIZES.map((size) => (
-                <SelectItem
-                  className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
-                  key={size}
-                  value={String(size)}
-                >
-                  {size} rows per page
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </PopoverContent>
-    </Popover>
+              {size} rows per page
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -611,7 +584,7 @@ function DirectoryGrid({
   };
 
   return (
-    <section className="flex items-start gap-2">
+    <section>
       <div className="min-w-0 flex-1 space-y-3">
         {value.rows.length > 5 ? (
           <DirectorySearch
@@ -819,13 +792,6 @@ function DirectoryGrid({
           pageCount={view.pageCount}
         />
       </div>
-      <DirectoryConfig
-        onPageSizeChange={(pageSize) => {
-          view.setPage(1);
-          onChange({ ...value, pageSize });
-        }}
-        pageSize={value.pageSize}
-      />
     </section>
   );
 }
