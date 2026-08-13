@@ -356,6 +356,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
     const [editorPath, setEditorPath] = useState<string[]>([]);
     const [previewPath, setPreviewPath] = useState<string[]>([]);
     const [newAnswer, setNewAnswer] = useState("");
+    const [addingAnswer, setAddingAnswer] = useState(false);
     const suppressMenuClick = useRef(false);
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
     const editorState = useMemo(() => {
@@ -383,8 +384,10 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
         }),
       );
       setNewAnswer("");
+      setAddingAnswer(false);
       setEditorPath([...editorState.path, id]);
     };
+    const isQuestion = editorState.visibleOptions.length > 0;
     const removeNode = (nodeId: string) => {
       const deleted = deleteDecisionNode(tree, nodeId);
       updateTree(deleted.tree);
@@ -491,9 +494,9 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     className="block text-xs font-medium text-muted-foreground"
                     htmlFor={`${editorState.activeNode.id}-prompt`}
                   >
-                    Question or result
+                    {isQuestion ? "Question" : "Result"}
                     <Input
-                      aria-label="Question or result"
+                      aria-label={isQuestion ? "Question" : "Result"}
                       className="mt-1 bg-background text-base font-medium text-foreground"
                       id={`${editorState.activeNode.id}-prompt`}
                       onChange={(event) =>
@@ -507,6 +510,11 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                       }
                       value={getDocumentText(editorState.activeNode.document)}
                     />
+                    {!isQuestion ? (
+                      <span className="mt-1.5 block text-xs font-normal text-muted-foreground">
+                        Add an answer to turn this result into a question.
+                      </span>
+                    ) : null}
                   </label>
                 </div>
               ) : null}
@@ -569,30 +577,60 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                 </div>
               </DragDropProvider>
 
-              <div className="flex shrink-0 gap-2">
-                <Input
-                  aria-label="New answer"
-                  onChange={(event) => setNewAnswer(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    addAnswer();
-                  }}
-                  placeholder={
-                    editorState.activeNode ? "Add answer" : "Add starting step"
-                  }
-                  value={newAnswer}
-                />
-                <Button
-                  aria-label="Add answer"
-                  disabled={!newAnswer.trim()}
-                  onClick={addAnswer}
-                  size="icon"
+              {addingAnswer ? (
+                <div className="flex shrink-0 items-center gap-1 rounded-xl bg-muted/35 p-1">
+                  <Input
+                    aria-label="New answer"
+                    autoFocus
+                    className="border-0 bg-transparent shadow-none focus-visible:bg-background"
+                    onChange={(event) => setNewAnswer(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setNewAnswer("");
+                        setAddingAnswer(false);
+                        return;
+                      }
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      addAnswer();
+                    }}
+                    placeholder={
+                      editorState.activeNode
+                        ? "Answer label"
+                        : "Starting step label"
+                    }
+                    value={newAnswer}
+                  />
+                  <Button
+                    onClick={() => {
+                      setNewAnswer("");
+                      setAddingAnswer(false);
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={!newAnswer.trim()}
+                    onClick={addAnswer}
+                    size="sm"
+                    type="button"
+                  >
+                    {editorState.activeNode ? "Add answer" : "Add step"}
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 text-sm font-medium text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => setAddingAnswer(true)}
                   type="button"
                 >
                   <HugeiconsIcon aria-hidden icon={Add01Icon} />
-                </Button>
-              </div>
+                  {editorState.activeNode ? "Add answer" : "Add starting step"}
+                </button>
+              )}
             </div>
           </section>
 

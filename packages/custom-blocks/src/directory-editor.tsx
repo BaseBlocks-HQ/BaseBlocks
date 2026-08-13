@@ -18,7 +18,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
-import { DragDropProvider } from "@dnd-kit/react";
+import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
 import { type RefObject, useRef, useState } from "react";
@@ -624,6 +624,38 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               </tbody>
             </table>
           </div>
+          <DragOverlay
+            disabled={(source) =>
+              (source?.data as SortData | undefined)?.kind !==
+              "directory-column"
+            }
+          >
+            {(source) => {
+              const sourceData = source.data as SortData | undefined;
+              if (sourceData?.kind !== "directory-column") return null;
+              const columnIndex = active.columnIds.indexOf(sourceData.id);
+              return (
+                <div className="w-44 overflow-hidden rounded-xl bg-card text-sm shadow-xl">
+                  <div className="flex h-10 items-center gap-2 bg-muted/70 px-3 text-xs font-medium text-muted-foreground">
+                    <HugeiconsIcon
+                      aria-hidden
+                      className="size-3.5"
+                      icon={DragDropHorizontalIcon}
+                    />
+                    {`Column ${columnIndex + 1}`}
+                  </div>
+                  {active.rows.slice(0, 6).map((row) => (
+                    <div
+                      className="h-10 truncate border-t border-border/60 px-3 py-2"
+                      key={row.id}
+                    >
+                      {row.cells[sourceData.id] ?? ""}
+                    </div>
+                  ))}
+                </div>
+              );
+            }}
+          </DragOverlay>
         </DragDropProvider>
       </BlockShell>
     );
