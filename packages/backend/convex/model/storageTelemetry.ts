@@ -133,6 +133,68 @@ export async function recordStorageUsageEvent(
   return eventId;
 }
 
+/** Apply the signed byte delta from an in-place content revision migration. */
+export async function recordContentMigrationStorageAdjustment(
+  ctx: MutationCtx,
+  input: {
+    organizationId: string;
+    siteId: Id<"sites">;
+    contentRevisionId: Id<"contentRevisions">;
+    previousBytes: number;
+    nextBytes: number;
+    now?: number;
+  },
+) {
+  const idempotencyKey = `content:migrate:${input.contentRevisionId}`;
+  const duplicate = await ctx.db
+    .query("storageUsageEvents")
+    .withIndex("by_org_idempotency", (query) =>
+      query
+        .eq("organizationId", input.organizationId)
+        .eq("idempotencyKey", idempotencyKey),
+    )
+    .unique();
+  if (duplicate) return duplicate._id;
+  if (
+    !Number.isSafeInteger(input.previousBytes) ||
+    !Number.isSafeInteger(input.nextBytes) ||
+    input.previousBytes < 0 ||
+    input.nextBytes < 0
+  )
+    throw new Error("Storage migration bytes must be non-negative integers");
+  const delta = BigInt(input.nextBytes - input.previousBytes);
+  const usage = await ctx.db
+    .query("workspaceStorageUsage")
+    .withIndex("by_organization", (query) =>
+      query.eq("organizationId", input.organizationId),
+    )
+    .unique();
+  if (!usage) throw new Error("Workspace storage usage is missing");
+  const contentPayloadBytes = usage.contentPayloadBytes + delta;
+  const logicalRevisionBytes = usage.logicalRevisionBytes + delta;
+  if (contentPayloadBytes < 0n || logicalRevisionBytes < 0n)
+    throw new Error("Storage telemetry projection underflow");
+  const now = input.now ?? Date.now();
+  const eventId = await ctx.db.insert("storageUsageEvents", {
+    organizationId: input.organizationId,
+    siteId: input.siteId,
+    contentRevisionId: input.contentRevisionId,
+    kind: "reconcileAdjustment",
+    logicalBytesDelta: delta,
+    storedBytesDelta: delta,
+    objectCountDelta: 0n,
+    idempotencyKey,
+    createdAt: now,
+  });
+  await ctx.db.patch(usage._id, {
+    contentPayloadBytes,
+    logicalRevisionBytes,
+    lastEventAt: now,
+    updatedAt: now,
+  });
+  return eventId;
+}
+
 export async function recordSiteStoragePurge(
   ctx: MutationCtx,
   input: {

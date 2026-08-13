@@ -1,4 +1,12 @@
 import type { OpenEditorDocument, ProseMirrorNode } from "@openeditor/core";
+import type {
+  OpenEditorCustomBlockDataSchema,
+  OpenEditorCustomBlockManifest,
+} from "@openeditor/custom-block";
+import {
+  validateOpenEditorCustomBlockDataValue,
+  validateOpenEditorCustomBlockEnvelope,
+} from "@openeditor/custom-block";
 
 export type ChildPageProjection = {
   pageId: string;
@@ -18,149 +26,240 @@ const pageNode = (page: ChildPageProjection): ProseMirrorNode => ({
   content: [{ type: "text", text: page.title || "Untitled" }],
 });
 
-export function pageProjections(
-  document: OpenEditorDocument,
-): ChildPageProjection[] {
-  const pages: ChildPageProjection[] = [];
-  const visit = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      value.forEach(visit);
-      return;
+function mapDeclaredValue(
+  value: unknown,
+  schema: OpenEditorCustomBlockDataSchema,
+  mapDocument: (document: OpenEditorDocument) => OpenEditorDocument,
+): unknown {
+  if (schema.type === "document") {
+    if (
+      !value ||
+      typeof value !== "object" ||
+      (value as { type?: unknown }).type !== "doc" ||
+      (value as { version?: unknown }).version !== 1 ||
+      !Array.isArray((value as { content?: unknown }).content)
+    )
+      return value;
+    return mapDocument(value as OpenEditorDocument);
+  }
+  if (schema.type === "oneOf") {
+    for (const variant of schema.variants) {
+      const valid = validateOpenEditorCustomBlockDataValue(
+        value,
+        variant,
+      ).valid;
+      if (valid) return mapDeclaredValue(value, variant, mapDocument);
     }
-    if (!value || typeof value !== "object") return;
-    const node = value as Record<string, unknown>;
-    if (node.type === "page") {
-      const attrs = node.attrs as Record<string, unknown> | undefined;
-      const pageId = attrs?.pageId;
-      if (typeof pageId === "string" && pageId) {
-        const content = Array.isArray(node.content) ? node.content : [];
-        const title = content
-          .flatMap((child) =>
-            child &&
-            typeof child === "object" &&
-            typeof (child as { text?: unknown }).text === "string"
-              ? [(child as { text: string }).text]
-              : [],
-          )
-          .join("");
-        pages.push({
-          pageId,
-          title: title || "Untitled",
-          icon: typeof attrs?.icon === "string" ? attrs.icon : null,
-          href: typeof attrs?.href === "string" ? attrs.href : null,
-        });
+    return value;
+  }
+  if (schema.type === "array" && schema.items && Array.isArray(value))
+    return value.map((item) =>
+      mapDeclaredValue(item, schema.items!, mapDocument),
+    );
+  if (
+    schema.type !== "object" ||
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  )
+    return value;
+  let changed = false;
+  const result = { ...(value as Record<string, unknown>) };
+  for (const [key, child] of Object.entries(result)) {
+    const childSchema = schema.properties?.[key];
+    if (!childSchema) continue;
+    const mapped = mapDeclaredValue(child, childSchema, mapDocument);
+    if (mapped !== child) {
+      result[key] = mapped;
+      changed = true;
+    }
+  }
+  return changed ? result : value;
+}
+
+/** Map only root and manifest-declared OpenEditor document fields. */
+export function mapOpenEditorDocuments(
+  document: OpenEditorDocument,
+  manifests: readonly OpenEditorCustomBlockManifest[],
+  transform: (document: OpenEditorDocument) => OpenEditorDocument,
+): OpenEditorDocument {
+  const byId = new Map<string, OpenEditorCustomBlockManifest>(
+    manifests.map((manifest) => [manifest.id, manifest]),
+  );
+  const visitNode = (node: ProseMirrorNode): ProseMirrorNode => {
+    let next = node;
+    if (Array.isArray(node.content)) {
+      let changed = false;
+      const content = node.content.map((child) => {
+        const mapped = visitNode(child);
+        changed ||= mapped !== child;
+        return mapped;
+      });
+      if (changed) next = { ...next, content };
+    }
+    if (node.type === "customBlock" && node.attrs) {
+      const manifest =
+        typeof node.attrs.blockId === "string"
+          ? byId.get(node.attrs.blockId)
+          : undefined;
+      const validation = manifest
+        ? validateOpenEditorCustomBlockEnvelope(node.attrs, manifests)
+        : null;
+      if (manifest && validation?.valid && !("status" in validation)) {
+        const data = mapDeclaredValue(
+          node.attrs.data,
+          manifest.dataSchema,
+          visitDocument,
+        );
+        if (data !== node.attrs.data)
+          next = { ...next, attrs: { ...node.attrs, data } };
       }
     }
-    Object.values(node).forEach(visit);
+    return next;
   };
-  visit(document);
+  function visitDocument(current: OpenEditorDocument): OpenEditorDocument {
+    let changed = false;
+    const content = current.content.map((node) => {
+      const next = visitNode(node);
+      changed ||= next !== node;
+      return next;
+    });
+    const structural = changed ? { ...current, content } : current;
+    return transform(structural);
+  }
+  return visitDocument(document);
+}
+
+export function pageProjections(
+  document: OpenEditorDocument,
+  manifests: readonly OpenEditorCustomBlockManifest[],
+): ChildPageProjection[] {
+  const pages: ChildPageProjection[] = [];
+  mapOpenEditorDocuments(document, manifests, (current) => {
+    for (const node of current.content)
+      if (node.type === "page") {
+        const pageId = node.attrs?.pageId;
+        if (typeof pageId !== "string" || !pageId) continue;
+        pages.push({
+          pageId,
+          title:
+            (node.content ?? []).map((child) => child.text ?? "").join("") ||
+            "Untitled",
+          icon: typeof node.attrs?.icon === "string" ? node.attrs.icon : null,
+          href: typeof node.attrs?.href === "string" ? node.attrs.href : null,
+        });
+      }
+    return current;
+  });
   return pages;
 }
 
-/**
- * Rewrites embedded page nodes from the authoritative hierarchy projection.
- * Non-page content and the position of still-existing page nodes are preserved;
- * newly projected children are appended to the first tab or the root document.
- */
 export function projectChildPages(
   document: OpenEditorDocument,
   children: readonly ChildPageProjection[],
+  manifests: readonly OpenEditorCustomBlockManifest[],
 ): OpenEditorDocument {
   const expected = new Map(children.map((child) => [child.pageId, child]));
   const seen = new Set<string>();
-  const rewrite = (value: unknown): unknown => {
-    if (Array.isArray(value)) {
-      return value.flatMap((item) => {
-        if (item && typeof item === "object") {
-          const node = item as Record<string, unknown>;
-          if (node.type === "page") {
-            const attrs = node.attrs as Record<string, unknown> | undefined;
-            const pageId = attrs?.pageId;
-            if (
-              typeof pageId !== "string" ||
-              !expected.has(pageId) ||
-              seen.has(pageId)
-            )
-              return [];
-            seen.add(pageId);
-            return [pageNode(expected.get(pageId)!)];
-          }
-        }
-        return [rewrite(item)];
-      });
-    }
-    if (!value || typeof value !== "object") return value;
-    return Object.fromEntries(
-      Object.entries(value).map(([key, child]) => [key, rewrite(child)]),
-    );
-  };
-  const synchronized = rewrite(document) as OpenEditorDocument;
+  const rewritten = mapOpenEditorDocuments(document, manifests, (current) => {
+    const content = current.content.flatMap((node) => {
+      if (node.type !== "page") return [node];
+      const pageId = node.attrs?.pageId;
+      if (
+        typeof pageId !== "string" ||
+        !expected.has(pageId) ||
+        seen.has(pageId)
+      )
+        return [];
+      seen.add(pageId);
+      return [pageNode(expected.get(pageId)!)];
+    });
+    return content.length === current.content.length &&
+      content.every((node, index) => node === current.content[index])
+      ? current
+      : { ...current, content };
+  });
   const missing = children
     .filter((child) => !seen.has(child.pageId))
     .map(pageNode);
-  if (missing.length === 0) return synchronized;
-
-  const first = synchronized.content[0];
-  if (first?.type === "baseblocksPageTabs") {
-    const tabs = (first.attrs?.tabs as { tabs?: unknown } | undefined)?.tabs;
-    const firstTab = Array.isArray(tabs) ? tabs[0] : undefined;
-    if (firstTab && typeof firstTab === "object") {
-      const tab = firstTab as { document?: OpenEditorDocument };
-      if (tab.document?.type === "doc") {
-        tab.document = {
-          ...tab.document,
-          content: [...tab.document.content, ...missing],
-        };
-        return synchronized;
-      }
+  if (missing.length === 0) return rewritten;
+  const first = rewritten.content[0];
+  if (
+    first?.type === "customBlock" &&
+    first.attrs?.blockId === "baseblocks.page-tabs"
+  ) {
+    const data = first.attrs.data as
+      | { tabs?: Array<{ document?: OpenEditorDocument }> }
+      | undefined;
+    const firstTab = data?.tabs?.[0];
+    if (firstTab?.document?.type === "doc") {
+      return {
+        ...rewritten,
+        content: [
+          {
+            ...first,
+            attrs: {
+              ...first.attrs,
+              data: {
+                ...data,
+                tabs: [
+                  {
+                    ...firstTab,
+                    document: {
+                      ...firstTab.document,
+                      content: [...firstTab.document.content, ...missing],
+                    },
+                  },
+                  ...(data?.tabs?.slice(1) ?? []),
+                ],
+              },
+            },
+          },
+          ...rewritten.content.slice(1),
+        ],
+      };
     }
   }
-  return { ...synchronized, content: [...synchronized.content, ...missing] };
+  return { ...rewritten, content: [...rewritten.content, ...missing] };
+}
+
+export function removeChildPageProjection(
+  document: OpenEditorDocument,
+  manifests: readonly OpenEditorCustomBlockManifest[],
+): OpenEditorDocument {
+  return mapOpenEditorDocuments(document, manifests, (current) => ({
+    ...current,
+    content: current.content.filter((node) => node.type !== "page"),
+  }));
 }
 
 export function reconcileChildPageProjection(
   local: OpenEditorDocument,
   authoritative: OpenEditorDocument,
+  manifests: readonly OpenEditorCustomBlockManifest[],
 ): OpenEditorDocument {
-  return projectChildPages(local, pageProjections(authoritative));
+  return projectChildPages(
+    local,
+    pageProjections(authoritative, manifests),
+    manifests,
+  );
 }
-
 export function hasSameChildPageProjection(
   left: OpenEditorDocument,
   right: OpenEditorDocument,
+  manifests: readonly OpenEditorCustomBlockManifest[],
 ): boolean {
   const ids = (document: OpenEditorDocument) =>
-    pageProjections(document).map((page) => page.pageId);
+    pageProjections(document, manifests).map((page) => page.pageId);
   return JSON.stringify(ids(left)) === JSON.stringify(ids(right));
 }
-
-export function removeChildPageProjection(
-  document: OpenEditorDocument,
-): OpenEditorDocument {
-  const remove = (value: unknown): unknown => {
-    if (Array.isArray(value)) {
-      return value.flatMap((item) =>
-        item &&
-        typeof item === "object" &&
-        (item as { type?: unknown }).type === "page"
-          ? []
-          : [remove(item)],
-      );
-    }
-    if (!value || typeof value !== "object") return value;
-    return Object.fromEntries(
-      Object.entries(value).map(([key, child]) => [key, remove(child)]),
-    );
-  };
-  return remove(document) as OpenEditorDocument;
-}
-
 export function hasSameNonPageContent(
   left: OpenEditorDocument,
   right: OpenEditorDocument,
+  manifests: readonly OpenEditorCustomBlockManifest[],
 ): boolean {
   return (
-    JSON.stringify(removeChildPageProjection(left)) ===
-    JSON.stringify(removeChildPageProjection(right))
+    JSON.stringify(removeChildPageProjection(left, manifests)) ===
+    JSON.stringify(removeChildPageProjection(right, manifests))
   );
 }

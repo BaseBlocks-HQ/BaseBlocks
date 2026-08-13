@@ -10,6 +10,9 @@ import {
   exportOpenEditorDocument,
   openEditorExportFormats,
 } from "@openeditor/exporters/export";
+import { baseBlocksCustomBlocks } from "@baseblocks/custom-blocks";
+import { baseBlocksCoreBlocks } from "@baseblocks/openeditor-contracts/core-blocks";
+import { createOpenEditorCustomBlockRegistry } from "@openeditor/custom-block";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -20,6 +23,10 @@ const ASSET_FAILURE_CODES = new Set([
   "asset_rejected",
   "asset_unavailable",
   "unsafe_url",
+]);
+const customBlockRegistry = createOpenEditorCustomBlockRegistry([
+  ...baseBlocksCustomBlocks,
+  ...baseBlocksCoreBlocks,
 ]);
 
 function expectedSha256(checksum: string | undefined): string | undefined {
@@ -71,7 +78,7 @@ export async function GET(
     const assetsById = new Map<string, PageExportAsset>(
       result.assets.map((asset: PageExportAsset) => [asset.fileId, asset]),
     );
-    const assetResolver = createOpenEditorImageAssetResolver({
+    const assetResolver = createOpenEditorImageAssetResolver<PageExportAsset>({
       lookup: (imageId) => assetsById.get(imageId) ?? null,
       load: async (asset, { signal }) => {
         const stored = await getFiles().download(asset.objectKey, {
@@ -106,6 +113,7 @@ export async function GET(
       },
     });
     const exported = await exportOpenEditorDocument(result.content, {
+      customBlocks: customBlockRegistry,
       format,
       includeTitle: true,
       resolveAsset: assetResolver,

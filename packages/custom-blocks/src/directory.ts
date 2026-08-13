@@ -1,8 +1,19 @@
-import type {
-  Directory,
-  DirectoryContent,
-  DirectoryRow,
-} from "@baseblocks/domain";
+export interface DirectoryRow {
+  id: string;
+  cells: Record<string, string>;
+}
+
+export interface Directory {
+  id: string;
+  label: string;
+  columnIds: string[];
+  rows: DirectoryRow[];
+  pageSize: number | null;
+}
+
+export interface DirectoryContent {
+  directories: Directory[];
+}
 
 export type DirectoryIdFactory = (kind: "column" | "row") => string;
 
@@ -73,6 +84,52 @@ export function removeDirectoryColumn(
       const { [columnId]: _, ...nextCells } = cells;
       return { ...row, cells: nextCells };
     }),
+  };
+}
+
+export function deleteDirectoryRow(
+  directory: Directory,
+  rowId: string,
+): Directory {
+  if (directory.rows.length <= 1) return directory;
+  const rows = directory.rows.filter(({ id }) => id !== rowId);
+  return rows.length === directory.rows.length
+    ? directory
+    : { ...directory, rows };
+}
+
+export function duplicateDirectoryRow(
+  directory: Directory,
+  rowId: string,
+  createId: DirectoryIdFactory,
+): Directory {
+  const row = directory.rows.find(({ id }) => id === rowId);
+  if (!row) return directory;
+  return {
+    ...directory,
+    rows: insertAt(
+      directory.rows,
+      row,
+      { ...row, id: createId("row"), cells: { ...row.cells } },
+      true,
+    ),
+  };
+}
+
+export function duplicateDirectoryColumn(
+  directory: Directory,
+  columnId: string,
+  createId: DirectoryIdFactory,
+): Directory {
+  if (!directory.columnIds.includes(columnId)) return directory;
+  const nextId = createId("column");
+  return {
+    ...directory,
+    columnIds: insertAt(directory.columnIds, columnId, nextId, true),
+    rows: directory.rows.map((row) => ({
+      ...row,
+      cells: { ...row.cells, [nextId]: row.cells[columnId] ?? "" },
+    })),
   };
 }
 
@@ -152,6 +209,84 @@ export function createDirectoryContent(): DirectoryContent {
   };
 }
 
+export type DirectoryEntityIdFactory = (
+  kind: "directory" | "column" | "row",
+) => string;
+
+export function addDirectory(
+  content: DirectoryContent,
+  createId: DirectoryEntityIdFactory,
+): { content: DirectoryContent; activeId: string } {
+  const directory = createDirectory(
+    createId("directory"),
+    `Directory ${content.directories.length + 1}`,
+    createId("column"),
+    createId("row"),
+  );
+  return {
+    content: { directories: [...content.directories, directory] },
+    activeId: directory.id,
+  };
+}
+
+export function duplicateDirectory(
+  content: DirectoryContent,
+  directoryId: string,
+  createId: DirectoryEntityIdFactory,
+): { content: DirectoryContent; activeId: string } {
+  const source = content.directories.find(({ id }) => id === directoryId);
+  if (!source) return { content, activeId: directoryId };
+  const columnIds = source.columnIds.map(() => createId("column"));
+  const directory: Directory = {
+    ...source,
+    id: createId("directory"),
+    label: `${source.label} copy`,
+    columnIds,
+    rows: source.rows.map((row) => ({
+      id: createId("row"),
+      cells: Object.fromEntries(
+        columnIds.map((id, index) => [
+          id,
+          row.cells[source.columnIds[index] ?? ""] ?? "",
+        ]),
+      ),
+    })),
+  };
+  return {
+    content: { directories: [...content.directories, directory] },
+    activeId: directory.id,
+  };
+}
+
+export function deleteDirectory(
+  content: DirectoryContent,
+  directoryId: string,
+): { content: DirectoryContent; activeId: string } {
+  if (content.directories.length <= 1)
+    return { content, activeId: content.directories[0]?.id ?? directoryId };
+  const index = content.directories.findIndex(({ id }) => id === directoryId);
+  if (index < 0) return { content, activeId: content.directories[0]?.id ?? "" };
+  const directories = content.directories.filter(
+    ({ id }) => id !== directoryId,
+  );
+  return {
+    content: { directories },
+    activeId: directories[Math.min(index, directories.length - 1)]?.id ?? "",
+  };
+}
+
+export function renameDirectory(
+  content: DirectoryContent,
+  directoryId: string,
+  label: string,
+): DirectoryContent {
+  return {
+    directories: content.directories.map((directory) =>
+      directory.id === directoryId ? { ...directory, label } : directory,
+    ),
+  };
+}
+
 export function moveDirectoryItem<T extends string | { id: string }>(
   items: T[],
   sourceId: string,
@@ -180,101 +315,7 @@ export function directoryToTsv(directory: Directory): string {
 
 export function directoryToText(content: DirectoryContent): string {
   return content.directories
-    .flatMap((directory) => [
-      ...(content.directories.length > 1 ? [directory.label] : []),
-      directoryToTsv(directory),
-    ])
+    .flatMap((directory) => [directory.label, directoryToTsv(directory)])
     .filter(Boolean)
     .join("\n");
 }
-
-export function directoryToHtml(
-  content: DirectoryContent,
-  escapeHtml: (value: string) => string,
-): string {
-  return content.directories
-    .map((directory) => {
-      const rows = directory.rows
-        .map(
-          (row) =>
-            `<tr>${directory.columnIds
-              .map(
-                (columnId) =>
-                  `<td>${escapeHtml(row.cells[columnId] ?? "")}</td>`,
-              )
-              .join("")}</tr>`,
-        )
-        .join("");
-      const table = `<table><tbody>${rows}</tbody></table>`;
-      return content.directories.length > 1
-        ? `<section data-baseblocks-directory><h2>${escapeHtml(directory.label)}</h2>${table}</section>`
-        : table;
-    })
-    .join("");
-}
-
-function normalizeDirectory(value: unknown, index: number): Directory {
-  const candidate =
-    value && typeof value === "object" ? (value as Partial<Directory>) : {};
-  const id =
-    typeof candidate.id === "string"
-      ? candidate.id
-      : index === 0
-        ? "default"
-        : `directory-${index + 1}`;
-  const columnIds = Array.isArray(candidate.columnIds)
-    ? candidate.columnIds.filter(
-        (columnId): columnId is string => typeof columnId === "string",
-      )
-    : [];
-  const normalizedColumnIds = columnIds.length ? columnIds : [`${id}-column-1`];
-  const rows = Array.isArray(candidate.rows)
-    ? candidate.rows.filter(
-        (row) =>
-          row &&
-          typeof row.id === "string" &&
-          row.cells &&
-          typeof row.cells === "object",
-      )
-    : [];
-  const pageSize =
-    typeof candidate.pageSize === "number" &&
-    Number.isInteger(candidate.pageSize) &&
-    candidate.pageSize > 0
-      ? candidate.pageSize
-      : null;
-
-  return {
-    id,
-    label:
-      typeof candidate.label === "string"
-        ? candidate.label
-        : `Directory ${index + 1}`,
-    columnIds: normalizedColumnIds,
-    pageSize,
-    rows: rows.length
-      ? rows
-      : [
-          {
-            id: `${id}-row-1`,
-            cells: Object.fromEntries(
-              normalizedColumnIds.map((columnId) => [columnId, ""]),
-            ),
-          },
-        ],
-  };
-}
-
-export function readDirectoryContent(value: unknown): DirectoryContent {
-  if (!value || typeof value !== "object") return createDirectoryContent();
-  const candidate = value as Partial<DirectoryContent>;
-  const directories =
-    Array.isArray(candidate.directories) && candidate.directories.length
-      ? candidate.directories
-      : [];
-  return directories.length
-    ? { directories: directories.map(normalizeDirectory) }
-    : createDirectoryContent();
-}
-
-export { readDirectoryContent as readDirectory };

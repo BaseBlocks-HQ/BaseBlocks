@@ -6,10 +6,8 @@ import { workflows } from "./workflows";
 import { fileSourceVersion } from "./model/fileExtraction";
 import { buildReleaseChangeDetail } from "./model/releaseChangeDetails";
 import { extractionIsPublishable } from "./model/releaseState";
-import {
-  extractOpenEditorText,
-  parseOpenEditorDocument,
-} from "./pageContentFormat";
+import { parseOpenEditorDocument } from "./pageContentFormat";
+import { extractOpenEditorText } from "./customBlockIndexing";
 import { releaseSearchScope, upsertSearchEntry } from "./search";
 
 const PAGE_BATCH_SIZE = 6;

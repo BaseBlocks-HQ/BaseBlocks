@@ -10,6 +10,9 @@ import type { SaveStatus } from "@baseblocks/domain";
 import type { OpenEditorDocument } from "@openeditor/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { VersionedDocument } from "./versioned-document";
+import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
+
+const manifests = baseBlocksCustomBlockRegistry.manifests;
 
 type SaveResult = VersionedDocument & {
   status: "saved" | "conflict";
@@ -97,7 +100,7 @@ export function useVersionedPageDocument({
 
       if (result.status === "conflict") {
         const baseDocument = baseDocumentRef.current;
-        if (!hasSameNonPageContent(baseDocument, result.document)) {
+        if (!hasSameNonPageContent(baseDocument, result.document, manifests)) {
           conflictRef.current = true;
           baseHashRef.current = result.contentHash;
           baseDocumentRef.current = result.document;
@@ -110,7 +113,11 @@ export function useVersionedPageDocument({
         baseHashRef.current = result.contentHash;
         baseDocumentRef.current = result.document;
         const local = documentRef.current;
-        const rebased = reconcileChildPageProjection(local, result.document);
+        const rebased = reconcileChildPageProjection(
+          local,
+          result.document,
+          manifests,
+        );
         apply(rebased);
         if (JSON.stringify(rebased) !== JSON.stringify(result.document)) {
           pendingRef.current = rebased;
@@ -182,8 +189,9 @@ export function useVersionedPageDocument({
     const baseDocument = baseDocumentRef.current;
     const inFlightDocument = inFlightDocumentRef.current;
     if (
-      !hasSameNonPageContent(baseDocument, incoming) &&
-      (!inFlightDocument || !hasSameNonPageContent(inFlightDocument, incoming))
+      !hasSameNonPageContent(baseDocument, incoming, manifests) &&
+      (!inFlightDocument ||
+        !hasSameNonPageContent(inFlightDocument, incoming, manifests))
     ) {
       conflictRef.current = true;
       baseHashRef.current = remote.contentHash;
@@ -196,7 +204,7 @@ export function useVersionedPageDocument({
 
     baseHashRef.current = remote.contentHash;
     baseDocumentRef.current = incoming;
-    const rebased = reconcileChildPageProjection(local, incoming);
+    const rebased = reconcileChildPageProjection(local, incoming, manifests);
     apply(rebased);
     if (JSON.stringify(rebased) !== JSON.stringify(incoming)) {
       pendingRef.current = rebased;
@@ -223,7 +231,9 @@ export function useVersionedPageDocument({
       }
       pendingRef.current = next;
       onSaveStatusChangeRef.current?.("pending");
-      schedule(!hasSameChildPageProjection(previous, next) ? 0 : 750);
+      schedule(
+        !hasSameChildPageProjection(previous, next, manifests) ? 0 : 750,
+      );
     },
     [apply, schedule],
   );
