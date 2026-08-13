@@ -201,12 +201,12 @@ function DecisionBreadcrumb({
 }) {
   const steps = path.flatMap((nodeId, index) => {
     const node = tree.nodes.find(({ id }) => id === nodeId);
-    return node?.parentId ? [{ index, node }] : [];
+    return node ? [{ index, node }] : [];
   });
   const collapsed = steps.length > 3;
   const hidden = collapsed ? steps.slice(0, -2) : [];
   const visible = collapsed ? steps.slice(-2) : steps;
-  const atStart = visible.length === 0;
+  const atStart = path.length === 0;
 
   return (
     <Breadcrumb className="min-w-0" aria-label="Edit path">
@@ -546,8 +546,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     />
                     {!isQuestion ? (
                       <span className="mt-1.5 block text-xs font-normal text-muted-foreground">
-                        With no answers, this step is the final result. Add an
-                        answer to make it a question.
+                        With no answers, this step is the final result.
                       </span>
                     ) : null}
                   </label>
@@ -587,7 +586,13 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                   });
                 }}
               >
-                <div className="grid min-h-0 flex-1 content-start overflow-y-auto overscroll-contain pe-1">
+                <div
+                  className={`grid min-h-0 flex-1 overflow-y-auto overscroll-contain pe-1 ${
+                    editorState.visibleOptions.length > 0
+                      ? "content-start"
+                      : "place-items-center"
+                  }`}
+                >
                   {editorState.visibleOptions.length > 0 ? (
                     editorState.visibleOptions.map((node, index) => (
                       <DecisionAnswer
@@ -612,7 +617,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                     ))
                   ) : (
                     <DecisionTreeState
-                      className="min-h-full"
+                      className="w-full"
                       variant={editorState.activeNode ? "answers" : "steps"}
                     />
                   )}
@@ -624,7 +629,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                   <Input
                     aria-label="New answer"
                     autoFocus
-                    className="border-0 bg-transparent pe-20 shadow-none focus-visible:bg-background"
+                    className="border-0 bg-transparent pe-16 shadow-none focus-visible:bg-background"
                     onChange={(event) => setNewAnswer(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Escape") {
@@ -646,11 +651,12 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                   <div className="absolute inset-y-1 end-1 flex items-center gap-0.5">
                     <Button
                       aria-label="Cancel"
+                      className="text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
                       onClick={() => {
                         setNewAnswer("");
                         setAddingAnswer(false);
                       }}
-                      size="icon-sm"
+                      size="icon-xs"
                       title="Cancel"
                       type="button"
                       variant="ghost"
@@ -661,11 +667,13 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                       aria-label={
                         editorState.activeNode ? "Add answer" : "Add step"
                       }
+                      className="text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
                       disabled={!newAnswer.trim()}
                       onClick={addAnswer}
-                      size="icon-sm"
+                      size="icon-xs"
                       title={editorState.activeNode ? "Add answer" : "Add step"}
                       type="button"
+                      variant="ghost"
                     >
                       <HugeiconsIcon aria-hidden icon={Tick01Icon} />
                     </Button>
