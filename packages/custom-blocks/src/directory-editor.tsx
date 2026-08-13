@@ -11,6 +11,7 @@ import {
   DragDropHorizontalIcon,
   DragDropVerticalIcon,
   FilePasteIcon,
+  PencilEdit01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@baseblocks/ui/button";
@@ -425,8 +426,8 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
       });
 
     return (
-      <BlockShell label="Edit directory" surface>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 bg-muted/35 px-3 py-2">
+      <BlockShell label="Edit directory">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {renaming ? (
               <Input
@@ -459,6 +460,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
                     },
                   },
                   {
+                    icon: PencilEdit01Icon,
                     label: "Rename directory",
                     onSelect: () => setRenaming(true),
                   },
@@ -557,7 +559,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
               });
           }}
         >
-          <div className="overflow-x-auto bg-card">
+          <div className="overflow-x-auto rounded-[1.5rem] bg-card">
             <table className="w-full min-w-[42rem] border-collapse text-sm">
               <caption className="sr-only">{active.label}</caption>
               <thead className="bg-muted/70 text-left text-xs text-muted-foreground">

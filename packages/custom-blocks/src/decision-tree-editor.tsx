@@ -7,6 +7,7 @@ import {
   Copy01Icon,
   Delete01Icon,
   DragDropVerticalIcon,
+  PencilEdit01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -37,7 +38,7 @@ import {
   textBlock,
   type OpenEditorDocument,
 } from "@openeditor/core";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, type RefObject, useMemo, useRef, useState } from "react";
 import {
   addDecisionNode,
   addDecisionTree,
@@ -56,7 +57,7 @@ import {
   resolveDecisionTree,
 } from "./decision-tree-navigation";
 import { decisionTreeBlock } from "./index";
-import { BlockShell, CollectionMenu } from "./ui";
+import { ActionMenu, BlockShell, CollectionMenu } from "./ui";
 
 const createId = () => crypto.randomUUID();
 const sensors = [
@@ -81,6 +82,7 @@ function DecisionAnswer({
   onDelete,
   onOpen,
   onRename,
+  suppressMenuClick,
   total,
 }: {
   index: number;
@@ -88,8 +90,10 @@ function DecisionAnswer({
   onDelete: () => void;
   onOpen: () => void;
   onRename: (name: string) => void;
+  suppressMenuClick: RefObject<boolean>;
   total: number;
 }) {
+  const [renaming, setRenaming] = useState(false);
   const sortable = useSortable<{ kind: "decision-answer"; id: string }>({
     id: node.id,
     index,
@@ -102,44 +106,72 @@ function DecisionAnswer({
   const label = `Move answer ${index + 1}; position ${index + 1} of ${total}`;
   return (
     <div
-      className={`flex min-w-0 items-center gap-1 py-1 ${sortable.isDropTarget ? "bg-muted/60" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
+      className={`group flex min-w-0 items-center gap-1 rounded-xl py-0.5 hover:bg-muted/40 ${sortable.isDropTarget ? "bg-muted/60" : ""} ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
-      <Button
-        aria-label={label}
-        className="cursor-grab touch-none active:cursor-grabbing"
-        ref={sortable.handleRef}
-        size="icon-xs"
-        title={label}
-        type="button"
-        variant="ghost"
-      >
-        <HugeiconsIcon aria-hidden icon={DragDropVerticalIcon} />
-      </Button>
-      <Input
-        aria-label={`Answer ${index + 1}`}
-        className="min-w-0 flex-1 border-transparent !bg-transparent font-medium shadow-none hover:!bg-muted/40 focus-visible:!bg-background"
-        onChange={(event) => onRename(event.target.value)}
-        value={node.name}
+      <ActionMenu
+        items={[
+          {
+            icon: PencilEdit01Icon,
+            label: "Rename answer",
+            onSelect: () => setRenaming(true),
+          },
+          {
+            destructive: true,
+            icon: Delete01Icon,
+            label: "Delete answer",
+            onSelect: onDelete,
+            separatorBefore: true,
+          },
+        ]}
+        label={`Answer ${index + 1} actions`}
+        trigger={
+          <Button
+            aria-label={`${label}. Select for actions.`}
+            className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+            onClickCapture={(event) => {
+              if (!suppressMenuClick.current) return;
+              event.preventDefault();
+              event.stopPropagation();
+              suppressMenuClick.current = false;
+            }}
+            ref={sortable.handleRef}
+            size="icon-xs"
+            title={`${label}. Select for actions.`}
+            type="button"
+            variant="ghost"
+          >
+            <HugeiconsIcon aria-hidden icon={DragDropVerticalIcon} />
+          </Button>
+        }
       />
-      <Button
-        aria-label={`Open ${node.name}`}
-        onClick={onOpen}
-        size="icon-xs"
-        type="button"
-        variant="ghost"
-      >
-        <HugeiconsIcon aria-hidden icon={ArrowRight01Icon} />
-      </Button>
-      <Button
-        aria-label={`Delete ${node.name}`}
-        onClick={onDelete}
-        size="icon-xs"
-        type="button"
-        variant="ghost"
-      >
-        <HugeiconsIcon aria-hidden icon={Delete01Icon} />
-      </Button>
+      {renaming ? (
+        <Input
+          aria-label={`Rename ${node.name}`}
+          autoFocus
+          className="min-w-0 flex-1 border-transparent !bg-transparent font-medium shadow-none focus-visible:!bg-background"
+          onBlur={() => setRenaming(false)}
+          onChange={(event) => onRename(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === "Escape")
+              setRenaming(false);
+          }}
+          value={node.name}
+        />
+      ) : (
+        <button
+          className="flex min-h-9 min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={onOpen}
+          type="button"
+        >
+          <span className="truncate">{node.name}</span>
+          <HugeiconsIcon
+            aria-hidden
+            className="size-4 shrink-0 text-muted-foreground"
+            icon={ArrowRight01Icon}
+          />
+        </button>
+      )}
     </div>
   );
 }
@@ -260,7 +292,7 @@ function VisitorFlow({
   return (
     <aside
       aria-label="Decision tree preview"
-      className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden border-t border-border/70 bg-muted/20 p-4 sm:p-6 lg:border-l lg:border-t-0"
+      className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden bg-muted/20 p-4 sm:p-6"
     >
       {state.activeNode ? (
         <h3 className="mb-4 text-balance text-center text-xl font-semibold leading-tight sm:text-2xl">
@@ -316,6 +348,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
     const [editorPath, setEditorPath] = useState<string[]>([]);
     const [previewPath, setPreviewPath] = useState<string[]>([]);
     const [newAnswer, setNewAnswer] = useState("");
+    const suppressMenuClick = useRef(false);
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
     const editorState = useMemo(() => {
       const nodes = tree?.nodes ?? [];
@@ -356,8 +389,8 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
     };
 
     return (
-      <BlockShell label="Edit decision tree" surface>
-        <div className="flex min-w-0 items-center border-b border-border/70 bg-muted/35 px-3 py-2">
+      <BlockShell label="Edit decision tree">
+        <div className="flex min-w-0 items-center px-1">
           {renaming ? (
             <Input
               aria-label="Decision tree name"
@@ -391,6 +424,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                   },
                 },
                 {
+                  icon: PencilEdit01Icon,
                   label: "Rename tree",
                   onSelect: () => setRenaming(true),
                 },
@@ -432,7 +466,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
           )}
         </div>
 
-        <div className="grid min-w-0 overflow-hidden bg-card lg:grid-cols-2">
+        <div className="grid min-w-0 overflow-hidden rounded-[1.5rem] bg-card lg:grid-cols-2">
           <section className="min-w-0 bg-card p-3 sm:p-4">
             <div className="mb-3 min-h-8 px-1 py-0.5">
               <DecisionBreadcrumb
@@ -444,44 +478,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
 
             <div className="space-y-4">
               {editorState.activeNode ? (
-                <div className="space-y-3">
-                  <div className="flex items-end gap-2">
-                    {editorState.activeNode.parentId ? (
-                      <label
-                        className="min-w-0 flex-1 text-xs font-medium text-muted-foreground"
-                        htmlFor={`${editorState.activeNode.id}-answer`}
-                      >
-                        Answer shown on the previous step
-                        <Input
-                          aria-label="Answer shown on the previous step"
-                          className="mt-1 bg-background font-medium text-foreground"
-                          id={`${editorState.activeNode.id}-answer`}
-                          onChange={(event) =>
-                            updateTree({
-                              ...tree,
-                              nodes: tree.nodes.map((node) =>
-                                node.id === editorState.activeNode?.id
-                                  ? { ...node, name: event.target.value }
-                                  : node,
-                              ),
-                            })
-                          }
-                          value={editorState.activeNode.name}
-                        />
-                      </label>
-                    ) : null}
-                    {editorState.activeNode.parentId ? (
-                      <Button
-                        aria-label={`Delete ${editorState.activeNode.name}`}
-                        onClick={() => removeNode(editorState.activeNode!.id)}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <HugeiconsIcon aria-hidden icon={Delete01Icon} />
-                      </Button>
-                    ) : null}
-                  </div>
+                <div>
                   <label
                     className="block text-xs font-medium text-muted-foreground"
                     htmlFor={`${editorState.activeNode.id}-prompt`}
@@ -508,7 +505,13 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
 
               <DragDropProvider
                 sensors={sensors}
+                onDragStart={() => {
+                  suppressMenuClick.current = true;
+                }}
                 onDragEnd={(event) => {
+                  window.setTimeout(() => {
+                    suppressMenuClick.current = false;
+                  }, 250);
                   if (event.canceled || !isSortable(event.operation.source))
                     return;
                   const source = event.operation.source;
@@ -551,6 +554,7 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                           ),
                         })
                       }
+                      suppressMenuClick={suppressMenuClick}
                       total={editorState.visibleOptions.length}
                     />
                   ))}
