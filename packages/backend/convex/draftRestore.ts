@@ -5,6 +5,7 @@ import { internalMutation, type MutationCtx } from "./_generated/server";
 import { workflows } from "./workflows";
 import { deleteFileRows } from "./files";
 import { recordStorageUsageEvent } from "./model/storageTelemetry";
+import { attachedSiteAssetLifecycle } from "./model/siteAssets";
 import { reconcileRestoredFile } from "./fileExtraction";
 import { removePageContentIndex, indexPageContent } from "./search";
 import { synchronizeParentDocument } from "./model/pageHierarchy";
@@ -444,13 +445,7 @@ async function restoreFiles(
       order: snapshot.order,
       deletedAt: undefined,
       ...(snapshot.kind === "siteAsset"
-        ? {
-            assetState: "attached" as const,
-            assetAttachedAt: previous?.assetAttachedAt ?? Date.now(),
-            assetExpiresAt: undefined,
-            assetPurgeAfter: undefined,
-            assetPurgeError: undefined,
-          }
+        ? attachedSiteAssetLifecycle(previous?.assetAttachedAt ?? Date.now())
         : {}),
     });
     const current = await ctx.db.get(snapshot.fileId);

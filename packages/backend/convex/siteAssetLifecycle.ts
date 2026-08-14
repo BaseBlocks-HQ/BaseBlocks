@@ -10,6 +10,7 @@ import {
   claimSiteAssetForPurge,
   isSiteAssetReferenced,
   reconcileSiteAsset,
+  retrySiteAssetPurge,
 } from "./model/siteAssets";
 import { recordStorageUsageEvent } from "./model/storageTelemetry";
 import { requireOrganizationPermission } from "./permissions";
@@ -47,7 +48,7 @@ export const claim = internalMutation({
   handler: async (ctx, { fileId }) => {
     if (fileId) return claimSiteAssetForPurge(ctx, fileId);
     const now = Date.now();
-    for (const state of ["pending", "retired"] as const) {
+    for (const state of ["deleting", "pending", "retired"] as const) {
       const candidate = await ctx.db
         .query("files")
         .withIndex("by_asset_state_purge", (query) =>
@@ -89,15 +90,7 @@ export const completePurge = internalMutation({
 export const failPurge = internalMutation({
   args: { fileId: v.id("files"), failure: v.string() },
   handler: async (ctx, { fileId, failure }) => {
-    const file = await ctx.db.get(fileId);
-    if (file?.kind !== "siteAsset" || file.assetState !== "deleting") {
-      return;
-    }
-    await ctx.db.patch(fileId, {
-      assetState: "retired",
-      assetPurgeAfter: Date.now() + 60 * 60 * 1000,
-      assetPurgeError: failure.replaceAll(/[\r\n\t]+/gu, " ").slice(0, 300),
-    });
+    await retrySiteAssetPurge(ctx, fileId, failure);
   },
 });
 

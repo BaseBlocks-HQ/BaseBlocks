@@ -1,6 +1,7 @@
 import {
   isSupportedUploadMimeType,
   keyMatchesPurpose,
+  managedFilePath,
   parseFileKey,
   resolveUploadMimeType,
 } from "@baseblocks/domain";
@@ -23,7 +24,7 @@ import {
   upsertDraftFileSearch,
 } from "./search";
 import { recordStorageUsageEvent } from "./model/storageTelemetry";
-import { PENDING_SITE_ASSET_TTL_MS } from "./model/siteAssets";
+import { pendingSiteAssetLifecycle } from "./model/siteAssets";
 
 async function isFileReferencedByAccessiblePage(
   ctx: Parameters<typeof getPageAccessOrNull>[0],
@@ -42,7 +43,7 @@ async function isFileReferencedByAccessiblePage(
 }
 
 export function buildFileUrl(fileId: Id<"files">): string {
-  return `/api/files/${fileId}`;
+  return managedFilePath(fileId);
 }
 
 export async function deleteFileRows(
@@ -468,6 +469,7 @@ export const createSiteAsset = mutation({
       site.organizationId,
       { resource: "site", action: "manage" },
     );
+    const createdAt = Date.now();
     const fileId = await ctx.db.insert("files", {
       siteId: args.siteId,
       kind: "siteAsset",
@@ -479,10 +481,8 @@ export const createSiteAsset = mutation({
       checksum: args.checksum,
       order: 0,
       uploadedBy: auth.userId,
-      createdAt: Date.now(),
-      assetState: "pending",
-      assetExpiresAt: Date.now() + PENDING_SITE_ASSET_TTL_MS,
-      assetPurgeAfter: Date.now() + PENDING_SITE_ASSET_TTL_MS,
+      createdAt,
+      ...pendingSiteAssetLifecycle(createdAt),
     });
     await recordStorageUsageEvent(ctx, {
       organizationId: site.organizationId,

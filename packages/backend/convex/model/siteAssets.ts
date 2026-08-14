@@ -7,6 +7,66 @@ type WriteCtx = Pick<GenericMutationCtx<DataModel>, "db">;
 
 export const PENDING_SITE_ASSET_TTL_MS = 48 * 60 * 60 * 1000;
 export const RETIRED_SITE_ASSET_GRACE_MS = 60 * 60 * 1000;
+export const SITE_ASSET_DELETE_LEASE_MS = 15 * 60 * 1000;
+
+type SiteAssetLifecycle = Pick<
+  Doc<"files">,
+  | "assetState"
+  | "assetExpiresAt"
+  | "assetAttachedAt"
+  | "assetPurgeAfter"
+  | "assetPurgeError"
+>;
+
+export function pendingSiteAssetLifecycle(now: number): SiteAssetLifecycle {
+  const expiresAt = now + PENDING_SITE_ASSET_TTL_MS;
+  return {
+    assetState: "pending",
+    assetExpiresAt: expiresAt,
+    assetAttachedAt: undefined,
+    assetPurgeAfter: expiresAt,
+    assetPurgeError: undefined,
+  };
+}
+
+export function attachedSiteAssetLifecycle(
+  attachedAt: number,
+): SiteAssetLifecycle {
+  return {
+    assetState: "attached",
+    assetExpiresAt: undefined,
+    assetAttachedAt: attachedAt,
+    assetPurgeAfter: undefined,
+    assetPurgeError: undefined,
+  };
+}
+
+function retiredSiteAssetLifecycle(
+  attachedAt: number | undefined,
+  purgeAfter: number,
+  purgeError?: string,
+): SiteAssetLifecycle {
+  return {
+    assetState: "retired",
+    assetExpiresAt: undefined,
+    assetAttachedAt: attachedAt,
+    assetPurgeAfter: purgeAfter,
+    assetPurgeError: purgeError,
+  };
+}
+
+function deletingSiteAssetLifecycle(
+  attachedAt: number | undefined,
+  now: number,
+): SiteAssetLifecycle {
+  return {
+    assetState: "deleting",
+    assetExpiresAt: undefined,
+    assetAttachedAt: attachedAt,
+    assetPurgeAfter: now + SITE_ASSET_DELETE_LEASE_MS,
+    assetPurgeError: undefined,
+  };
+}
 
 function isSiteAsset(file: Doc<"files"> | null): file is Doc<"files"> {
   return file?.kind === "siteAsset";
@@ -83,11 +143,7 @@ export async function attachSiteAsset(
     });
   }
   await ctx.db.patch(fileId, {
-    assetState: "attached",
-    assetAttachedAt: file.assetAttachedAt ?? now,
-    assetExpiresAt: undefined,
-    assetPurgeAfter: undefined,
-    assetPurgeError: undefined,
+    ...attachedSiteAssetLifecycle(file.assetAttachedAt ?? now),
     deletedAt: undefined,
   });
   return file;
@@ -115,10 +171,7 @@ async function retireSiteAsset(
     });
   }
   await ctx.db.patch(file._id, {
-    assetState: "retired",
-    assetExpiresAt: undefined,
-    assetPurgeAfter: purgeAfter,
-    assetPurgeError: undefined,
+    ...retiredSiteAssetLifecycle(file.assetAttachedAt, purgeAfter),
     deletedAt: file.deletedAt ?? now,
   });
 }
@@ -170,7 +223,17 @@ export async function claimSiteAssetForPurge(
   now = Date.now(),
 ) {
   let file = await ctx.db.get(fileId);
-  if (!isSiteAsset(file) || file.assetState === "deleting") return null;
+  if (!isSiteAsset(file)) return null;
+  if (file.assetState === "deleting") {
+    if (file.assetPurgeAfter === undefined || file.assetPurgeAfter > now) {
+      return null;
+    }
+    await ctx.db.patch(
+      file._id,
+      deletingSiteAssetLifecycle(file.assetAttachedAt, now),
+    );
+    return { fileId: file._id, objectKey: file.objectKey };
+  }
   if (await isSiteAssetReferenced(ctx, file)) {
     await attachSiteAsset(ctx, file.siteId, file._id, now);
     return null;
@@ -187,9 +250,27 @@ export async function claimSiteAssetForPurge(
     file = await ctx.db.get(fileId);
     if (!isSiteAsset(file)) return null;
   }
-  await ctx.db.patch(file._id, {
-    assetState: "deleting",
-    assetPurgeError: undefined,
-  });
+  await ctx.db.patch(
+    file._id,
+    deletingSiteAssetLifecycle(file.assetAttachedAt, now),
+  );
   return { fileId: file._id, objectKey: file.objectKey };
+}
+
+export async function retrySiteAssetPurge(
+  ctx: WriteCtx,
+  fileId: Id<"files">,
+  failure: string,
+  now = Date.now(),
+) {
+  const file = await ctx.db.get(fileId);
+  if (!isSiteAsset(file) || file.assetState !== "deleting") return;
+  await ctx.db.patch(
+    fileId,
+    retiredSiteAssetLifecycle(
+      file.assetAttachedAt,
+      now + RETIRED_SITE_ASSET_GRACE_MS,
+      failure.replaceAll(/[\r\n\t]+/gu, " ").slice(0, 300),
+    ),
+  );
 }

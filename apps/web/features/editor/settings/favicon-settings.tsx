@@ -2,6 +2,7 @@
 
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import type { Id } from "@baseblocks/backend";
+import { managedFilePath } from "@baseblocks/domain";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ImageAssetDropZone } from "./image-asset-dropzone";
@@ -63,7 +64,7 @@ export function FaviconSettings({
       onFileAccepted={(file) => void upload(file)}
       onRemove={() => void remove()}
       progress={uploadState.progress?.percentage}
-      src={faviconFileId ? `/api/files/${faviconFileId}` : undefined}
+      src={faviconFileId ? managedFilePath(faviconFileId) : undefined}
     />
   );
 }

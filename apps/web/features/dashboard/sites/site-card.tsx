@@ -12,6 +12,7 @@ import { getTeamSiteEditorPath } from "@/features/dashboard/routes";
 import { getSiteOpenUrl } from "@/features/published-sites/urls";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import { managedFilePath } from "@baseblocks/domain";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,7 +66,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
   const isPublished = Boolean(site.liveReleaseId);
   const statusLabel = isPublished ? t("sites.published") : t("sites.draft");
   const logoUrl = site.logoFileId
-    ? `/api/files/${encodeURIComponent(site.logoFileId)}`
+    ? managedFilePath(site.logoFileId)
     : undefined;
 
   const handleDelete = async () => {

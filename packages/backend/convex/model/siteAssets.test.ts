@@ -7,7 +7,7 @@ function lifecycleContext({
   purgeAfter = 100,
 }: {
   referenced?: boolean;
-  state?: "pending" | "attached" | "retired";
+  state?: "pending" | "attached" | "retired" | "deleting";
   purgeAfter?: number;
 } = {}) {
   const patches: Array<Record<string, unknown>> = [];
@@ -15,6 +15,7 @@ function lifecycleContext({
     _id: "file-1",
     siteId: "site-1",
     kind: "siteAsset",
+    objectKey: "site-assets/file-1.png",
     size: 10,
     assetState: state,
     assetPurgeAfter: purgeAfter,
@@ -86,6 +87,30 @@ describe("site asset lifecycle", () => {
     expect(patches.at(-1)).toMatchObject({
       assetState: "attached",
       assetPurgeAfter: undefined,
+    });
+  });
+
+  test("does not reclaim an active delete lease", async () => {
+    const { ctx, patches } = lifecycleContext({
+      state: "deleting",
+      purgeAfter: 300,
+    });
+    const claimed = await claimSiteAssetForPurge(ctx, "file-1" as never, 200);
+    expect(claimed).toBeNull();
+    expect(patches).toEqual([]);
+  });
+
+  test("reclaims an expired delete lease", async () => {
+    const { ctx, patches } = lifecycleContext({
+      state: "deleting",
+      purgeAfter: 100,
+    });
+    const claimed = await claimSiteAssetForPurge(ctx, "file-1" as never, 200);
+    expect(claimed?.fileId).toBe("file-1" as never);
+    expect(claimed?.objectKey).toBe("site-assets/file-1.png");
+    expect(patches.at(-1)).toMatchObject({
+      assetState: "deleting",
+      assetPurgeAfter: 15 * 60 * 1000 + 200,
     });
   });
 });

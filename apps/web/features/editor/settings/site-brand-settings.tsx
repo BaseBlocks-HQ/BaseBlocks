@@ -3,6 +3,7 @@
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import { api } from "@baseblocks/backend";
 import type { Doc } from "@baseblocks/backend";
+import { managedFilePath } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -116,7 +117,7 @@ export function SiteBrandSettings({ site }: { site: Doc<"sites"> }) {
             onFileAccepted={(file) => void uploadLogo(file)}
             onRemove={() => void removeLogo()}
             progress={uploadState.progress?.percentage}
-            src={site.logoFileId ? `/api/files/${site.logoFileId}` : undefined}
+            src={site.logoFileId ? managedFilePath(site.logoFileId) : undefined}
           />
         </AssetRow>
         <AssetRow label="Favicon">

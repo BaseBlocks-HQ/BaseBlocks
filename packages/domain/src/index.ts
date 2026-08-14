@@ -59,6 +59,7 @@ export type { UploadPurpose } from "./files/storage";
 export {
   getUploadMimeTypeForFilename,
   isSupportedUploadMimeType,
+  managedFilePath,
   normalizeMimeType,
   resolveUploadMimeType,
   supportedUploadMimeTypes,
