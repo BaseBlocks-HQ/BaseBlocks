@@ -2,10 +2,9 @@
 
 import {
   Add01Icon,
-  AppWindowIcon,
   ArrowUpRight01Icon,
   Delete01Icon,
-  ImageAdd01Icon,
+  Image01Icon,
   Link02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -19,13 +18,18 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
 import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
 import type { OpenEditorCustomBlockEditorHost } from "@openeditor/custom-block/editor";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { quickLinksBlock } from "./index";
 import { QuickLinkAssetLoader } from "./quick-link-asset-loader";
 import { destinationLabel, type QuickLink } from "./quick-links";
-import { BlockShell, selectClassName } from "./ui";
+import { BlockShell } from "./ui";
 
 const createId = () => crypto.randomUUID();
 type LinkDraft = Omit<QuickLink, "id"> & { id: string | null };
@@ -34,7 +38,6 @@ const emptyDraft = (): LinkDraft => ({
   id: null,
   title: "",
   url: "",
-  linkType: "website",
 });
 
 export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
@@ -43,7 +46,7 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
     const updateDataJson = (value: unknown) => updateData(value as typeof data);
     const [draft, setDraft] = useState<LinkDraft | null>(null);
     const resolved = draft
-      ? host.links?.resolve({ href: draft.url, kind: draft.linkType })
+      ? host.links?.resolve({ href: draft.url, kind: "website" })
       : null;
 
     return (
@@ -66,15 +69,11 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
               type="button"
             >
               <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
-                {link.artwork?.kind === "icon" && host.icons ? (
-                  (host.icons.render(link.artwork.id) as ReactNode)
-                ) : link.artwork?.kind === "asset" ? (
+                {link.imageAssetId ? (
                   <QuickLinkEditorAsset
-                    assetId={link.artwork.assetId}
+                    assetId={link.imageAssetId}
                     host={host}
                   />
-                ) : link.linkType === "app" ? (
-                  <HugeiconsIcon aria-hidden icon={AppWindowIcon} />
                 ) : (
                   <HugeiconsIcon aria-hidden icon={Link02Icon} />
                 )}
@@ -103,13 +102,33 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
           open={draft !== null}
         >
           {draft ? (
-            <DialogContent className="w-[calc(100%-2rem)] max-w-[32rem] overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
-              <DialogHeader>
-                <DialogTitle className="px-5 pt-4 text-base">
+            <DialogContent className="w-[calc(100%-1.5rem)] max-w-[26rem] gap-0 overflow-hidden rounded-2xl border-0 bg-background/80 p-0 text-foreground shadow-2xl backdrop-blur-xl backdrop-saturate-150 sm:max-w-[26rem] [&_[data-slot='dialog-close']]:top-2 [&_[data-slot='dialog-close']]:right-2 [&_[data-slot='dialog-close']]:flex [&_[data-slot='dialog-close']]:size-8 [&_[data-slot='dialog-close']]:items-center [&_[data-slot='dialog-close']]:justify-center [&_[data-slot='dialog-close']]:rounded-lg">
+              <DialogHeader className="px-4 pt-4 pe-12">
+                <DialogTitle className="brand-display text-2xl leading-none font-normal tracking-[-0.025em]">
                   {draft.id ? "Edit quick link" : "Add quick link"}
                 </DialogTitle>
               </DialogHeader>
-              <div className="grid gap-4 px-5">
+              <form
+                className="grid gap-4 px-4 pt-4 pb-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!resolved || !draft.title.trim()) return;
+                  const value: QuickLink = {
+                    id: draft.id ?? createId(),
+                    title: draft.title.trim(),
+                    url: draft.url.trim(),
+                    imageAssetId: draft.imageAssetId,
+                  };
+                  updateDataJson({
+                    links: draft.id
+                      ? data.links.map((link) =>
+                          link.id === draft.id ? value : link,
+                        )
+                      : [...data.links, value],
+                  });
+                  setDraft(null);
+                }}
+              >
                 <div className="grid gap-1.5">
                   <Label htmlFor="quick-link-title">Title</Label>
                   <Input
@@ -122,143 +141,112 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="quick-link-destination">Destination</Label>
+                  <Label htmlFor="quick-link-destination">Website URL</Label>
                   <Input
                     aria-invalid={Boolean(draft.url && !resolved)}
                     id="quick-link-destination"
                     onChange={(event) =>
                       setDraft({ ...draft, url: event.target.value })
                     }
-                    placeholder={
-                      draft.linkType === "app"
-                        ? "myapp://open"
-                        : "https://example.com"
-                    }
+                    placeholder="https://example.com"
                     value={draft.url}
                   />
                   {draft.url && !resolved ? (
                     <p className="text-xs text-destructive">
-                      Enter a valid destination.
+                      Enter an HTTP, HTTPS, or site-relative URL.
                     </p>
                   ) : null}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="quick-link-type">Link type</Label>
-                    <select
-                      className={`${selectClassName} w-full`}
-                      id="quick-link-type"
-                      onChange={(event) =>
-                        setDraft({
-                          ...draft,
-                          linkType:
-                            event.target.value === "app" ? "app" : "website",
-                        })
-                      }
-                      value={draft.linkType}
-                    >
-                      <option value="website">Website</option>
-                      <option value="app">App</option>
-                    </select>
-                  </div>
-                  {host.icons ? (
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="quick-link-icon">Icon</Label>
-                      <select
-                        className={`${selectClassName} w-full`}
-                        id="quick-link-icon"
-                        onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            artwork: event.target.value
-                              ? { kind: "icon", id: event.target.value }
-                              : undefined,
-                          })
-                        }
-                        value={
-                          draft.artwork?.kind === "icon" ? draft.artwork.id : ""
-                        }
-                      >
-                        <option value="">No icon</option>
-                        {host.icons.list().map((icon) => (
-                          <option key={icon.id} value={icon.id}>
-                            {icon.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : null}
-                </div>
                 {host.assets?.pick ? (
-                  <Button
-                    className="w-fit"
-                    onClick={async () => {
-                      const asset = await host.assets?.pick?.();
-                      if (asset)
-                        setDraft({
-                          ...draft,
-                          artwork: { kind: "asset", assetId: asset.id },
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-sm font-medium">Image</p>
+                    <div className="group relative shrink-0">
+                      <button
+                        aria-label={
+                          draft.imageAssetId
+                            ? "Replace quick link image"
+                            : "Choose quick link image"
+                        }
+                        className="group flex h-20 w-28 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/25 bg-background text-muted-foreground transition-[border-color,background-color] hover:border-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        onClick={async () => {
+                          const asset = await host.assets?.pick?.();
+                          if (asset)
+                            setDraft({ ...draft, imageAssetId: asset.id });
+                        }}
+                        type="button"
+                      >
+                        {draft.imageAssetId ? (
+                          <>
+                            <QuickLinkEditorAsset
+                              assetId={draft.imageAssetId}
+                              host={host}
+                            />
+                            <span className="absolute inset-x-0 bottom-0 bg-background/90 py-1 text-center text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                              Replace
+                            </span>
+                          </>
+                        ) : (
+                          <HugeiconsIcon
+                            aria-hidden
+                            className="size-5"
+                            icon={Image01Icon}
+                          />
+                        )}
+                      </button>
+                      {draft.imageAssetId ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              aria-label="Remove quick link image"
+                              className="absolute top-1 end-1 size-7 bg-background/90 text-muted-foreground opacity-100 shadow-sm transition-opacity hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
+                              onClick={() =>
+                                setDraft({
+                                  ...draft,
+                                  imageAssetId: undefined,
+                                })
+                              }
+                              size="icon-xs"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <HugeiconsIcon aria-hidden icon={Delete01Icon} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent sideOffset={6}>Remove</TooltipContent>
+                        </Tooltip>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+                <DialogFooter
+                  className={
+                    draft.id ? "pt-1 sm:justify-between" : "pt-1 sm:justify-end"
+                  }
+                >
+                  {draft.id ? (
+                    <Button
+                      className="mr-auto text-destructive hover:text-destructive"
+                      onClick={() => {
+                        updateDataJson({
+                          links: data.links.filter(({ id }) => id !== draft.id),
                         });
-                    }}
-                    type="button"
-                    variant="outline"
-                  >
-                    <HugeiconsIcon aria-hidden icon={ImageAdd01Icon} />
-                    {draft.artwork?.kind === "asset"
-                      ? "Change image"
-                      : "Choose image"}
-                  </Button>
-                ) : null}
-              </div>
-              <DialogFooter className="px-5 pb-4 sm:justify-between">
-                {draft.id ? (
+                        setDraft(null);
+                      }}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <HugeiconsIcon aria-hidden icon={Delete01Icon} />
+                      Delete
+                    </Button>
+                  ) : null}
                   <Button
-                    className="mr-auto text-destructive hover:text-destructive"
-                    onClick={() => {
-                      updateDataJson({
-                        links: data.links.filter(({ id }) => id !== draft.id),
-                      });
-                      setDraft(null);
-                    }}
-                    type="button"
-                    variant="ghost"
+                    disabled={!draft.title.trim() || !resolved}
+                    type="submit"
                   >
-                    <HugeiconsIcon aria-hidden icon={Delete01Icon} />
-                    Delete
+                    Save
                   </Button>
-                ) : null}
-                <Button
-                  onClick={() => setDraft(null)}
-                  type="button"
-                  variant="outline"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  disabled={!draft.title.trim() || !resolved}
-                  onClick={() => {
-                    if (!resolved) return;
-                    const value: QuickLink = {
-                      id: draft.id ?? createId(),
-                      title: draft.title.trim(),
-                      url: draft.url,
-                      linkType: draft.linkType,
-                      artwork: draft.artwork,
-                    };
-                    updateDataJson({
-                      links: draft.id
-                        ? data.links.map((link) =>
-                            link.id === draft.id ? value : link,
-                          )
-                        : [...data.links, value],
-                    });
-                    setDraft(null);
-                  }}
-                  type="button"
-                >
-                  Save
-                </Button>
-              </DialogFooter>
+                </DialogFooter>
+              </form>
             </DialogContent>
           ) : null}
         </Dialog>
@@ -283,6 +271,6 @@ function QuickLinkEditorAsset({
   return asset ? (
     <img alt={asset.alt} className="size-full object-cover" src={asset.src} />
   ) : (
-    <HugeiconsIcon aria-hidden icon={ImageAdd01Icon} />
+    <HugeiconsIcon aria-hidden icon={Image01Icon} />
   );
 }
