@@ -257,14 +257,13 @@ describe("extractOpenEditorText", () => {
                         attrs: {
                           "openeditor-id": "links",
                           blockId: "baseblocks.quick-links",
-                          version: 1,
+                          version: 2,
                           data: {
                             links: [
                               {
                                 id: "docs",
                                 title: "Documentation",
                                 url: "/docs",
-                                linkType: "website",
                               },
                             ],
                           },

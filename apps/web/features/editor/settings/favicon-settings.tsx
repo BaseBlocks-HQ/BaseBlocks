@@ -2,20 +2,22 @@
 
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import type { Id } from "@baseblocks/backend";
+import { managedFilePath } from "@baseblocks/domain";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ImageAssetDropZone } from "./image-asset-dropzone";
 
 export function FaviconSettings({
-  favicon,
+  faviconFileId,
   onChange,
   siteId,
 }: {
-  favicon?: string;
-  onChange: (favicon?: string) => Promise<void>;
+  faviconFileId?: Id<"files">;
+  onChange: (faviconFileId?: Id<"files">) => Promise<void>;
   siteId: Id<"sites">;
 }) {
   const { uploadImage, uploadState } = useImageUpload();
+  const [isSaving, setIsSaving] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
   const upload = async (file?: File) => {
@@ -25,16 +27,24 @@ export function FaviconSettings({
       return;
     }
 
-    const result = await uploadImage(file, siteId).catch(() => null);
-    if (!result) {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const result = await uploadImage(file, siteId);
+      if (result) {
+        await onChange(result.fileId);
+        toast.success("Favicon updated");
+      } else {
+        toast.error(
+          uploadState.error ?? "Unable to save the favicon. Try again.",
+        );
+      }
+    } catch {
       toast.error(
-        uploadState.error ?? "Unable to upload the favicon. Try again.",
+        uploadState.error ?? "Unable to save the favicon. Try again.",
       );
-      return;
     }
-
-    await onChange(result.url);
-    toast.success("Favicon updated");
+    setIsSaving(false);
   };
 
   const remove = async () => {
@@ -45,20 +55,19 @@ export function FaviconSettings({
       toast.success("Favicon removed");
     } catch {
       toast.error("Unable to remove the favicon. Try again.");
-    } finally {
-      setIsRemoving(false);
     }
+    setIsRemoving(false);
   };
 
   return (
     <ImageAssetDropZone
       alt="Favicon"
       isRemoving={isRemoving}
-      isUploading={uploadState.isUploading}
+      isUploading={uploadState.isUploading || isSaving}
       onFileAccepted={(file) => void upload(file)}
       onRemove={() => void remove()}
       progress={uploadState.progress?.percentage}
-      src={favicon}
+      src={faviconFileId ? managedFilePath(faviconFileId) : undefined}
     />
   );
 }

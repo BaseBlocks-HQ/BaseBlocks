@@ -8,6 +8,7 @@ import {
   type OpenEditorDocument,
 } from "../pageContentFormat";
 import { getOrCreateContentObject } from "./contentObjects";
+import { synchronizeDraftPageSiteAssets } from "./siteAssets";
 
 type DbCtx = Pick<
   GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>,
@@ -72,7 +73,10 @@ export async function writePageContent(
   if (existing?.contentHash === contentHash) {
     return { contentHash, revisionId: existing.revisionId, changed: false };
   }
-  const { revisionId } = await getOrCreateContentObject(ctx, {
+  const previousRevision = existing
+    ? await ctx.db.get(existing.revisionId)
+    : null;
+  const { revisionId, fileIds } = await getOrCreateContentObject(ctx, {
     siteId: page.siteId,
     content: serialized,
     contentHash,
@@ -97,5 +101,12 @@ export async function writePageContent(
       updatedAt,
     });
   }
+  await synchronizeDraftPageSiteAssets(
+    ctx,
+    page.siteId,
+    previousRevision?.fileIds ?? [],
+    fileIds,
+    updatedAt,
+  );
   return { contentHash, revisionId, changed: true };
 }

@@ -3,6 +3,7 @@
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import { api } from "@baseblocks/backend";
 import type { Doc } from "@baseblocks/backend";
+import { managedFilePath } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -14,16 +15,13 @@ import { FaviconSettings } from "./favicon-settings";
 import { ImageAssetDropZone } from "./image-asset-dropzone";
 import { SiteSettingsSectionTitle } from "./site-settings-section-title";
 
-export function SiteBrandSettings({
-  site,
-}: {
-  site: Doc<"sites"> & { logoUrl?: string };
-}) {
+export function SiteBrandSettings({ site }: { site: Doc<"sites"> }) {
   const siteId = site._id;
   const updateSite = useMutation(api.sites.update);
   const { uploadImage, uploadState } = useImageUpload();
   const [name, setName] = useState(site.name);
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
   const [isRemovingLogo, setIsRemovingLogo] = useState(false);
 
   useEffect(() => setName(site.name), [site.name]);
@@ -38,9 +36,8 @@ export function SiteBrandSettings({
       toast.success("Site name updated");
     } catch {
       toast.error("Unable to update the site name. Try again.");
-    } finally {
-      setIsSavingName(false);
     }
+    setIsSavingName(false);
   };
 
   const uploadLogo = async (file?: File) => {
@@ -53,17 +50,20 @@ export function SiteBrandSettings({
       toast.error("Select an image smaller than 5 MB.");
       return;
     }
-    const result = await uploadImage(file, siteId);
-    if (!result) {
-      toast.error(uploadState.error ?? "Unable to upload the logo. Try again.");
-      return;
-    }
+    if (isSavingLogo) return;
+    setIsSavingLogo(true);
     try {
-      await updateSite({ siteId, logoFileId: result.fileId });
-      toast.success("Logo uploaded");
+      const result = await uploadImage(file, siteId);
+      if (result) {
+        await updateSite({ siteId, logoFileId: result.fileId });
+        toast.success("Logo uploaded");
+      } else {
+        toast.error(uploadState.error ?? "Unable to save the logo. Try again.");
+      }
     } catch {
-      toast.error("Unable to save the logo. Try again.");
+      toast.error(uploadState.error ?? "Unable to save the logo. Try again.");
     }
+    setIsSavingLogo(false);
   };
 
   const removeLogo = async () => {
@@ -74,9 +74,8 @@ export function SiteBrandSettings({
       toast.success("Logo removed");
     } catch {
       toast.error("Unable to remove the logo. Try again.");
-    } finally {
-      setIsRemovingLogo(false);
     }
+    setIsRemovingLogo(false);
   };
 
   return (
@@ -90,7 +89,7 @@ export function SiteBrandSettings({
             size="compact"
           >
             {isSavingName ? <Spinner className="size-3.5" /> : null}
-            Save changes
+            Save name
           </Button>
         </div>
         <div className="space-y-2">
@@ -113,22 +112,22 @@ export function SiteBrandSettings({
         <AssetRow label="Logo">
           <ImageAssetDropZone
             alt="Site logo"
-            isUploading={uploadState.isUploading}
+            isUploading={uploadState.isUploading || isSavingLogo}
             isRemoving={isRemovingLogo}
             onFileAccepted={(file) => void uploadLogo(file)}
             onRemove={() => void removeLogo()}
             progress={uploadState.progress?.percentage}
-            src={site.logoUrl}
+            src={site.logoFileId ? managedFilePath(site.logoFileId) : undefined}
           />
         </AssetRow>
         <AssetRow label="Favicon">
           <FaviconSettings
-            favicon={site.settings.favicon}
+            faviconFileId={site.faviconFileId}
             siteId={siteId}
-            onChange={async (favicon) => {
+            onChange={async (faviconFileId) => {
               await updateSite(
-                favicon
-                  ? { siteId, settings: { favicon } }
+                faviconFileId
+                  ? { siteId, faviconFileId }
                   : { siteId, clearFavicon: true },
               );
             }}

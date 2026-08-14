@@ -2,8 +2,7 @@ export type QuickLink = {
   id: string;
   title: string;
   url: string;
-  artwork?: { kind: "icon"; id: string } | { kind: "asset"; assetId: string };
-  linkType: "website" | "app";
+  imageAssetId?: string;
 };
 
 export type QuickLinksData = { links: QuickLink[] };
@@ -27,33 +26,19 @@ export function parseQuickLinksData(value: unknown): QuickLinksData {
       throw new Error("Each Quick Link needs a title.");
     if (typeof link.url !== "string")
       throw new Error("Each Quick Link needs a destination.");
-    if (link.linkType !== "website" && link.linkType !== "app")
-      throw new Error("Quick Link type is invalid.");
-    let artwork: QuickLink["artwork"];
-    if (link.artwork !== undefined) {
-      if (
-        !link.artwork ||
-        typeof link.artwork !== "object" ||
-        Array.isArray(link.artwork)
-      )
-        throw new Error("Quick Link artwork is invalid.");
-      const rawArtwork = link.artwork as Record<string, unknown>;
-      if (rawArtwork.kind === "icon" && typeof rawArtwork.id === "string")
-        artwork = { kind: "icon", id: rawArtwork.id };
-      else if (
-        rawArtwork.kind === "asset" &&
-        typeof rawArtwork.assetId === "string" &&
-        /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(rawArtwork.assetId)
-      )
-        artwork = { kind: "asset", assetId: rawArtwork.assetId };
-      else throw new Error("Quick Link artwork is invalid.");
-    }
+    if (
+      link.imageAssetId !== undefined &&
+      (typeof link.imageAssetId !== "string" ||
+        !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(link.imageAssetId))
+    )
+      throw new Error("Quick Link image is invalid.");
     const parsed: QuickLink = {
       id: link.id,
       title: link.title,
       url: link.url,
-      linkType: link.linkType,
-      ...(artwork ? { artwork } : {}),
+      ...(typeof link.imageAssetId === "string"
+        ? { imageAssetId: link.imageAssetId }
+        : {}),
     };
     if (!safeQuickLinkHref(parsed))
       throw new Error("Quick Links contains an unsafe destination.");
@@ -67,7 +52,6 @@ export function duplicateQuickLink(link: QuickLink, id: string): QuickLink {
     ...link,
     id,
     title: `${link.title} copy`,
-    artwork: link.artwork ? { ...link.artwork } : undefined,
   };
 }
 
@@ -95,12 +79,6 @@ export function updateQuickLink(
 export function safeQuickLinkHref(link: QuickLink): string | null {
   const url = link.url.trim();
   if (!url) return null;
-  if (link.linkType === "app") {
-    return /^[a-z][a-z\d+.-]*:\/\//i.test(url) &&
-      !/^(?:javascript|data|vbscript):/i.test(url)
-      ? url
-      : null;
-  }
   if (url.startsWith("/") && !url.startsWith("//")) return url;
   try {
     const parsed = new URL(url);
@@ -113,7 +91,6 @@ export function safeQuickLinkHref(link: QuickLink): string | null {
 }
 
 export function destinationLabel(link: QuickLink): string {
-  if (link.linkType === "app") return "Open app";
   if (link.url.startsWith("/")) return "BaseBlocks page";
   try {
     return new URL(link.url).hostname.replace(/^www\./, "");

@@ -12,6 +12,7 @@ import { getTeamSiteEditorPath } from "@/features/dashboard/routes";
 import { getSiteOpenUrl } from "@/features/published-sites/urls";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import { managedFilePath } from "@baseblocks/domain";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +42,7 @@ interface SiteCardProps {
     _id: string;
     name: string;
     slug: string;
-    logoUrl?: string;
+    logoFileId?: string;
     liveReleaseId?: string;
     team?: {
       _id: string;
@@ -64,6 +65,9 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
   const publishedSiteHref = getSiteOpenUrl(effectiveTeamSlug, site.slug);
   const isPublished = Boolean(site.liveReleaseId);
   const statusLabel = isPublished ? t("sites.published") : t("sites.draft");
+  const logoUrl = site.logoFileId
+    ? managedFilePath(site.logoFileId)
+    : undefined;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -88,9 +92,9 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
         />
 
         <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-sm font-medium text-muted-foreground">
-          {site.logoUrl ? (
+          {logoUrl ? (
             <Image
-              src={site.logoUrl}
+              src={logoUrl}
               alt=""
               aria-hidden="true"
               className="size-10 object-cover"

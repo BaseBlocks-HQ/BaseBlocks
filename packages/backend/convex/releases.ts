@@ -17,6 +17,7 @@ import {
   findActivePublication,
   promoteRelease,
 } from "./model/releaseOperations";
+import { buildHistoricalReleaseContent } from "./model/releaseChangeDetails";
 import {
   isOrganizationMember,
   requireOrganizationPermission,
@@ -214,16 +215,19 @@ export const get = query({
       .query("releaseChanges")
       .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
       .collect();
-    return {
-      release: releaseSummary(release, site.liveReleaseId),
-      changes: changes.map((change) => ({
+    const projectedChanges = await Promise.all(
+      changes.map(async (change) => ({
         entityType: change.entityType,
         entityId: change.entityId,
         changeType: change.changeType,
         label: change.label,
         fields: change.fields,
-        content: change.content,
+        content: await buildHistoricalReleaseContent(ctx, release, change),
       })),
+    );
+    return {
+      release: releaseSummary(release, site.liveReleaseId),
+      changes: projectedChanges,
     };
   },
 });
@@ -366,6 +370,7 @@ export const publish = mutation({
       number,
       name: site.name,
       logoFileId: site.logoFileId,
+      faviconFileId: site.faviconFileId,
       defaultPageId: site.defaultPageId,
       settings: site.settings,
       sourceDraftRevision: draftRevision,

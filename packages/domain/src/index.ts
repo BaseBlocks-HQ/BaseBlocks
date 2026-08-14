@@ -52,7 +52,6 @@ export type {
   DirectoryContent,
   SearchContent,
   LibraryContent,
-  QuicklinkType,
   QuicklinkItem,
 } from "./content/elements";
 
@@ -60,6 +59,7 @@ export type { UploadPurpose } from "./files/storage";
 export {
   getUploadMimeTypeForFilename,
   isSupportedUploadMimeType,
+  managedFilePath,
   normalizeMimeType,
   resolveUploadMimeType,
   supportedUploadMimeTypes,

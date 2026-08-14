@@ -4,7 +4,6 @@ export type {
   DirectoryContent,
   SearchContent,
   LibraryContent,
-  QuicklinkType,
   QuicklinkItem,
   SaveStatus,
 } from "./schema";

@@ -23,6 +23,7 @@ import { searchEditor } from "./extensions/search";
 import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 import { createBaseBlocksCustomBlockHost } from "./custom-block-host";
 import { createOpenEditorIcon } from "./slash-menu";
+import { baseBlocksCustomBlockMenuExtension } from "./custom-block-menu";
 export { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 
 const customBlockSlashMenuIcons = {
@@ -71,6 +72,33 @@ export function authorizeBaseBlocksCustomBlockAsset<T extends { id: string }>(
   return asset;
 }
 
+export class BaseBlocksCustomBlockAssetAuthorization {
+  private documentAssetIds = new Set<string>();
+  private pendingAssetIds = new Set<string>();
+
+  constructor(document: OpenEditorDocument) {
+    this.updateDocument(document);
+  }
+
+  updateDocument(document: OpenEditorDocument) {
+    this.documentAssetIds = extractBaseBlocksCustomBlockAssetIds(document);
+    for (const id of this.documentAssetIds) this.pendingAssetIds.delete(id);
+  }
+
+  discard(id: string) {
+    return this.pendingAssetIds.delete(id);
+  }
+
+  authorize<T extends { id: string }>(asset: T | null) {
+    if (asset) this.pendingAssetIds.add(asset.id);
+    return asset;
+  }
+
+  has(id: string) {
+    return this.documentAssetIds.has(id) || this.pendingAssetIds.has(id);
+  }
+}
+
 function DocumentEditorSurface({
   value,
   onChange,
@@ -114,6 +142,7 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
   authorizedAssetIds: Pick<ReadonlySet<string>, "has">,
   pickAsset?: () => Promise<{ id: string; kind: "raster"; alt: string } | null>,
   runtimes: BaseBlocksNestedRuntimes = {},
+  discardAsset?: (id: string) => Promise<void>,
 ) => {
   const DocumentEditor = (
     props: Omit<
@@ -127,6 +156,7 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
         authorizedAssetIds,
         pickAsset,
         runtimes,
+        discardAsset,
       )}
       runtimes={runtimes}
     />
@@ -135,8 +165,13 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
     registry: baseBlocksCustomBlockRegistry,
     editors: [...baseBlocksCustomBlockEditors, searchEditor, libraryEditor],
     icons: customBlockSlashMenuIcons,
+    blockMenuExtensions: [baseBlocksCustomBlockMenuExtension],
     host: {
-      ...createBaseBlocksCustomBlockHost(authorizedAssetIds, pickAsset),
+      ...createBaseBlocksCustomBlockHost(
+        authorizedAssetIds,
+        pickAsset,
+        discardAsset,
+      ),
       fields: { document: DocumentEditor },
     },
   };

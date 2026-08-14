@@ -1,8 +1,8 @@
-import type { GenericMutationCtx } from "convex/server";
+import type { GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { changedField, openEditorContentLines } from "./releaseDiff";
 
-type MutationCtx = Pick<GenericMutationCtx<DataModel>, "db">;
+type ReadCtx = Pick<GenericQueryCtx<DataModel>, "db">;
 type Summary = Pick<
   Doc<"draftChanges">,
   "entityType" | "entityId" | "changeType" | "label" | "details"
@@ -12,16 +12,12 @@ function compact<T>(values: Array<T | null>): T[] {
   return values.filter((value): value is T => value !== null);
 }
 
-function id<T extends keyof DataModel>(
-  ctx: MutationCtx,
-  table: T,
-  value: string,
-) {
+function id<T extends keyof DataModel>(ctx: ReadCtx, table: T, value: string) {
   return ctx.db.normalizeId(table, value);
 }
 
 async function revisionContent(
-  ctx: MutationCtx,
+  ctx: ReadCtx,
   revisionId: Id<"contentRevisions"> | undefined,
 ) {
   if (!revisionId) return undefined;
@@ -31,7 +27,7 @@ async function revisionContent(
 }
 
 export async function buildReleaseChangeDetail(
-  ctx: MutationCtx,
+  ctx: ReadCtx,
   site: Doc<"sites">,
   change: Summary,
 ) {
@@ -42,6 +38,7 @@ export async function buildReleaseChangeDetail(
       fields: compact([
         changedField("Site name", base?.name, site.name),
         changedField("Logo", base?.logoFileId, site.logoFileId),
+        changedField("Favicon", base?.faviconFileId, site.faviconFileId),
         changedField("Default page", base?.defaultPageId, site.defaultPageId),
         changedField("Settings", base?.settings, site.settings),
       ]),
@@ -160,5 +157,41 @@ export async function buildReleaseChangeDetail(
       changedField("Size", base?.size, active?.size),
       changedField("File content", base?.checksum, active?.checksum),
     ]),
+  };
+}
+
+export async function buildHistoricalReleaseContent(
+  ctx: ReadCtx,
+  release: Doc<"siteReleases">,
+  change: Summary,
+) {
+  if (change.entityType !== "page") return undefined;
+  const pageId = id(ctx, "pages", change.entityId);
+  if (!pageId) return undefined;
+  const previousReleaseId = release.previousReleaseId;
+  const [current, previous] = await Promise.all([
+    ctx.db
+      .query("releasePages")
+      .withIndex("by_release_page", (q) =>
+        q.eq("releaseId", release._id).eq("pageId", pageId),
+      )
+      .unique(),
+    previousReleaseId
+      ? ctx.db
+          .query("releasePages")
+          .withIndex("by_release_page", (q) =>
+            q.eq("releaseId", previousReleaseId).eq("pageId", pageId),
+          )
+          .unique()
+      : null,
+  ]);
+  if (current?.contentHash === previous?.contentHash) return undefined;
+  const [before, after] = await Promise.all([
+    revisionContent(ctx, previous?.contentRevisionId),
+    revisionContent(ctx, current?.contentRevisionId),
+  ]);
+  return {
+    beforeLines: openEditorContentLines(before),
+    afterLines: openEditorContentLines(after),
   };
 }

@@ -98,16 +98,52 @@ export const decisionTreeBlock = defineOpenEditorCustomBlock({
 export const quickLinksBlock = defineOpenEditorCustomBlock({
   id: "baseblocks.quick-links",
   label: "Quick Links",
-  version: 1,
+  version: 2,
   createData: () => ({ links: [] }),
   parseData: parseQuickLinksData,
+  migrate: ({ version, data }) => {
+    const rawLinks = (data as { links?: unknown }).links;
+    if (version !== 1 || !Array.isArray(rawLinks))
+      throw new Error("Unsupported Quick Links version.");
+    const links = rawLinks.flatMap((item: unknown) => {
+      if (
+        !item ||
+        typeof item !== "object" ||
+        Array.isArray(item) ||
+        (item as Record<string, unknown>).linkType !== "website"
+      )
+        return [];
+      const link = item as Record<string, unknown>;
+      const artwork =
+        link.artwork &&
+        typeof link.artwork === "object" &&
+        !Array.isArray(link.artwork)
+          ? (link.artwork as Record<string, unknown>)
+          : null;
+      return [
+        {
+          id: link.id,
+          title: link.title,
+          url: link.url,
+          ...(artwork?.kind === "asset" && typeof artwork.assetId === "string"
+            ? { imageAssetId: artwork.assetId }
+            : {}),
+        },
+      ];
+    });
+    return {
+      blockId: "baseblocks.quick-links",
+      version: 2,
+      data: parseQuickLinksData({ links }),
+    };
+  },
   assets: ({ links }) =>
     links.flatMap((link, index) =>
-      link.artwork?.kind === "asset"
+      link.imageAssetId
         ? [
             {
-              id: link.artwork.assetId,
-              path: `$.data.links[${index}].artwork.assetId`,
+              id: link.imageAssetId,
+              path: `$.data.links[${index}].imageAssetId`,
             },
           ]
         : [],
@@ -117,7 +153,7 @@ export const quickLinksBlock = defineOpenEditorCustomBlock({
       tag: "ul",
       children: data.links.flatMap<OpenEditorCustomBlockSafeHtml>((link) => {
         const href = safeQuickLinkHref(link);
-        return href && link.linkType !== "app"
+        return href
           ? [
               {
                 tag: "li" as const,
