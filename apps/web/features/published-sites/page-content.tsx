@@ -5,6 +5,8 @@ import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { baseBlocksOpenEditorTheme } from "@/features/openeditor/openeditor-theme";
 import { createBaseBlocksCustomBlockViewerConfiguration } from "@/features/openeditor/custom-block-viewer";
+import { OpenEditorTabbedPage } from "@/features/openeditor/page-tabs";
+import { readOpenEditorPageTabs } from "@/features/openeditor/page-tabs-model";
 import { createPublishedImageRuntime } from "@/features/published-sites/image-runtime";
 import { getPageLink } from "@/features/published-sites/urls";
 import { Button } from "@baseblocks/ui/button";
@@ -12,8 +14,8 @@ import type {
   OpenEditorDocument,
   OpenEditorPageRuntime,
 } from "@openeditor/core";
-import { OpenEditorViewer } from "@openeditor/react/viewer";
-import { OpenEditorThemeProvider } from "@openeditor/ui/viewer";
+import { OpenEditorViewer } from "@openeditor/react";
+import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import type { PublishedPageTarget } from "./page-targets";
 
@@ -83,13 +85,23 @@ export function PublicPageContent({
             className="contents"
             theme={baseBlocksOpenEditorTheme}
           >
-            <OpenEditorViewer
-              className="oe-viewer"
-              customBlocks={customBlocks}
-              document={content}
-              imageRuntime={imageRuntime}
-              pageRuntime={pageRuntime}
-            />
+            {readOpenEditorPageTabs(content) ? (
+              <OpenEditorTabbedPage
+                document={content}
+                viewerCustomBlocks={customBlocks}
+                editable={false}
+                imageRuntime={imageRuntime}
+                pageRuntime={pageRuntime}
+              />
+            ) : (
+              <OpenEditorViewer
+                className="oe-viewer"
+                customBlocks={customBlocks}
+                document={content}
+                imageRuntime={imageRuntime}
+                pageRuntime={pageRuntime}
+              />
+            )}
           </OpenEditorThemeProvider>
         ) : null}
       </article>

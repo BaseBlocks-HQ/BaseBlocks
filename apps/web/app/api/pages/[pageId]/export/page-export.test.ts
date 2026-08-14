@@ -3,25 +3,7 @@ import {
   createOpenEditorImageAssetResolver,
   exportOpenEditorDocument,
 } from "@openeditor/exporters/export";
-import { baseBlocksCustomBlocks } from "@baseblocks/custom-blocks";
-import { baseBlocksCoreBlocks } from "@baseblocks/openeditor-contracts/core-blocks";
-import { createOpenEditorCustomBlockRegistry } from "@openeditor/custom-block";
 import { assertStoredChecksum } from "./page-export";
-
-const customBlocks = createOpenEditorCustomBlockRegistry([
-  ...baseBlocksCustomBlocks,
-  ...baseBlocksCoreBlocks,
-]);
-
-const block = (id: string, data: unknown) => ({
-  type: "customBlock",
-  attrs: {
-    "openeditor-id": `test-${id}`,
-    blockId: id,
-    version: 1,
-    data,
-  },
-});
 
 describe("BaseBlocks page export integration", () => {
   test("exports authorized private image bytes through the OpenEditor facade", async () => {
@@ -76,56 +58,5 @@ describe("BaseBlocks page export integration", () => {
     expect((exported.data as Uint8Array).slice(0, 4)).toEqual(
       Uint8Array.of(0x50, 0x4b, 0x03, 0x04),
     );
-  });
-
-  test("exports registered block data and nested documents", async () => {
-    const content = {
-      type: "doc" as const,
-      version: 1 as const,
-      content: [
-        block("baseblocks.decision-tree", {
-          tabsMode: "row",
-          trees: [
-            {
-              id: "tree",
-              label: "Choose a plan",
-              nodes: [
-                {
-                  id: "question",
-                  parentId: null,
-                  name: "Team size?",
-                  order: 0,
-                  document: {
-                    type: "doc",
-                    version: 1,
-                    content: [
-                      {
-                        type: "paragraph",
-                        attrs: { "openeditor-id": "context" },
-                        content: [{ type: "text", text: "Decision context" }],
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          ],
-        }),
-      ],
-    };
-
-    const text = await exportOpenEditorDocument(content, {
-      customBlocks,
-      format: "text",
-      title: "Custom blocks",
-    });
-    const html = await exportOpenEditorDocument(content, {
-      customBlocks,
-      format: "html",
-      title: "Custom blocks",
-    });
-
-    expect(text.data).toContain("Decision context");
-    expect(html.data).toContain("Decision context");
   });
 });

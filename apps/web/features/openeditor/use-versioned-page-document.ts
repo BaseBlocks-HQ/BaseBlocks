@@ -1,5 +1,7 @@
 "use client";
 
+/* oxlint-disable react-doctor/react-compiler-no-manual-memoization, react-doctor/no-derived-state-effect -- This hook is a synchronization boundary for a versioned remote document. Stable callbacks protect queued writes, and the effect reconciles an external revision with unsaved local edits rather than deriving presentation state. */
+
 import type { Id } from "@baseblocks/backend";
 import {
   hasSameChildPageProjection,
@@ -10,9 +12,6 @@ import type { SaveStatus } from "@baseblocks/domain";
 import type { OpenEditorDocument } from "@openeditor/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { VersionedDocument } from "./versioned-document";
-import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
-
-const manifests = baseBlocksCustomBlockRegistry.manifests;
 
 type SaveResult = VersionedDocument & {
   status: "saved" | "conflict";
@@ -100,7 +99,7 @@ export function useVersionedPageDocument({
 
       if (result.status === "conflict") {
         const baseDocument = baseDocumentRef.current;
-        if (!hasSameNonPageContent(baseDocument, result.document, manifests)) {
+        if (!hasSameNonPageContent(baseDocument, result.document)) {
           conflictRef.current = true;
           baseHashRef.current = result.contentHash;
           baseDocumentRef.current = result.document;
@@ -113,11 +112,7 @@ export function useVersionedPageDocument({
         baseHashRef.current = result.contentHash;
         baseDocumentRef.current = result.document;
         const local = documentRef.current;
-        const rebased = reconcileChildPageProjection(
-          local,
-          result.document,
-          manifests,
-        );
+        const rebased = reconcileChildPageProjection(local, result.document);
         apply(rebased);
         if (JSON.stringify(rebased) !== JSON.stringify(result.document)) {
           pendingRef.current = rebased;
@@ -189,9 +184,8 @@ export function useVersionedPageDocument({
     const baseDocument = baseDocumentRef.current;
     const inFlightDocument = inFlightDocumentRef.current;
     if (
-      !hasSameNonPageContent(baseDocument, incoming, manifests) &&
-      (!inFlightDocument ||
-        !hasSameNonPageContent(inFlightDocument, incoming, manifests))
+      !hasSameNonPageContent(baseDocument, incoming) &&
+      (!inFlightDocument || !hasSameNonPageContent(inFlightDocument, incoming))
     ) {
       conflictRef.current = true;
       baseHashRef.current = remote.contentHash;
@@ -204,7 +198,7 @@ export function useVersionedPageDocument({
 
     baseHashRef.current = remote.contentHash;
     baseDocumentRef.current = incoming;
-    const rebased = reconcileChildPageProjection(local, incoming, manifests);
+    const rebased = reconcileChildPageProjection(local, incoming);
     apply(rebased);
     if (JSON.stringify(rebased) !== JSON.stringify(incoming)) {
       pendingRef.current = rebased;
@@ -231,9 +225,7 @@ export function useVersionedPageDocument({
       }
       pendingRef.current = next;
       onSaveStatusChangeRef.current?.("pending");
-      schedule(
-        !hasSameChildPageProjection(previous, next, manifests) ? 0 : 750,
-      );
+      schedule(!hasSameChildPageProjection(previous, next) ? 0 : 750);
     },
     [apply, schedule],
   );

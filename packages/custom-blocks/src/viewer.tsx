@@ -1,11 +1,32 @@
 "use client";
 
+/* oxlint-disable react-doctor/nextjs-no-img-element -- Managed assets are host-resolved private or blob URLs. This framework-neutral package must not depend on the Next.js image pipeline. */
+
 import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
+import { getDocumentText } from "@openeditor/core";
+import {
+  AppWindowIcon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  ArrowUpRight01Icon,
+  Link02Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@baseblocks/ui/button";
+import { Input } from "@baseblocks/ui/input";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { OpenEditorCustomBlockViewerHost } from "@openeditor/custom-block/viewer";
 import type { QuickLink } from "./quick-links";
 import { decisionTreeBlock, directoryBlock, quickLinksBlock } from "./index";
-import { resolveDecisionTree } from "./decision-tree-navigation";
+import {
+  previousDecisionTreePath,
+  resolveDecisionTree,
+} from "./decision-tree-navigation";
+import { DecisionTreeState } from "./decision-tree-state";
+import { QuickLinkAssetLoader } from "./quick-link-asset-loader";
+import { destinationLabel } from "./quick-links";
+import { BlockShell, selectClassName } from "./ui";
 
 export const directoryViewer = defineOpenEditorCustomBlockViewer({
   block: directoryBlock,
@@ -25,11 +46,12 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
     const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
     const visible = filtered.slice(page * pageSize, (page + 1) * pageSize);
     return (
-      <section aria-label="Directory">
+      <BlockShell label="Directory">
         {data.directories.length > 1 ? (
-          <label>
-            Directory
+          <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span>Directory</span>
             <select
+              className={`${selectClassName} max-w-56`}
               onChange={(event) => {
                 setActiveId(event.target.value);
                 setPage(0);
@@ -44,63 +66,95 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
             </select>
           </label>
         ) : null}
-        <label>
-          Search
-          <input
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(0);
-            }}
-            type="search"
-            value={query}
-          />
-        </label>
-        <table>
-          <caption>{active.label}</caption>
-          <thead>
-            <tr>
-              {active.columnIds.map((columnId, index) => (
-                <th key={columnId} scope="col">{`Column ${index + 1}`}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((row) => (
-              <tr key={row.id}>
-                {active.columnIds.map((columnId) => (
-                  <td key={columnId}>{row.cells[columnId] ?? ""}</td>
+        {active.rows.length > 5 ? (
+          <div className="relative max-w-sm">
+            <HugeiconsIcon
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              icon={Search01Icon}
+            />
+            <Input
+              aria-label="Search directory"
+              className="rounded-xl pl-10 shadow-none"
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(0);
+              }}
+              placeholder="Search"
+              type="search"
+              value={query}
+            />
+          </div>
+        ) : null}
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <table className="w-full table-fixed text-sm">
+            <caption className="sr-only">{active.label}</caption>
+            <thead>
+              <tr className="border-b border-border/60 bg-muted/30">
+                {active.columnIds.map((columnId, index) => (
+                  <th
+                    className="border-l border-border/60 px-3 py-2 text-left text-xs font-medium text-muted-foreground first:border-l-0"
+                    key={columnId}
+                    scope="col"
+                  >{`Column ${index + 1}`}</th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {visible.map((row) => (
+                <tr
+                  className="border-b border-border/50 last:border-0"
+                  key={row.id}
+                >
+                  {active.columnIds.map((columnId) => (
+                    <td
+                      className="whitespace-normal border-l border-border/60 px-3 py-2 align-top first:border-l-0 [overflow-wrap:anywhere]"
+                      key={columnId}
+                    >
+                      {row.cells[columnId] ?? ""}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {pages > 1 ? (
-          <nav aria-label="Directory pages">
-            <button
+          <nav
+            aria-label="Directory pages"
+            className="flex min-h-8 items-center justify-end gap-1 text-xs text-muted-foreground"
+          >
+            <Button
+              aria-label="Previous page"
               disabled={page === 0}
               onClick={() => setPage(page - 1)}
+              size="icon-xs"
               type="button"
+              variant="ghost"
             >
-              Previous
-            </button>
-            <span>{`Page ${page + 1} of ${pages}`}</span>
-            <button
+              <HugeiconsIcon icon={ArrowLeft01Icon} />
+            </Button>
+            <span className="min-w-20 text-center tabular-nums">{`Page ${page + 1} of ${pages}`}</span>
+            <Button
+              aria-label="Next page"
               disabled={page + 1 >= pages}
               onClick={() => setPage(page + 1)}
+              size="icon-xs"
               type="button"
+              variant="ghost"
             >
-              Next
-            </button>
+              <HugeiconsIcon icon={ArrowRight01Icon} />
+            </Button>
           </nav>
         ) : null}
-      </section>
+      </BlockShell>
     );
   },
 });
 
 export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
   block: decisionTreeBlock,
-  render: function DecisionTreeViewer({ data, host }) {
+  render: function DecisionTreeViewer({ data }) {
     const [treeId, setTreeId] = useState(data.trees[0]?.id ?? "");
     const [path, setPath] = useState<string[]>([]);
     const tree = data.trees.find(({ id }) => id === treeId) ?? data.trees[0];
@@ -109,12 +163,12 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
       [tree, path],
     );
     if (!tree) return null;
-    const Document = host.fields.document;
     return (
-      <section aria-label="Decision tree">
+      <BlockShell label="Decision tree">
         {data.trees.length > 1 ? (
           <select
             aria-label="Decision tree"
+            className={`${selectClassName} max-w-56`}
             onChange={(event) => {
               setTreeId(event.target.value);
               setPath([]);
@@ -128,29 +182,53 @@ export const decisionTreeViewer = defineOpenEditorCustomBlockViewer({
             ))}
           </select>
         ) : null}
-        <nav aria-label="Decision path">
-          <button onClick={() => setPath([])} type="button">
-            Root
-          </button>
-          {state.visibleOptions.map((node) => (
-            <button
-              key={node.id}
-              onClick={() => setPath([...state.path, node.id])}
-              type="button"
-            >
-              {node.name}
-            </button>
-          ))}
-        </nav>
-        {state.activeNode ? (
-          <aside aria-label={`${state.activeNode.name} context`}>
-            <Document
-              ariaLabel={`${state.activeNode.name} context`}
-              value={state.activeNode.document}
+        <div className="flex min-h-72 min-w-0 flex-col justify-center overflow-hidden rounded-2xl bg-muted/20 p-4 sm:p-6">
+          {state.activeNode ? (
+            <h3 className="mb-5 text-balance text-center text-2xl font-semibold leading-tight">
+              {getDocumentText(state.activeNode.document) || "Untitled step"}
+            </h3>
+          ) : null}
+          {state.visibleOptions.length > 0 ? (
+            <nav aria-label="Decision options" className="grid min-w-0 gap-2">
+              {state.visibleOptions.map((node) => (
+                <button
+                  className="flex min-h-[52px] min-w-0 w-full items-center justify-between gap-3 rounded-2xl bg-card p-3 text-left hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  key={node.id}
+                  onClick={() => setPath([...state.path, node.id])}
+                  type="button"
+                >
+                  <span className="min-w-0 break-words text-sm font-medium">
+                    {node.name}
+                  </span>
+                  <HugeiconsIcon
+                    aria-hidden
+                    className="size-4 shrink-0 text-muted-foreground"
+                    icon={ArrowRight01Icon}
+                  />
+                </button>
+              ))}
+            </nav>
+          ) : (
+            <DecisionTreeState
+              variant={state.activeNode ? "result" : "preview"}
             />
-          </aside>
-        ) : null}
-      </section>
+          )}
+          {state.path.length > 1 || path.length > 0 ? (
+            <Button
+              className="mx-auto mt-5"
+              onClick={() => {
+                setPath(previousDecisionTreePath(state.path));
+              }}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon aria-hidden icon={ArrowLeft01Icon} />
+              Previous question
+            </Button>
+          ) : null}
+        </div>
+      </BlockShell>
     );
   },
 });
@@ -159,8 +237,8 @@ export const quickLinksViewer = defineOpenEditorCustomBlockViewer({
   block: quickLinksBlock,
   render: function QuickLinksViewer({ data, host }) {
     return (
-      <nav aria-label="Quick links">
-        <ul>
+      <nav aria-label="Quick links" className="not-prose my-4">
+        <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
           {data.links.map((link) => {
             const resolved = host.links?.resolve({
               href: link.url,
@@ -168,15 +246,27 @@ export const quickLinksViewer = defineOpenEditorCustomBlockViewer({
             });
             if (!resolved) return null;
             return (
-              <li key={link.id}>
+              <li className="m-0 list-none p-0" key={link.id}>
                 <a
+                  className="group flex min-w-0 items-center gap-3 rounded-2xl bg-card p-3 transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   href={resolved.href}
                   rel={resolved.external ? "noopener noreferrer" : undefined}
                   target={resolved.external ? "_blank" : undefined}
                 >
                   <QuickLinkArtwork host={host} link={link} />
-                  {link.title}
-                  {resolved.label ? <span>{resolved.label}</span> : null}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">
+                      {link.title}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {resolved.label ?? destinationLabel(link)}
+                    </span>
+                  </span>
+                  <HugeiconsIcon
+                    aria-hidden
+                    className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                    icon={ArrowUpRight01Icon}
+                  />
                 </a>
               </li>
             );
@@ -203,40 +293,28 @@ function QuickLinkArtwork({
   }, [assetId, host]);
   if (link.artwork?.kind === "icon")
     return (
-      <span aria-hidden>
+      <span
+        aria-hidden
+        className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary"
+      >
         {host.icons?.render(link.artwork.id) as ReactNode}
       </span>
     );
-  return asset ? <img alt={asset.alt} src={asset.src} /> : null;
-}
-
-/** Keeps stale or unauthorized managed-asset results out of rendered links. */
-export class QuickLinkAssetLoader {
-  private generation = 0;
-
-  cancel() {
-    this.generation += 1;
-  }
-
-  load(
-    assetId: string | null,
-    host: OpenEditorCustomBlockViewerHost,
-    update: (asset: { src: string; alt: string } | null) => void,
-  ) {
-    const generation = ++this.generation;
-    update(null);
-    if (!assetId) return;
-    void host.assets
-      ?.resolve(assetId)
-      .then((resolved) => {
-        if (generation !== this.generation) return;
-        const src = resolved ? host.resolveUrl(resolved.src, "asset") : null;
-        update(resolved && src ? { ...resolved, src } : null);
-      })
-      .catch(() => {
-        if (generation === this.generation) update(null);
-      });
-  }
+  return (
+    <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
+      {asset ? (
+        <img
+          alt={asset.alt}
+          className="size-full object-cover"
+          src={asset.src}
+        />
+      ) : link.linkType === "app" ? (
+        <HugeiconsIcon aria-hidden className="size-5" icon={AppWindowIcon} />
+      ) : (
+        <HugeiconsIcon aria-hidden className="size-5" icon={Link02Icon} />
+      )}
+    </span>
+  );
 }
 
 export const baseBlocksCustomBlockViewers = [

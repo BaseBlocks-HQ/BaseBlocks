@@ -1,25 +1,21 @@
 import {
   defineOpenEditorCustomBlock,
-  type OpenEditorCustomBlockJsonObject,
   type OpenEditorCustomBlockSafeHtml,
 } from "@openeditor/custom-block";
 import {
   createDirectoryContent,
   directoryToText,
-  type DirectoryContent,
+  parseDirectoryContent,
 } from "./directory";
-import type { DecisionTreeValue } from "./decision-tree";
-import {
-  decisionTreeManifest,
-  directoryManifest,
-  quickLinksManifest,
-} from "./manifests";
-import { safeQuickLinkHref, type QuickLink } from "./quick-links";
+import { parseDecisionTreeValue } from "./decision-tree";
+import { parseQuickLinksData, safeQuickLinkHref } from "./quick-links";
 
-type DirectoryBlockData = DirectoryContent & OpenEditorCustomBlockJsonObject;
-export const directoryBlock = defineOpenEditorCustomBlock<DirectoryBlockData>({
-  ...directoryManifest,
-  initialData: () => createDirectoryContent() as DirectoryBlockData,
+export const directoryBlock = defineOpenEditorCustomBlock({
+  id: "baseblocks.directory",
+  label: "Directory",
+  version: 1,
+  createData: createDirectoryContent,
+  parseData: parseDirectoryContent,
   toHtml: ({ data }) => ({
     tag: "div",
     children: data.directories.map((directory) => ({
@@ -39,7 +35,7 @@ export const directoryBlock = defineOpenEditorCustomBlock<DirectoryBlockData>({
                   tag: "tr" as const,
                   children: directory.columnIds.map((_columnId, index) => ({
                     tag: "th" as const,
-                    attrs: { scope: "col" },
+                    attrs: { scope: "col" as const },
                     children: [`Column ${index + 1}`],
                   })),
                 },
@@ -63,54 +59,59 @@ export const directoryBlock = defineOpenEditorCustomBlock<DirectoryBlockData>({
   toText: ({ data }) => directoryToText(data),
 });
 
-type DecisionTreeBlockData = DecisionTreeValue &
-  OpenEditorCustomBlockJsonObject;
-export const decisionTreeBlock =
-  defineOpenEditorCustomBlock<DecisionTreeBlockData>({
-    ...decisionTreeManifest,
-    initialData: () => ({
-      trees: [{ id: "default", label: "Tree 1", nodes: [] }],
-      tabsMode: "row",
-    }),
-    toHtml: ({ data, renderDocument }) => ({
-      tag: "div",
-      children: data.trees.map((tree) => ({
-        tag: "section",
-        children: [
-          { tag: "strong", children: [tree.label] },
-          {
-            tag: "ul",
-            children: tree.nodes.map((node) => ({
-              tag: "li",
-              children: [node.name, renderDocument(node.document)],
-            })),
-          },
-        ],
-      })),
-    }),
-    toText: ({ data, documentToText }) =>
-      data.trees
-        .flatMap((tree) => [
-          tree.label,
-          ...tree.nodes.map((node) =>
-            [node.name, documentToText(node.document)]
-              .filter(Boolean)
-              .join("\n"),
-          ),
-        ])
-        .join("\n"),
-  });
+export const decisionTreeBlock = defineOpenEditorCustomBlock({
+  id: "baseblocks.decision-tree",
+  label: "Decision Tree",
+  version: 1,
+  createData: () => ({
+    trees: [{ id: "default", label: "Tree 1", nodes: [] }],
+    tabsMode: "row" as const,
+  }),
+  parseData: parseDecisionTreeValue,
+  toHtml: ({ data, renderDocument }) => ({
+    tag: "div",
+    children: data.trees.map((tree) => ({
+      tag: "section",
+      children: [
+        { tag: "strong", children: [tree.label] },
+        {
+          tag: "ul",
+          children: tree.nodes.map((node) => ({
+            tag: "li",
+            children: [node.name, renderDocument(node.document)],
+          })),
+        },
+      ],
+    })),
+  }),
+  toText: ({ data, documentToText }) =>
+    data.trees
+      .flatMap((tree) => [
+        tree.label,
+        ...tree.nodes.map((node) =>
+          [node.name, documentToText(node.document)].filter(Boolean).join("\n"),
+        ),
+      ])
+      .join("\n"),
+});
 
-export type QuickLinksData = {
-  links: QuickLink[];
-} & OpenEditorCustomBlockJsonObject;
-export const quickLinksBlock = defineOpenEditorCustomBlock<QuickLinksData>({
-  ...quickLinksManifest,
-  initialData: () => ({ links: [] }),
-  validateData: ({ links }) =>
-    links.every((link) => safeQuickLinkHref(link))
-      ? null
-      : "Quick Links contains an unsafe destination.",
+export const quickLinksBlock = defineOpenEditorCustomBlock({
+  id: "baseblocks.quick-links",
+  label: "Quick Links",
+  version: 1,
+  createData: () => ({ links: [] }),
+  parseData: parseQuickLinksData,
+  assets: ({ links }) =>
+    links.flatMap((link, index) =>
+      link.artwork?.kind === "asset"
+        ? [
+            {
+              id: link.artwork.assetId,
+              path: `$.data.links[${index}].artwork.assetId`,
+            },
+          ]
+        : [],
+    ),
   toHtml: ({ data }) =>
     ({
       tag: "ul",
@@ -131,12 +132,9 @@ export const quickLinksBlock = defineOpenEditorCustomBlock<QuickLinksData>({
             ]
           : [{ tag: "li" as const, children: [link.title] }];
       }),
-    }) as unknown as OpenEditorCustomBlockSafeHtml,
+    }) as OpenEditorCustomBlockSafeHtml,
   toText: ({ data }) =>
-    data.links
-      .filter((link) => safeQuickLinkHref(link))
-      .map((link) => `${link.title}: ${link.url}`)
-      .join("\n"),
+    data.links.map((link) => `${link.title}: ${link.url}`).join("\n"),
 });
 
 export const baseBlocksCustomBlocks = [

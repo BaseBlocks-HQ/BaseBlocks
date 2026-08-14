@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  FolderLibraryIcon,
+  GitForkIcon,
+  LayoutTable01Icon,
+  LinkSquare02Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import { OpenEditorContent, useOpenEditorController } from "@openeditor/react";
 import { baseBlocksCustomBlockEditors } from "@baseblocks/custom-blocks/editor";
 import { extractOpenEditorCustomBlockAssetReferences } from "@openeditor/custom-block";
@@ -12,38 +19,45 @@ import type {
 import { useEffect, useRef, type ComponentProps } from "react";
 import { libraryEditor } from "./extensions/library";
 import { searchEditor } from "./extensions/search";
-import { pageTabsEditor } from "./page-tabs";
 
 import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 import { createBaseBlocksCustomBlockHost } from "./custom-block-host";
-export {
-  baseBlocksCustomBlockRegistry,
-  baseBlocksInstallableCustomBlockIds,
-} from "./custom-block-registry";
+import { createOpenEditorIcon } from "./slash-menu";
+export { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
+
+const customBlockSlashMenuIcons = {
+  "baseblocks.decision-tree": createOpenEditorIcon(GitForkIcon),
+  "baseblocks.directory": createOpenEditorIcon(LayoutTable01Icon),
+  "baseblocks.library": createOpenEditorIcon(FolderLibraryIcon),
+  "baseblocks.quick-links": createOpenEditorIcon(LinkSquare02Icon),
+  "baseblocks.search": createOpenEditorIcon(Search01Icon),
+} as const;
 
 export function extractBaseBlocksCustomBlockAssetIds(
   document: OpenEditorDocument,
 ) {
   const ids = new Set<string>();
+  const visited = new WeakSet<object>();
   const visit = (value: unknown): void => {
     if (Array.isArray(value)) {
       for (const item of value) visit(item);
       return;
     }
     if (!value || typeof value !== "object") return;
+    if (visited.has(value)) return;
+    visited.add(value);
     const node = value as {
       type?: unknown;
       attrs?: unknown;
-      content?: unknown;
     };
     if (node.type === "customBlock") {
       for (const reference of extractOpenEditorCustomBlockAssetReferences(
         node.attrs,
-        baseBlocksCustomBlockRegistry.manifests,
+        baseBlocksCustomBlockRegistry,
       ))
         ids.add(reference.id);
     }
-    visit(node.content);
+    for (const child of Object.values(value)) visit(child);
   };
   visit(document);
   return ids;
@@ -119,12 +133,8 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
   );
   return {
     registry: baseBlocksCustomBlockRegistry,
-    editors: [
-      ...baseBlocksCustomBlockEditors,
-      searchEditor,
-      libraryEditor,
-      pageTabsEditor,
-    ],
+    editors: [...baseBlocksCustomBlockEditors, searchEditor, libraryEditor],
+    icons: customBlockSlashMenuIcons,
     host: {
       ...createBaseBlocksCustomBlockHost(authorizedAssetIds, pickAsset),
       fields: { document: DocumentEditor },

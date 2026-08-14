@@ -4,15 +4,14 @@ import { getFiles } from "@/lib/files/server";
 import { assertStoredChecksum, type PageExportAsset } from "./page-export";
 import { iterableSource, readSource } from "@baseblocks/anydoc/sources";
 import { api } from "@baseblocks/backend";
+import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts";
+import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
 import { isOpenEditorDocument } from "@openeditor/core";
 import {
   createOpenEditorImageAssetResolver,
   exportOpenEditorDocument,
   openEditorExportFormats,
 } from "@openeditor/exporters/export";
-import { baseBlocksCustomBlocks } from "@baseblocks/custom-blocks";
-import { baseBlocksCoreBlocks } from "@baseblocks/openeditor-contracts/core-blocks";
-import { createOpenEditorCustomBlockRegistry } from "@openeditor/custom-block";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -23,10 +22,6 @@ const ASSET_FAILURE_CODES = new Set([
   "asset_rejected",
   "asset_unavailable",
   "unsafe_url",
-]);
-const customBlockRegistry = createOpenEditorCustomBlockRegistry([
-  ...baseBlocksCustomBlocks,
-  ...baseBlocksCoreBlocks,
 ]);
 
 function expectedSha256(checksum: string | undefined): string | undefined {
@@ -78,7 +73,7 @@ export async function GET(
     const assetsById = new Map<string, PageExportAsset>(
       result.assets.map((asset: PageExportAsset) => [asset.fileId, asset]),
     );
-    const assetResolver = createOpenEditorImageAssetResolver<PageExportAsset>({
+    const assetResolver = createOpenEditorImageAssetResolver({
       lookup: (imageId) => assetsById.get(imageId) ?? null,
       load: async (asset, { signal }) => {
         const stored = await getFiles().download(asset.objectKey, {
@@ -112,13 +107,17 @@ export async function GET(
         };
       },
     });
-    const exported = await exportOpenEditorDocument(result.content, {
-      customBlocks: customBlockRegistry,
+    const exportDocument =
+      format === "json"
+        ? result.content
+        : projectBaseBlocksDocumentForPortableExport(result.content);
+    const exported = await exportOpenEditorDocument(exportDocument, {
       format,
       includeTitle: true,
       resolveAsset: assetResolver,
       signal: exportSignal,
       title,
+      customBlocks: baseBlocksBlockRegistry,
     });
     if (
       exported.warnings.some((warning) => ASSET_FAILURE_CODES.has(warning.code))

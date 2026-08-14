@@ -394,9 +394,9 @@ export default defineSchema({
     descriptionText: v.string(),
     updatedAt: v.number(),
   })
+    .index("by_content_revision", ["contentRevisionId"])
     .index("by_release", ["releaseId"])
     .index("by_release_page", ["releaseId", "pageId"])
-    .index("by_content_revision", ["contentRevisionId"])
     .index("by_release_parent_order", ["releaseId", "parentId", "order"])
     .index("by_release_parent_slug", ["releaseId", "parentId", "slug"]),
 

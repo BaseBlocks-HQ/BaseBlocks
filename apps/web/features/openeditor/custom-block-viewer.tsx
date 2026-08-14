@@ -1,12 +1,6 @@
 "use client";
 
 import { baseBlocksCustomBlockViewers } from "@baseblocks/custom-blocks/viewer";
-import {
-  libraryBlock,
-  pageTabsBlock,
-  searchBlock,
-} from "@baseblocks/openeditor-contracts/core-blocks";
-import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
@@ -14,26 +8,10 @@ import type {
   OpenEditorPageRuntime,
 } from "@openeditor/core";
 import { OpenEditorViewer } from "@openeditor/react/viewer";
-import { PublicLibraryViewer, readLibrary } from "./renderers/library";
-import { readSearch, SearchViewer } from "./renderers/search";
-import { PageTabsViewerSurface } from "./page-tabs-viewer";
+import { libraryViewer } from "./extensions/library";
+import { searchViewer } from "./extensions/search";
 import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 import { createBaseBlocksCustomBlockHost } from "./custom-block-host";
-
-const coreViewers = [
-  defineOpenEditorCustomBlockViewer({
-    block: searchBlock,
-    render: ({ data }) => <SearchViewer value={readSearch(data)} />,
-  }),
-  defineOpenEditorCustomBlockViewer({
-    block: libraryBlock,
-    render: ({ data }) => <PublicLibraryViewer value={readLibrary(data)} />,
-  }),
-  defineOpenEditorCustomBlockViewer({
-    block: pageTabsBlock,
-    render: PageTabsViewerSurface,
-  }),
-] as const;
 
 type NestedRuntimes = {
   attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
@@ -66,7 +44,7 @@ export const createBaseBlocksCustomBlockViewerConfiguration = (
   );
   return {
     registry: baseBlocksCustomBlockRegistry,
-    viewers: [...baseBlocksCustomBlockViewers, ...coreViewers],
+    viewers: [...baseBlocksCustomBlockViewers, searchViewer, libraryViewer],
     host: {
       ...createBaseBlocksCustomBlockHost(authorizedAssetIds),
       fields: { document: DocumentViewer },

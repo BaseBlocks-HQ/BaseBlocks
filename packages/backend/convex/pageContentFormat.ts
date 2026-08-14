@@ -7,27 +7,16 @@ import {
   assertBaseBlocksDocument,
   baseBlocksDocumentContract,
   projectChildPages,
+  validateBaseBlocksNestedDocument,
   type ChildPageProjection,
 } from "@baseblocks/openeditor-contracts";
+import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
 import { sha256 } from "@noble/hashes/sha2.js";
-import {
-  extractOpenEditorCustomBlockAssetReferences,
-  type OpenEditorCustomBlockDataSchema,
-  validateOpenEditorCustomBlockDataValue,
-  validateOpenEditorCustomBlockEnvelope,
-} from "@openeditor/custom-block";
-import { baseBlocksCustomBlockManifests } from "@baseblocks/custom-blocks/manifests";
-import { baseBlocksCoreBlockManifests } from "@baseblocks/openeditor-contracts/core-manifests";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 export type { OpenEditorDocument } from "@openeditor/core";
 
 export type OpenEditorNode = ProseMirrorNode;
-
-export const baseBlocksManifests = [
-  ...baseBlocksCustomBlockManifests,
-  ...baseBlocksCoreBlockManifests,
-] as const;
 
 export const emptyOpenEditorDocument = (): OpenEditorDocument =>
   ({
@@ -58,22 +47,51 @@ export function parseOpenEditorDocument(value: unknown): OpenEditorDocument {
     limits: { requireNodeIds: true },
   });
   assertBaseBlocksDocument(document);
+  visitOpenEditorDocuments(document, (nested) => {
+    if (nested === document) return;
+    const validation = validateBaseBlocksNestedDocument(nested);
+    if (!validation.valid)
+      throw new Error(
+        validation.issues
+          .slice(0, 20)
+          .map((issue) => `${issue.path}: ${issue.message}`)
+          .join("\n"),
+      );
+  });
   visitOpenEditorNodes(document, (node) => {
     if (node.type !== "customBlock") return;
-    const result = validateOpenEditorCustomBlockEnvelope(
-      node.attrs,
-      baseBlocksManifests,
-    );
-    if (!result.valid) {
+    const resolved = baseBlocksBlockRegistry.resolve(node);
+    if (resolved.status !== "ready")
       throw new Error(
-        `Invalid custom block: ${result.diagnostics.map(({ path, message }) => `${path}: ${message}`).join("; ")}`,
+        `Invalid custom block ${String(node.attrs?.blockId ?? "unknown")}: ${resolved.status}${resolved.diagnostics.length ? `: ${resolved.diagnostics.map((item) => item.message).join(" ")}` : ""}`,
       );
-    }
   });
   return document;
 }
 
-function visitOpenEditorNodes(
+export function visitOpenEditorDocuments(
+  value: unknown,
+  visit: (document: OpenEditorDocument) => void,
+): void {
+  if (Array.isArray(value)) {
+    for (const item of value) visitOpenEditorDocuments(item, visit);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  const record = value as Record<string, unknown>;
+  if (
+    record.type === "doc" &&
+    record.version === 1 &&
+    Array.isArray(record.content)
+  )
+    visit(record as OpenEditorDocument);
+  for (const child of Object.values(record)) {
+    if (child && typeof child === "object")
+      visitOpenEditorDocuments(child, visit);
+  }
+}
+
+export function visitOpenEditorNodes(
   value: unknown,
   visit: (node: OpenEditorNode) => void,
 ): void {
@@ -86,59 +104,12 @@ function visitOpenEditorNodes(
   if (typeof record.type === "string" && record.type !== "doc") {
     visit(record as OpenEditorNode);
   }
-  if (Array.isArray(record.content)) {
-    visitOpenEditorNodes(record.content, visit);
-  }
-  if (record.type === "customBlock" && record.attrs) {
-    const attrs = record.attrs as Record<string, unknown>;
-    const manifest = baseBlocksManifests.find(({ id }) => id === attrs.blockId);
-    const validation = manifest
-      ? validateOpenEditorCustomBlockEnvelope(attrs, baseBlocksManifests)
-      : null;
-    if (manifest && validation?.valid && !("status" in validation)) {
-      visitOpenEditorDeclaredDocuments(attrs.data, manifest.dataSchema, visit);
-    }
+  for (const child of Object.values(record)) {
+    if (child && typeof child === "object") visitOpenEditorNodes(child, visit);
   }
 }
 
-function visitOpenEditorDeclaredDocuments(
-  value: unknown,
-  schema: OpenEditorCustomBlockDataSchema,
-  visit: (node: OpenEditorNode) => void,
-): void {
-  if (schema.type === "document") {
-    visitOpenEditorNodes(value, visit);
-    return;
-  }
-  if (schema.type === "oneOf") {
-    for (const variant of schema.variants) {
-      if (validateOpenEditorCustomBlockDataValue(value, variant).valid) {
-        visitOpenEditorDeclaredDocuments(value, variant, visit);
-        break;
-      }
-    }
-    return;
-  }
-  if (schema.type === "array" && schema.items && Array.isArray(value)) {
-    for (const item of value)
-      visitOpenEditorDeclaredDocuments(item, schema.items, visit);
-    return;
-  }
-  if (
-    schema.type === "object" &&
-    value &&
-    typeof value === "object" &&
-    !Array.isArray(value)
-  ) {
-    for (const [key, child] of Object.entries(value)) {
-      const childSchema = schema.properties?.[key];
-      if (childSchema)
-        visitOpenEditorDeclaredDocuments(child, childSchema, visit);
-    }
-  }
-}
-
-function collectOpenEditorAttributeValues(
+export function collectOpenEditorAttributeValues(
   content: OpenEditorDocument,
   nodeType: string,
   attributePath: string[],
@@ -166,35 +137,18 @@ export function extractOpenEditorReferences(content: OpenEditorDocument) {
     "imageId",
   ]);
   const customAssetIds = new Set<string>();
-  const libraryIds = new Set<string>();
   visitOpenEditorNodes(content, (node) => {
-    if (node.type !== "customBlock" || !node.attrs) return;
-    for (const reference of extractOpenEditorCustomBlockAssetReferences(
-      node.attrs,
-      baseBlocksManifests,
-    ))
+    if (node.type !== "customBlock") return;
+    for (const reference of baseBlocksBlockRegistry.assets(node.attrs))
       customAssetIds.add(reference.id);
-    if (node.attrs.blockId === "baseblocks.library") {
-      const validation = validateOpenEditorCustomBlockEnvelope(
-        node.attrs,
-        baseBlocksManifests,
-      );
-      const libraryId = (node.attrs.data as { libraryId?: unknown } | undefined)
-        ?.libraryId;
-      if (
-        validation.valid &&
-        !("status" in validation) &&
-        typeof libraryId === "string" &&
-        libraryId
-      )
-        libraryIds.add(libraryId);
-    }
   });
   return {
-    libraryIds,
+    libraryIds: collectOpenEditorAttributeValues(content, "customBlock", [
+      "data",
+      "libraryId",
+    ]),
     attachmentIds,
     imageIds,
-    customAssetIds,
     fileIds: new Set([...attachmentIds, ...imageIds, ...customAssetIds]),
     pageIds: collectOpenEditorAttributeValues(content, "page", ["pageId"]),
   };
@@ -213,5 +167,63 @@ export function synchronizeOpenEditorChildPages(
   document: OpenEditorDocument,
   children: readonly ChildPageProjection[],
 ): OpenEditorDocument {
-  return projectChildPages(document, children, baseBlocksManifests);
+  return projectChildPages(document, children);
+}
+
+export function extractOpenEditorText(content: OpenEditorDocument): string {
+  const parts: string[] = [];
+  visitOpenEditorNodes(content, (node) => {
+    if (typeof node.text === "string") parts.push(node.text);
+    const attrs = node.attrs;
+    if (!attrs) return;
+    if (node.type === "customBlock") {
+      const resolved = baseBlocksBlockRegistry.resolve(node);
+      if (resolved.status === "ready")
+        parts.push(baseBlocksBlockRegistry.toText(node));
+      return;
+    }
+    if (node.type === "baseblocksPageTabs") {
+      const tabs = (attrs.tabs as { tabs?: unknown } | undefined)?.tabs;
+      if (Array.isArray(tabs))
+        for (const tab of tabs)
+          if (
+            tab &&
+            typeof tab === "object" &&
+            !Array.isArray(tab) &&
+            typeof (tab as { label?: unknown }).label === "string"
+          )
+            parts.push((tab as { label: string }).label);
+      return;
+    }
+    for (const key of ["name", "title", "label", "description", "code"]) {
+      if (typeof attrs[key] === "string") parts.push(attrs[key] as string);
+    }
+    const collectStrings = (value: unknown, key?: string): void => {
+      if (typeof value === "string") {
+        if (
+          key &&
+          key !== "id" &&
+          !key.endsWith("Id") &&
+          !["url", "src", "href"].includes(key)
+        ) {
+          parts.push(value);
+        }
+        return;
+      }
+      if (Array.isArray(value)) {
+        for (const item of value) collectStrings(item);
+        return;
+      }
+      if (!value || typeof value !== "object") return;
+      for (const [childKey, child] of Object.entries(value)) {
+        collectStrings(child, childKey);
+      }
+    };
+    for (const [key, value] of Object.entries(attrs)) {
+      if (!["name", "title", "label", "description", "code"].includes(key)) {
+        collectStrings(value, key);
+      }
+    }
+  });
+  return parts.join(" ").replace(/\s+/g, " ").trim();
 }

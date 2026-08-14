@@ -1,4 +1,5 @@
 const DEFAULT_ROOT_DOMAIN = "baseblocks.dev";
+const STAGING_SUBDOMAIN = "staging";
 
 export type RequestHost =
   | { kind: "root"; hostname: string }
@@ -39,6 +40,9 @@ export function parseRequestHost(host: string): RequestHost {
 
   if (hostname === rootDomain) return { kind: "root", hostname };
   if (hostname === `www.${rootDomain}`) return { kind: "www", hostname };
+  if (hostname === `${STAGING_SUBDOMAIN}.${rootDomain}`) {
+    return { kind: "root", hostname };
+  }
 
   if (
     hostname === "localhost" ||

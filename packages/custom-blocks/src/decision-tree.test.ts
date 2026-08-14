@@ -5,6 +5,7 @@ import {
   addDecisionTree,
   deleteDecisionNode,
   deleteDecisionTree,
+  duplicateDecisionTree,
   renameDecisionTree,
   updateDecisionDocument,
   type DecisionTree,
@@ -39,6 +40,45 @@ describe("decision tree collections", () => {
     expect(deleteDecisionTree(renamed, "two")).toEqual({
       value,
       activeId: "one",
+    });
+  });
+
+  test("duplicates a tree with independent node IDs", () => {
+    const source: DecisionTreeValue = {
+      tabsMode: "dropdown",
+      trees: [
+        {
+          id: "one",
+          label: "Support",
+          nodes: [
+            {
+              id: "root",
+              parentId: null,
+              name: "Start",
+              order: 0,
+              document: document("root-document"),
+            },
+            {
+              id: "child",
+              parentId: "root",
+              name: "Answer",
+              order: 0,
+              document: document("child-document"),
+            },
+          ],
+        },
+      ],
+    };
+    const ids = ["root-copy", "child-copy", "tree-copy"];
+    const duplicated = duplicateDecisionTree(source, "one", () => ids.shift()!);
+    expect(duplicated.activeId).toBe("tree-copy");
+    expect(duplicated.value.trees[1]).toMatchObject({
+      id: "tree-copy",
+      label: "Support copy",
+      nodes: [
+        { id: "root-copy", parentId: null },
+        { id: "child-copy", parentId: "root-copy" },
+      ],
     });
   });
 });

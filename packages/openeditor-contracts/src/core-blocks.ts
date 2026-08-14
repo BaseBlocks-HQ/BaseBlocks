@@ -1,31 +1,42 @@
 import { defineOpenEditorCustomBlock } from "@openeditor/custom-block";
-import type { JsonObject, OpenEditorDocument } from "@openeditor/core";
 
-import {
-  libraryManifest,
-  pageTabsManifest,
-  searchManifest,
-} from "./core-manifests";
-export {
-  baseBlocksCoreBlockManifests,
-  libraryManifest,
-  pageTabsManifest,
-  searchManifest,
-} from "./core-manifests";
+export type SearchBlockData = {
+  placeholder: string;
+  maxResults: number;
+  showFileType: boolean;
+};
 
-export const searchBlock = defineOpenEditorCustomBlock<
-  JsonObject & {
-    placeholder: string;
-    maxResults: number;
-    showFileType: boolean;
-  }
->({
-  ...searchManifest,
-  initialData: () => ({
+export function parseSearchBlockData(value: unknown): SearchBlockData {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("Search data must be an object.");
+  const data = value as Record<string, unknown>;
+  if (typeof data.placeholder !== "string")
+    throw new Error("Search placeholder must be a string.");
+  if (
+    !Number.isSafeInteger(data.maxResults) ||
+    Number(data.maxResults) < 1 ||
+    Number(data.maxResults) > 50
+  )
+    throw new Error("Search maximum results must be between 1 and 50.");
+  if (typeof data.showFileType !== "boolean")
+    throw new Error("Search file type visibility must be a boolean.");
+  return {
+    placeholder: data.placeholder,
+    maxResults: Number(data.maxResults),
+    showFileType: data.showFileType,
+  };
+}
+
+export const searchBlock = defineOpenEditorCustomBlock({
+  id: "baseblocks.search",
+  label: "Search",
+  version: 1,
+  createData: () => ({
     placeholder: "Search documents…",
     maxResults: 10,
     showFileType: true,
   }),
+  parseData: parseSearchBlockData,
   toHtml: ({ data }) => ({
     tag: "div",
     attrs: { "aria-label": data.placeholder },
@@ -34,56 +45,33 @@ export const searchBlock = defineOpenEditorCustomBlock<
   toText: () => "[Site search]",
 });
 
-export const libraryBlock = defineOpenEditorCustomBlock<
-  JsonObject & { libraryId?: string; allowDownloads: boolean }
->({
-  ...libraryManifest,
-  initialData: () => ({ allowDownloads: true }),
+export type LibraryBlockData = {
+  libraryId?: string;
+  allowDownloads: boolean;
+};
+
+export function parseLibraryBlockData(value: unknown): LibraryBlockData {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("Library data must be an object.");
+  const data = value as Record<string, unknown>;
+  if (data.libraryId !== undefined && typeof data.libraryId !== "string")
+    throw new Error("Library ID must be a string.");
+  if (typeof data.allowDownloads !== "boolean")
+    throw new Error("Library download access must be a boolean.");
+  return {
+    ...(data.libraryId ? { libraryId: data.libraryId as string } : {}),
+    allowDownloads: data.allowDownloads,
+  };
+}
+
+export const libraryBlock = defineOpenEditorCustomBlock({
+  id: "baseblocks.library",
+  label: "Library",
+  version: 1,
+  createData: () => ({ allowDownloads: true }),
+  parseData: parseLibraryBlockData,
   toHtml: () => ({ tag: "div", children: ["Document library"] }),
   toText: () => "[Document library]",
 });
 
-export type PageTabsData = {
-  tabs: Array<{ id: string; label: string; document: OpenEditorDocument }>;
-};
-export const pageTabsBlock = defineOpenEditorCustomBlock<PageTabsData>({
-  ...pageTabsManifest,
-  initialData: () => ({
-    tabs: [
-      {
-        id: "default",
-        label: "Tab 1",
-        document: {
-          type: "doc",
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              attrs: { "openeditor-id": "page-tabs-default-paragraph" },
-            },
-          ],
-        },
-      },
-    ],
-  }),
-  toHtml: ({ data, renderDocument }) => ({
-    tag: "div",
-    children: data.tabs.map((tab) => ({
-      tag: "section",
-      children: [
-        { tag: "strong", children: [tab.label] },
-        renderDocument(tab.document),
-      ],
-    })),
-  }),
-  toText: ({ data, documentToText }) =>
-    data.tabs
-      .map((tab) => `${tab.label}\n${documentToText(tab.document)}`)
-      .join("\n"),
-});
-
-export const baseBlocksCoreBlocks = [
-  searchBlock,
-  libraryBlock,
-  pageTabsBlock,
-] as const;
+export const baseBlocksProductBlocks = [searchBlock, libraryBlock] as const;

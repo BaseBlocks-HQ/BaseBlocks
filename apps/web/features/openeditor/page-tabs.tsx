@@ -1,171 +1,303 @@
 "use client";
 
-import { createDocument, textBlock } from "@openeditor/core";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  pageTabsBlock,
-  type PageTabsData,
-} from "@baseblocks/openeditor-contracts/core-blocks";
-import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
-import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
-import { useState } from "react";
-import { pageTabDomId } from "./page-tabs-dom";
-export { pageTabDomId } from "./page-tabs-dom";
+  Add01Icon,
+  Cancel01Icon,
+  PencilEdit01Icon,
+} from "@hugeicons/core-free-icons";
+import { Button } from "@baseblocks/ui/button";
+import { Input } from "@baseblocks/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
+import {
+  createDocument,
+  textBlock,
+  type OpenEditorAttachmentRuntime,
+  type OpenEditorDocument,
+  type OpenEditorImageRuntime,
+  type OpenEditorPageRuntime,
+} from "@openeditor/core";
+import {
+  OpenEditorContent,
+  OpenEditorViewer,
+  type OpenEditorReactProps,
+  useOpenEditorController,
+} from "@openeditor/react";
+import {
+  OpenEditorBlockMenu,
+  OpenEditorSelectionBubble,
+  OpenEditorSlashMenu,
+  OpenEditorTableMenu,
+} from "@openeditor/ui";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
+import {
+  readOpenEditorPageTabs,
+  updateOpenEditorPageTabs,
+  type OpenEditorPageTab,
+} from "./page-tabs-model";
 
-const initialDocument = () => createDocument([textBlock("paragraph", "")]);
-
-function TabButtons({
+function TabBar({
   activeId,
-  instanceId,
+  editable,
   tabs,
-  onSelect,
+  onActiveIdChange,
+  onAdd,
+  onRemove,
+  onRename,
 }: {
   activeId: string;
-  instanceId: string;
-  tabs: PageTabsData["tabs"];
-  onSelect: (id: string) => void;
+  editable: boolean;
+  tabs: OpenEditorPageTab[];
+  onActiveIdChange: (id: string) => void;
+  onAdd?: () => void;
+  onRemove?: (id: string) => void;
+  onRename?: (id: string, label: string) => void;
 }) {
-  const selectAt = (index: number) => {
-    const tab = tabs[(index + tabs.length) % tabs.length];
-    if (!tab) return;
-    onSelect(tab.id);
-    requestAnimationFrame(() =>
-      document.getElementById(pageTabDomId(instanceId, tab.id, "tab"))?.focus(),
-    );
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [label, setLabel] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const startRename = (tab: OpenEditorPageTab) => {
+    setLabel(tab.label);
+    setRenamingId(tab.id);
+    requestAnimationFrame(() => inputRef.current?.select());
   };
+  const finishRename = () => {
+    if (!renamingId) return;
+    const nextLabel = label.trim();
+    if (nextLabel) onRename?.(renamingId, nextLabel);
+    setRenamingId(null);
+  };
+
   return (
-    <div aria-label="Page tabs" role="tablist">
-      {tabs.map((tab, index) => (
-        <button
-          aria-controls={pageTabDomId(instanceId, tab.id, "panel")}
-          aria-selected={tab.id === activeId}
-          id={pageTabDomId(instanceId, tab.id, "tab")}
-          key={tab.id}
-          onClick={() => onSelect(tab.id)}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowRight") selectAt(index + 1);
-            else if (event.key === "ArrowLeft") selectAt(index - 1);
-            else if (event.key === "Home") selectAt(0);
-            else if (event.key === "End") selectAt(tabs.length - 1);
-            else return;
-            event.preventDefault();
-          }}
-          role="tab"
-          tabIndex={tab.id === activeId ? 0 : -1}
-          type="button"
-        >
-          {tab.label}
-        </button>
-      ))}
+    <div className="mb-8 flex justify-center">
+      <Tabs onValueChange={onActiveIdChange} value={activeId}>
+        <TabsList className="!h-9 max-w-full justify-start gap-0.5 overflow-x-auto rounded-[var(--radius-pill,calc(var(--radius)+2px))] bg-sidebar/95 p-0.5 text-sidebar-foreground backdrop-blur-md">
+          {tabs.map((tab) => (
+            <div
+              className="group/tab flex h-8 shrink-0 items-center rounded-[var(--radius-pill,var(--radius))] transition-colors hover:bg-accent/70 has-[button[data-state=active]]:bg-accent"
+              key={tab.id}
+            >
+              {renamingId === tab.id ? (
+                <Input
+                  aria-label={`Rename ${tab.label}`}
+                  className="mx-1 h-6 w-24 rounded-[var(--radius-pill,max(0px,calc(var(--radius)-4px)))] px-2 py-0 text-sm shadow-none focus-visible:ring-1"
+                  onBlur={finishRename}
+                  onChange={(event) => setLabel(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.nativeEvent.isComposing) return;
+                    if (event.key === "Enter") finishRename();
+                    if (event.key === "Escape") setRenamingId(null);
+                  }}
+                  ref={inputRef}
+                  value={label}
+                />
+              ) : (
+                <>
+                  <TabsTrigger
+                    className="h-8 rounded-[var(--radius-pill,var(--radius))] border-transparent bg-transparent px-3 text-sidebar-foreground/60 shadow-none after:hidden hover:text-sidebar-foreground data-[state=active]:border-transparent data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-transparent dark:data-[state=active]:text-accent-foreground"
+                    value={tab.id}
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                  {editable ? (
+                    <div className="mr-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-[width,opacity] duration-150 group-hover/tab:w-12 group-hover/tab:opacity-100 group-has-[:focus-visible]/tab:w-12 group-has-[:focus-visible]/tab:opacity-100">
+                      <Button
+                        aria-label={`Rename ${tab.label}`}
+                        className="rounded-[var(--radius-pill,max(0px,calc(var(--radius)-4px)))] hover:bg-transparent hover:text-foreground"
+                        onClick={() => startRename(tab)}
+                        size="icon-xs"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <HugeiconsIcon
+                          icon={PencilEdit01Icon}
+                          className="size-3"
+                        />
+                      </Button>
+                      <Button
+                        aria-label={`Remove ${tab.label}`}
+                        className="rounded-[var(--radius-pill,max(0px,calc(var(--radius)-4px)))] text-muted-foreground hover:bg-transparent hover:text-destructive"
+                        disabled={tabs.length <= 1}
+                        onClick={() => onRemove?.(tab.id)}
+                        size="icon-xs"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          ))}
+          {editable ? (
+            <Button
+              aria-label="Add tab"
+              className="size-8 shrink-0 rounded-[var(--radius-pill,var(--radius))] text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+              onClick={onAdd}
+              size="icon-xs"
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+            </Button>
+          ) : null}
+        </TabsList>
+      </Tabs>
     </div>
   );
 }
 
-export const pageTabsEditor = defineOpenEditorCustomBlockEditor({
-  block: pageTabsBlock,
-  render: function PageTabsEditor({ data, host, instanceId, updateData }) {
-    const [activeId, setActiveId] = useState(data.tabs[0]?.id ?? "");
-    const active = data.tabs.find(({ id }) => id === activeId) ?? data.tabs[0];
-    if (!active) return null;
-    const updateTabs = (tabs: PageTabsData["tabs"]) => updateData({ tabs });
-    const Document = host.fields.document;
-    return (
-      <section aria-label="Edit page tabs">
-        <TabButtons
-          activeId={active.id}
-          instanceId={instanceId}
-          onSelect={setActiveId}
-          tabs={data.tabs}
-        />
-        <div>
-          <button
-            onClick={() => {
-              const id = crypto.randomUUID();
-              updateTabs([
-                ...data.tabs,
-                {
-                  id,
-                  label: `Tab ${data.tabs.length + 1}`,
-                  document: initialDocument(),
-                },
-              ]);
-              setActiveId(id);
-            }}
-            type="button"
-          >
-            Add tab
-          </button>
-          <button
-            disabled={data.tabs.length === 1}
-            onClick={() => {
-              const tabs = data.tabs.filter(({ id }) => id !== active.id);
-              updateTabs(tabs);
-              setActiveId(tabs[0]?.id ?? "");
-            }}
-            type="button"
-          >
-            Delete tab
-          </button>
-          <label>
-            Tab name
-            <input
-              onChange={(event) =>
-                updateTabs(
-                  data.tabs.map((tab) =>
-                    tab.id === active.id
-                      ? { ...tab, label: event.target.value }
-                      : tab,
-                  ),
-                )
-              }
-              value={active.label}
-            />
-          </label>
-        </div>
-        <div
-          aria-labelledby={pageTabDomId(instanceId, active.id, "tab")}
-          id={pageTabDomId(instanceId, active.id, "panel")}
-          role="tabpanel"
-        >
-          <Document
-            ariaLabel={`Edit ${active.label}`}
-            onChange={(document) =>
-              updateTabs(
-                data.tabs.map((tab) =>
-                  tab.id === active.id ? { ...tab, document } : tab,
-                ),
-              )
-            }
-            value={active.document}
-          />
-        </div>
-      </section>
-    );
-  },
-});
+function ActiveTabEditor({
+  attachmentRuntime,
+  imageRuntime,
+  initialDocument,
+  pageRuntime,
+  onChange,
+  customBlocks,
+}: {
+  attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
+  imageRuntime?: OpenEditorImageRuntime<File>;
+  initialDocument: OpenEditorDocument;
+  pageRuntime: OpenEditorPageRuntime;
+  onChange: (document: OpenEditorDocument) => void;
+  customBlocks?: OpenEditorReactProps["customBlocks"];
+}) {
+  const onChangeRef = useRef(onChange);
+  const locallyEmittedDocumentRef = useRef<OpenEditorDocument | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  const handleChange = (nextDocument: OpenEditorDocument) => {
+    locallyEmittedDocumentRef.current = nextDocument;
+    onChangeRef.current(nextDocument);
+  };
+  const controller = useOpenEditorController({
+    initialDocument,
+    attachmentRuntime,
+    imageRuntime,
+    pageRuntime,
+    onChange: handleChange,
+    customBlocks,
+  });
+  useEffect(() => {
+    if (!controller.ready) return;
+    if (initialDocument === locallyEmittedDocumentRef.current) {
+      locallyEmittedDocumentRef.current = undefined;
+      return;
+    }
+    let active = true;
+    const frame = requestAnimationFrame(() => {
+      if (!active || !controller.ready) return;
+      controller.setContent(initialDocument, { emitChange: false });
+    });
+    return () => {
+      active = false;
+      cancelAnimationFrame(frame);
+    };
+  }, [controller, controller.ready, initialDocument]);
+  return (
+    <>
+      <OpenEditorContent controller={controller} />
+      <OpenEditorBlockMenu controller={controller} />
+      <OpenEditorSelectionBubble controller={controller} />
+      <OpenEditorTableMenu controller={controller} />
+      <OpenEditorSlashMenu controller={controller} />
+    </>
+  );
+}
 
-export const pageTabsViewer = defineOpenEditorCustomBlockViewer({
-  block: pageTabsBlock,
-  render: function PageTabsViewer({ data, host, instanceId }) {
-    const [activeId, setActiveId] = useState(data.tabs[0]?.id ?? "");
-    const active = data.tabs.find(({ id }) => id === activeId) ?? data.tabs[0];
-    if (!active) return null;
-    const Document = host.fields.document;
-    return (
-      <section aria-label="Page tabs">
-        <TabButtons
-          activeId={active.id}
-          instanceId={instanceId}
-          onSelect={setActiveId}
-          tabs={data.tabs}
-        />
-        <div
-          aria-labelledby={pageTabDomId(instanceId, active.id, "tab")}
-          id={pageTabDomId(instanceId, active.id, "panel")}
-          role="tabpanel"
-        >
-          <Document ariaLabel={active.label} value={active.document} />
-        </div>
-      </section>
+export function OpenEditorTabbedPage({
+  attachmentRuntime,
+  document,
+  imageRuntime,
+  editable,
+  editorCustomBlocks,
+  pageRuntime,
+  viewerCustomBlocks,
+  onChange,
+}: {
+  attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
+  document: OpenEditorDocument;
+  imageRuntime?: OpenEditorImageRuntime<File>;
+  editable: boolean;
+  editorCustomBlocks?: OpenEditorReactProps["customBlocks"];
+  pageRuntime: OpenEditorPageRuntime;
+  viewerCustomBlocks?: ComponentProps<typeof OpenEditorViewer>["customBlocks"];
+  onChange?: (document: OpenEditorDocument) => void;
+}) {
+  const value = readOpenEditorPageTabs(document);
+  const [activeId, setActiveId] = useState(value?.tabs[0]?.id ?? "");
+  if (!value) return null;
+  const active = value.tabs.find((tab) => tab.id === activeId) ?? value.tabs[0];
+  if (!active) return null;
+
+  const updateTabs = (tabs: OpenEditorPageTab[]) => {
+    const nextDocument = updateOpenEditorPageTabs(document, { tabs });
+    onChange?.(nextDocument);
+  };
+  const updateActive = (patch: Partial<OpenEditorPageTab>) =>
+    updateTabs(
+      value.tabs.map((tab) =>
+        tab.id === active.id ? { ...tab, ...patch } : tab,
+      ),
     );
-  },
-});
+  const addTab = () => {
+    const tab: OpenEditorPageTab = {
+      id: crypto.randomUUID(),
+      label: `Tab ${value.tabs.length + 1}`,
+      document: createDocument([textBlock("paragraph", "")]),
+    };
+    updateTabs([...value.tabs, tab]);
+    setActiveId(tab.id);
+  };
+  const removeTab = (id: string) => {
+    if (value.tabs.length <= 1) return;
+    const index = value.tabs.findIndex((tab) => tab.id === id);
+    const tabs = value.tabs.filter((tab) => tab.id !== id);
+    if (active.id === id)
+      setActiveId(tabs[Math.min(index, tabs.length - 1)]?.id ?? "");
+    updateTabs(tabs);
+  };
+
+  return (
+    <>
+      <TabBar
+        activeId={active.id}
+        editable={editable}
+        onActiveIdChange={setActiveId}
+        onAdd={addTab}
+        onRemove={removeTab}
+        onRename={(id, label) =>
+          updateTabs(
+            value.tabs.map((tab) => (tab.id === id ? { ...tab, label } : tab)),
+          )
+        }
+        tabs={value.tabs}
+      />
+      {editable ? (
+        <ActiveTabEditor
+          attachmentRuntime={attachmentRuntime}
+          customBlocks={editorCustomBlocks}
+          imageRuntime={imageRuntime}
+          initialDocument={active.document}
+          key={active.id}
+          onChange={(nextDocument) => updateActive({ document: nextDocument })}
+          pageRuntime={pageRuntime}
+        />
+      ) : (
+        <OpenEditorViewer
+          attachmentRuntime={attachmentRuntime}
+          className="oe-viewer"
+          document={active.document}
+          imageRuntime={imageRuntime}
+          pageRuntime={pageRuntime}
+          customBlocks={viewerCustomBlocks}
+        />
+      )}
+    </>
+  );
+}

@@ -8,6 +8,7 @@
 @source "./[locale]/(app)";
 @source "./[locale]/(authentication)";
 @source "./[locale]/(published)";
+@source "../../../packages/custom-blocks";
 @source "../../../packages/ui";
 
 @keyframes library-upload-shimmer {

@@ -15,6 +15,81 @@ export interface DirectoryContent {
   directories: Directory[];
 }
 
+const object = (value: unknown): Record<string, unknown> => {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("Directory data must be an object.");
+  return value as Record<string, unknown>;
+};
+
+export function parseDirectoryContent(value: unknown): DirectoryContent {
+  const root = object(value);
+  if (!Array.isArray(root.directories) || root.directories.length < 1)
+    throw new Error("Directory data must contain at least one directory.");
+  const directoryIds = new Set<string>();
+  const directories = root.directories.map((item) => {
+    const input = object(item);
+    if (typeof input.id !== "string" || !input.id)
+      throw new Error("Each directory needs an ID.");
+    if (directoryIds.has(input.id))
+      throw new Error("Directory IDs must be unique.");
+    directoryIds.add(input.id);
+    if (typeof input.label !== "string")
+      throw new Error("Each directory needs a label.");
+    if (!Array.isArray(input.columnIds) || input.columnIds.length < 1)
+      throw new Error("Each directory needs at least one column.");
+    const columnIds = input.columnIds.map((id) => {
+      if (typeof id !== "string" || !id)
+        throw new Error("Each directory column needs an ID.");
+      return id;
+    });
+    if (new Set(columnIds).size !== columnIds.length)
+      throw new Error("Directory column IDs must be unique.");
+    const columnIdSet = new Set(columnIds);
+    if (!Array.isArray(input.rows) || input.rows.length < 1)
+      throw new Error("Each directory needs at least one row.");
+    const rowIds = new Set<string>();
+    const rows = input.rows.map((rowValue) => {
+      const row = object(rowValue);
+      if (typeof row.id !== "string" || !row.id)
+        throw new Error("Each directory row needs an ID.");
+      if (rowIds.has(row.id))
+        throw new Error("Directory row IDs must be unique.");
+      rowIds.add(row.id);
+      const rawCells = object(row.cells);
+      if (
+        Object.keys(rawCells).length !== columnIds.length ||
+        Object.keys(rawCells).some((id) => !columnIdSet.has(id))
+      )
+        throw new Error("Directory cells must match the directory columns.");
+      const cells = Object.fromEntries(
+        columnIds.map((id) => {
+          const cell = rawCells[id];
+          if (typeof cell !== "string")
+            throw new Error("Directory cell values must be strings.");
+          return [id, cell];
+        }),
+      );
+      return { id: row.id, cells };
+    });
+    const pageSize = input.pageSize;
+    if (
+      pageSize !== null &&
+      (!Number.isSafeInteger(pageSize) || Number(pageSize) < 1)
+    )
+      throw new Error(
+        "Directory page size must be null or a positive integer.",
+      );
+    return {
+      id: input.id,
+      label: input.label,
+      columnIds,
+      rows,
+      pageSize: pageSize === null ? null : Number(pageSize),
+    };
+  });
+  return { directories };
+}
+
 export type DirectoryIdFactory = (kind: "column" | "row") => string;
 
 export function createDirectoryRow(
