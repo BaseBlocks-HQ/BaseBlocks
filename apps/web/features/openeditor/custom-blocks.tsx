@@ -23,6 +23,7 @@ import { searchEditor } from "./extensions/search";
 import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 import { createBaseBlocksCustomBlockHost } from "./custom-block-host";
 import { createOpenEditorIcon } from "./slash-menu";
+import { baseBlocksCustomBlockMenuExtension } from "./custom-block-menu";
 export { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 
 const customBlockSlashMenuIcons = {
@@ -135,6 +136,7 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
     registry: baseBlocksCustomBlockRegistry,
     editors: [...baseBlocksCustomBlockEditors, searchEditor, libraryEditor],
     icons: customBlockSlashMenuIcons,
+    blockMenuExtensions: [baseBlocksCustomBlockMenuExtension],
     host: {
       ...createBaseBlocksCustomBlockHost(authorizedAssetIds, pickAsset),
       fields: { document: DocumentEditor },
