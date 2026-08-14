@@ -36,9 +36,8 @@ export function SiteBrandSettings({ site }: { site: Doc<"sites"> }) {
       toast.success("Site name updated");
     } catch {
       toast.error("Unable to update the site name. Try again.");
-    } finally {
-      setIsSavingName(false);
     }
+    setIsSavingName(false);
   };
 
   const uploadLogo = async (file?: File) => {
@@ -55,14 +54,16 @@ export function SiteBrandSettings({ site }: { site: Doc<"sites"> }) {
     setIsSavingLogo(true);
     try {
       const result = await uploadImage(file, siteId);
-      if (!result) throw new Error("Upload failed");
-      await updateSite({ siteId, logoFileId: result.fileId });
-      toast.success("Logo uploaded");
+      if (result) {
+        await updateSite({ siteId, logoFileId: result.fileId });
+        toast.success("Logo uploaded");
+      } else {
+        toast.error(uploadState.error ?? "Unable to save the logo. Try again.");
+      }
     } catch {
       toast.error(uploadState.error ?? "Unable to save the logo. Try again.");
-    } finally {
-      setIsSavingLogo(false);
     }
+    setIsSavingLogo(false);
   };
 
   const removeLogo = async () => {
@@ -73,9 +74,8 @@ export function SiteBrandSettings({ site }: { site: Doc<"sites"> }) {
       toast.success("Logo removed");
     } catch {
       toast.error("Unable to remove the logo. Try again.");
-    } finally {
-      setIsRemovingLogo(false);
     }
+    setIsRemovingLogo(false);
   };
 
   return (

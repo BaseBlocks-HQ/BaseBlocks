@@ -31,16 +31,20 @@ export function FaviconSettings({
     setIsSaving(true);
     try {
       const result = await uploadImage(file, siteId);
-      if (!result) throw new Error("Upload failed");
-      await onChange(result.fileId);
-      toast.success("Favicon updated");
+      if (result) {
+        await onChange(result.fileId);
+        toast.success("Favicon updated");
+      } else {
+        toast.error(
+          uploadState.error ?? "Unable to save the favicon. Try again.",
+        );
+      }
     } catch {
       toast.error(
         uploadState.error ?? "Unable to save the favicon. Try again.",
       );
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   const remove = async () => {
@@ -51,9 +55,8 @@ export function FaviconSettings({
       toast.success("Favicon removed");
     } catch {
       toast.error("Unable to remove the favicon. Try again.");
-    } finally {
-      setIsRemoving(false);
     }
+    setIsRemoving(false);
   };
 
   return (

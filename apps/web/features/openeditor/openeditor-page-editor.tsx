@@ -34,7 +34,7 @@ import {
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useMutation } from "convex/react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
@@ -368,10 +368,12 @@ function useBaseBlocksCustomBlockConfigurations(
   },
 ) {
   const discardSiteAsset = useMutation(api.siteAssetLifecycle.discard);
-  const assetAuthorization = useRef(
-    new BaseBlocksCustomBlockAssetAuthorization(document),
-  ).current;
-  assetAuthorization.updateDocument(document);
+  const [assetAuthorization] = useState(
+    () => new BaseBlocksCustomBlockAssetAuthorization(document),
+  );
+  useEffect(() => {
+    assetAuthorization.updateDocument(document);
+  }, [assetAuthorization, document]);
   const pickAsset = async () => {
     const input = await imageRuntime.selectImage?.();
     if (!input || !imageRuntime.uploadImage) return null;
