@@ -39,9 +39,8 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
 import {
-  authorizeBaseBlocksCustomBlockAsset,
+  BaseBlocksCustomBlockAssetAuthorization,
   createBaseBlocksCustomBlockEditorConfiguration,
-  extractBaseBlocksCustomBlockAssetIds,
 } from "./custom-blocks";
 import { createBaseBlocksCustomBlockViewerConfiguration } from "./custom-block-viewer";
 import { useBaseBlocksImageRuntime } from "./image-runtime";
@@ -368,20 +367,15 @@ function useBaseBlocksCustomBlockConfigurations(
     pageRuntime: OpenEditorPageRuntime;
   },
 ) {
-  const authorizedAssetIdsRef = useRef<Set<string>>(
-    extractBaseBlocksCustomBlockAssetIds(document),
-  );
-  authorizedAssetIdsRef.current =
-    extractBaseBlocksCustomBlockAssetIds(document);
-  const authorizedAssetIds = useRef({
-    has: (id: string) => authorizedAssetIdsRef.current.has(id),
-  }).current;
+  const assetAuthorization = useRef(
+    new BaseBlocksCustomBlockAssetAuthorization(document),
+  ).current;
+  assetAuthorization.updateDocument(document);
   const pickAsset = async () => {
     const input = await imageRuntime.selectImage?.();
     if (!input || !imageRuntime.uploadImage) return null;
     const uploaded = await imageRuntime.uploadImage(input);
-    return authorizeBaseBlocksCustomBlockAsset(
-      authorizedAssetIdsRef.current,
+    return assetAuthorization.authorize(
       uploaded.imageId
         ? { id: uploaded.imageId, kind: "raster" as const, alt: uploaded.alt }
         : null,
@@ -389,12 +383,12 @@ function useBaseBlocksCustomBlockConfigurations(
   };
   return {
     editor: createBaseBlocksCustomBlockEditorConfiguration(
-      authorizedAssetIds,
+      assetAuthorization,
       pickAsset,
       runtimes,
     ),
     viewer: createBaseBlocksCustomBlockViewerConfiguration(
-      authorizedAssetIdsRef.current,
+      assetAuthorization,
       runtimes,
     ),
   };

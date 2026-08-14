@@ -19,7 +19,7 @@ type NestedRuntimes = {
   pageRuntime?: OpenEditorPageRuntime;
 };
 export const createBaseBlocksCustomBlockViewerConfiguration = (
-  authorizedAssetIds: ReadonlySet<string>,
+  authorizedAssetIds: Pick<ReadonlySet<string>, "has">,
   runtimes: NestedRuntimes = {},
 ) => {
   const DocumentViewer = ({
