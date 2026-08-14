@@ -24,7 +24,8 @@
   },
   "devDependencies": {
     "@baseblocks/tsconfig": "workspace:*",
-    "@types/bun": "1.3.14"
+    "@types/bun": "1.3.14",
+    "convex-test": "0.0.55"
   },
   "peerDependencies": {
     "typescript": ">=5 <8"
@@ -34,8 +35,8 @@
     "@aws-sdk/s3-presigned-post": "^3.1084.0",
     "@aws-sdk/s3-request-presigner": "^3.1084.0",
     "@baseblocks/anydoc-convex": "0.1.0-alpha.15",
-    "@baseblocks/domain": "workspace:*",
     "@baseblocks/custom-blocks": "workspace:*",
+    "@baseblocks/domain": "workspace:*",
     "@baseblocks/openeditor-contracts": "workspace:*",
     "@convex-dev/better-auth": "^0.12.5",
     "@convex-dev/workflow": "^0.4.4",
@@ -47,6 +48,7 @@
     "@polar-sh/sdk": "0.49.0",
     "ai": "7.0.49",
     "better-auth": "^1.6.23",
+    "buffer": "6.0.3",
     "convex": "^1.42.1",
     "files-sdk": "2.2.3"
   }

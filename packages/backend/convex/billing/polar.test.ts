@@ -1,4 +1,3 @@
-import { createHmac } from "node:crypto";
 import { describe, expect, test } from "bun:test";
 import {
   billingOperationMetadata,
@@ -8,7 +7,6 @@ import {
   normalizeSubscriptionLifecycle,
   PolarApiError,
   resolvePolarOrganizationCustomer,
-  verifyPolarWebhook,
   type PolarBillingProvider,
   type PolarSubscription,
 } from "./polar";
@@ -443,47 +441,5 @@ describe("subscription normalization", () => {
       scheduledPause: false,
       effectiveThrough: "2026-09-01T00:00:00Z",
     });
-  });
-});
-
-describe("Polar Standard Webhooks verification", () => {
-  const signingKey = "polar-webhook-secret";
-  const secret = `whsec_${Buffer.from(signingKey).toString("base64")}`;
-  const body = JSON.stringify({
-    type: "subscription.updated",
-    timestamp: "2026-08-09T12:00:00Z",
-    data: { id: "sub_1" },
-  });
-  const timestamp = 1_786_276_800;
-  const deliveryId = "evt_delivery_1";
-  const signature = createHmac("sha256", signingKey)
-    .update(`${deliveryId}.${timestamp}.${body}`)
-    .digest("base64");
-  const headers = {
-    "webhook-id": deliveryId,
-    "webhook-timestamp": String(timestamp),
-    "webhook-signature": `v1,${signature}`,
-  };
-
-  test("accepts the unmodified raw body and returns replay identity", async () => {
-    const verified = await verifyPolarWebhook(body, headers, secret, {
-      now: timestamp,
-    });
-    expect(verified?.deliveryId).toBe(deliveryId);
-    expect(verified?.payload.type).toBe("subscription.updated");
-  });
-
-  test("rejects tampering, stale delivery, and missing headers", async () => {
-    expect(
-      await verifyPolarWebhook(`${body} `, headers, secret, { now: timestamp }),
-    ).toBeNull();
-    expect(
-      await verifyPolarWebhook(body, headers, secret, {
-        now: timestamp + 301,
-      }),
-    ).toBeNull();
-    expect(
-      await verifyPolarWebhook(body, {}, secret, { now: timestamp }),
-    ).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
 import { authComponent, createAuth } from "./auth";
 import { handleNangoWebhook } from "./integrationWebhooks";
-import { handlePolarWebhook } from "./billingWebhooks";
+import { handlePolarWebhook } from "./billing_webhooks";
 
 const http = httpRouter();
 
