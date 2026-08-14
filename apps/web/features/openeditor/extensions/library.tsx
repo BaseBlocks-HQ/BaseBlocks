@@ -1,7 +1,7 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, FolderAddIcon, CogIcon } from "@hugeicons/core-free-icons";
+import { Add01Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
 import {
   PublicLibraryViewer,
   readLibrary,
@@ -16,13 +16,6 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -33,31 +26,29 @@ import { Switch } from "@baseblocks/ui/switch";
 import { defineOpenEditorCustomBlockEditor } from "@openeditor/custom-block/editor";
 import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
-function LibraryEditor({
+export function LibrarySettings({
+  onComplete,
   value,
   onChange,
 }: {
+  onComplete?: () => void;
   value: LibraryContent;
   onChange: (value: LibraryContent) => void;
 }) {
   const { siteId } = useSiteRenderActions();
   const createLibrary = useMutation(api.libraries.createLibrary);
-  const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const newLibraryNameId = useId();
+  const allowDownloadsId = useId();
   const libraries = useQuery(
     api.libraries.listLibraries,
     siteId ? { siteId } : "skip",
   );
   const libraryId = value.libraryId as LibraryId | undefined;
-  const explorer = useQuery(
-    api.libraries.getExplorer,
-    libraryId ? { libraryId } : "skip",
-  );
-
   const create = async () => {
     const name = newName.trim();
     if (!name || !siteId || creating) return;
@@ -67,7 +58,7 @@ function LibraryEditor({
       const nextLibraryId = await createLibrary({ siteId, name });
       onChange({ ...value, libraryId: nextLibraryId });
       setNewName("");
-      setOpen(false);
+      onComplete?.();
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Could not create library.",
@@ -86,125 +77,117 @@ function LibraryEditor({
   }
 
   return (
-    <div className="flex items-start gap-2">
-      <div className="min-w-0 flex-1">
-        {libraryId ? (
-          <LibraryExplorer
-            allowDownloads={value.allowDownloads !== false}
-            embedded
-            explorer={explorer}
-          />
-        ) : (
-          <button
-            className="flex min-h-20 w-full items-center justify-center gap-2 rounded-2xl border border-dashed text-sm font-medium text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={() => setOpen(true)}
-            type="button"
-          >
-            <HugeiconsIcon icon={FolderAddIcon} className="size-4" />
-            Choose or create a library
-          </button>
-        )}
+    <div className="grid gap-4">
+      <div className="grid gap-1.5">
+        <Label className="text-xs font-medium tracking-wide text-sidebar-foreground/55">
+          Library
+        </Label>
+        <Select
+          onValueChange={(next) => onChange({ ...value, libraryId: next })}
+          value={libraryId}
+        >
+          <SelectTrigger className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground">
+            <SelectValue placeholder="Choose a library" />
+          </SelectTrigger>
+          <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+            {libraries?.map((library) => (
+              <SelectItem
+                className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                key={library._id}
+                value={library._id}
+              >
+                {library.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+      <div className="grid gap-1.5">
+        <Label
+          className="text-xs font-medium tracking-wide text-sidebar-foreground/55"
+          htmlFor={newLibraryNameId}
+        >
+          New library
+        </Label>
+        <div className="flex gap-2">
+          <Input
+            className="h-10 rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
+            id={newLibraryNameId}
+            onChange={(event) => {
+              setNewName(event.target.value);
+              setError(null);
+            }}
+            onKeyDown={(event) => {
+              if (event.nativeEvent.isComposing) return;
+              if (event.key === "Enter") void create();
+            }}
+            placeholder="Library name"
+            value={newName}
+          />
           <Button
-            aria-label="Configure library"
-            className="shrink-0 rounded-2xl border-0 bg-card shadow-none hover:bg-muted/60"
+            aria-label="Create library"
+            className="size-10 shrink-0 rounded-full"
+            disabled={!newName.trim() || creating}
+            onClick={() => void create()}
             size="icon"
             type="button"
-            variant="ghost"
           >
-            <HugeiconsIcon icon={CogIcon} className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          align="end"
-          className="w-80 rounded-[1.25rem] border-sidebar-border bg-sidebar p-4 text-sidebar-foreground shadow-2xl"
-        >
-          <PopoverHeader className="mb-4">
-            <PopoverTitle>Library settings</PopoverTitle>
-          </PopoverHeader>
-          <div className="grid gap-4">
-            <div className="grid gap-1.5">
-              <Label className="text-xs font-medium tracking-wide text-sidebar-foreground/55">
-                Library
-              </Label>
-              <Select
-                onValueChange={(next) =>
-                  onChange({ ...value, libraryId: next })
-                }
-                value={libraryId}
-              >
-                <SelectTrigger className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground">
-                  <SelectValue placeholder="Choose a library" />
-                </SelectTrigger>
-                <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-                  {libraries?.map((library) => (
-                    <SelectItem
-                      className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
-                      key={library._id}
-                      value={library._id}
-                    >
-                      {library.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        </div>
+        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      </div>
 
-            <div className="grid gap-1.5">
-              <Label
-                className="text-xs font-medium tracking-wide text-sidebar-foreground/55"
-                htmlFor="new-library-name"
-              >
-                New library
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  className="h-10 rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
-                  id="new-library-name"
-                  onChange={(event) => {
-                    setNewName(event.target.value);
-                    setError(null);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") void create();
-                  }}
-                  placeholder="Library name"
-                  value={newName}
-                />
-                <Button
-                  aria-label="Create library"
-                  className="size-10 shrink-0 rounded-full"
-                  disabled={!newName.trim() || creating}
-                  onClick={() => void create()}
-                  size="icon"
-                  type="button"
-                >
-                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                </Button>
-              </div>
-              {error ? (
-                <p className="text-xs text-destructive">{error}</p>
-              ) : null}
-            </div>
+      <div className="flex items-center justify-between gap-4">
+        <Label className="text-sm" htmlFor={allowDownloadsId}>
+          Allow downloads
+        </Label>
+        <Switch
+          checked={value.allowDownloads !== false}
+          id={allowDownloadsId}
+          onCheckedChange={(allowDownloads) =>
+            onChange({ ...value, allowDownloads })
+          }
+        />
+      </div>
+    </div>
+  );
+}
 
-            <div className="flex items-center justify-between gap-4">
-              <Label className="text-sm" htmlFor="library-downloads">
-                Allow downloads
-              </Label>
-              <Switch
-                checked={value.allowDownloads !== false}
-                id="library-downloads"
-                onCheckedChange={(allowDownloads) =>
-                  onChange({ ...value, allowDownloads })
-                }
-              />
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+function LibraryEditor({
+  onChange,
+  value,
+}: {
+  onChange: (value: LibraryContent) => void;
+  value: LibraryContent;
+}) {
+  const { siteId } = useSiteRenderActions();
+  const libraryId = value.libraryId as LibraryId | undefined;
+  const explorer = useQuery(
+    api.libraries.getExplorer,
+    libraryId ? { libraryId } : "skip",
+  );
+  if (!siteId) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Library editing is unavailable outside a site.
+      </p>
+    );
+  }
+  return libraryId ? (
+    <LibraryExplorer
+      allowDownloads={value.allowDownloads !== false}
+      embedded
+      explorer={explorer}
+    />
+  ) : (
+    <div className="rounded-2xl border border-dashed p-4">
+      <div className="mb-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        <HugeiconsIcon icon={FolderAddIcon} className="size-4" />
+        Choose or create a library
+      </div>
+      <LibrarySettings onChange={onChange} value={value} />
     </div>
   );
 }
@@ -214,7 +197,7 @@ export const libraryEditor = defineOpenEditorCustomBlockEditor({
   render: ({ data, updateData }) => (
     <section className="not-prose my-4">
       <LibraryEditor
-        onChange={({ libraryId, allowDownloads }) =>
+        onChange={({ allowDownloads, libraryId }) =>
           updateData({
             ...(libraryId ? { libraryId } : {}),
             allowDownloads: allowDownloads !== false,
