@@ -161,10 +161,12 @@ export const getPage = query({
     const revisionFileIds = new Map(
       (revision?.fileIds ?? []).map((fileId) => [String(fileId), fileId]),
     );
+    const references = extractOpenEditorReferences(content);
     const imageIds = (
       await Promise.all(
-        Array.from(extractOpenEditorReferences(content).imageIds).map(
-          async (imageId) => {
+        Array.from(references.fileIds)
+          .sort()
+          .map(async (imageId) => {
             const fileId = revisionFileIds.get(imageId);
             if (!fileId) return null;
             const asset = await ctx.db
@@ -177,8 +179,7 @@ export const getPage = query({
               asset.contentType.toLowerCase().startsWith("image/")
               ? imageId
               : null;
-          },
-        ),
+          }),
       )
     ).filter((imageId): imageId is string => imageId !== null);
 

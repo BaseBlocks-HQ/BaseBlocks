@@ -76,7 +76,9 @@ async function queryReleaseLibraries(
 const queryPublicReleasePage = unstable_cache(
   (releaseId: Id<"siteReleases">, path: string) =>
     queryReleasePage(releaseId, path),
-  ["published-release-page-v3"],
+  // The response contains the parsed document shape. Bump this key whenever
+  // that shape changes so a rollback cannot keep an incompatible document.
+  ["published-release-page-v4"],
 );
 
 const queryPublicReleasePageMetadata = unstable_cache(

@@ -37,7 +37,7 @@ describe("published page images", () => {
     const revision = {
       _id: page.contentRevisionId,
       payloadId: "payload-1",
-      fileIds: ["image-released", "file-not-image"],
+      fileIds: ["image-released", "custom-image-released", "file-not-image"],
       libraryIds: [],
       pageIds: [],
     };
@@ -54,6 +54,28 @@ describe("published page images", () => {
               imageId: "image-released",
               src: null,
               alt: "Released",
+            },
+          },
+          {
+            type: "customBlock",
+            attrs: {
+              "openeditor-id": "quick-links-released",
+              blockId: "baseblocks.quick-links",
+              version: 1,
+              data: {
+                links: [
+                  {
+                    id: "link-1",
+                    title: "Released link",
+                    url: "https://example.com",
+                    linkType: "website",
+                    artwork: {
+                      kind: "asset",
+                      assetId: "custom-image-released",
+                    },
+                  },
+                ],
+              },
             },
           },
           {
@@ -85,6 +107,15 @@ describe("published page images", () => {
           fileId: "image-released",
           kind: "siteAsset",
           contentType: "image/png",
+        },
+      ],
+      [
+        "custom-image-released",
+        {
+          releaseId: release._id,
+          fileId: "custom-image-released",
+          kind: "siteAsset",
+          contentType: "image/webp",
         },
       ],
       [
@@ -139,6 +170,9 @@ describe("published page images", () => {
       path: "",
     })) as { imageIds?: string[] };
 
-    expect(result.imageIds).toEqual(["image-released"]);
+    expect(result.imageIds).toEqual([
+      "custom-image-released",
+      "image-released",
+    ]);
   });
 });
