@@ -15,6 +15,7 @@ minimumReleaseAgeExcludes = [
   "@baseblocks/anydoc-react-viewer",
   "@baseblocks/anydoc-spreadsheet-engine",
   "@baseblocks/anydoc-spreadsheet-viewer",
+  "@baseblocks/anydoc-viewer-ui",
   "@firecrawl/anydoc",
   "@firecrawl/anydoc-darwin-arm64",
   "@firecrawl/anydoc-darwin-x64",

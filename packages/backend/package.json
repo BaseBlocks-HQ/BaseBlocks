@@ -33,7 +33,7 @@
     "@aws-sdk/client-s3": "^3.1084.0",
     "@aws-sdk/s3-presigned-post": "^3.1084.0",
     "@aws-sdk/s3-request-presigner": "^3.1084.0",
-    "@baseblocks/anydoc-convex": "0.1.0-alpha.13",
+    "@baseblocks/anydoc-convex": "0.1.0-alpha.15",
     "@baseblocks/domain": "workspace:*",
     "@baseblocks/custom-blocks": "workspace:*",
     "@baseblocks/openeditor-contracts": "workspace:*",

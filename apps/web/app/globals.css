@@ -12,6 +12,14 @@
   initial-value: 0px;
 }
 
+.baseblocks-anydoc-preview
+  [data-anydoc-docx-viewport]
+  .anydoc-docx
+  :where(p, ul, ol) {
+  /* OpenEditor colors its own prose. A DOCX page owns its document colors. */
+  color: inherit;
+}
+
 @property --scroll-fade-b {
   syntax: "<length-percentage>";
   inherits: false;

@@ -66,7 +66,7 @@ export default function AnyDocPreview({
 
   return (
     <AnyDocumentViewer
-      className="h-full min-h-0"
+      className="baseblocks-anydoc-preview h-full min-h-0"
       contentType={file.contentType}
       controls={controls}
       error={(error: ViewerError) => (
