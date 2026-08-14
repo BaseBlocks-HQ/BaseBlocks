@@ -256,42 +256,18 @@ export const billingTables = {
     .index("by_subscription_created", ["subscriptionId", "createdAt"]),
 
   billingWebhookEvents: defineTable({
-    provider: v.literal("polar"),
     providerEnvironment,
     deliveryId: v.string(),
     eventType: v.string(),
     eventOccurredAt: v.number(),
-    providerModifiedAt: v.optional(v.number()),
-    resourceType: v.optional(v.string()),
-    resourceId: v.optional(v.string()),
-    organizationId: v.optional(v.string()),
-    providerCustomerId: v.optional(v.string()),
-    providerSubscriptionId: v.optional(v.string()),
-    providerOrderId: v.optional(v.string()),
-    payloadHash: v.string(),
-    rawPayload: v.string(),
-    payload: v.any(),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("processed"),
-      v.literal("ignored"),
-      v.literal("failed"),
-      v.literal("deadLettered"),
-    ),
-    attemptCount: v.number(),
-    nextAttemptAt: v.optional(v.number()),
-    failureCode: v.optional(v.string()),
-    failureMessage: v.optional(v.string()),
+    resourceId: v.string(),
+    organizationId: v.string(),
+    outcome: v.union(v.literal("applied"), v.literal("ignored")),
+    ignoredReason: v.optional(v.string()),
     receivedAt: v.number(),
-    processedAt: v.optional(v.number()),
-    updatedAt: v.number(),
+    processedAt: v.number(),
   })
     .index("by_environment_delivery", ["providerEnvironment", "deliveryId"])
-    .index("by_resource_occurred", [
-      "resourceType",
-      "resourceId",
-      "eventOccurredAt",
-    ])
     .index("by_organization_received", ["organizationId", "receivedAt"])
     .index("by_type_occurred", ["eventType", "eventOccurredAt"]),
 
