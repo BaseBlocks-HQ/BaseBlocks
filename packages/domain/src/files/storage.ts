@@ -1,5 +1,9 @@
 export type UploadPurpose = "file" | "siteAsset";
 
+export function managedFilePath(fileId: string): string {
+  return `/api/files/${encodeURIComponent(fileId)}`;
+}
+
 export const supportedUploadMimeTypes = [
   "image/avif",
   "image/gif",

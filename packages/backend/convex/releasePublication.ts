@@ -6,6 +6,7 @@ import { workflows } from "./workflows";
 import { fileSourceVersion } from "./model/fileExtraction";
 import { buildReleaseChangeDetail } from "./model/releaseChangeDetails";
 import { extractionIsPublishable } from "./model/releaseState";
+import { isSiteAssetReferencedByDraft } from "./model/siteAssets";
 import {
   extractOpenEditorText,
   parseOpenEditorDocument,
@@ -201,6 +202,12 @@ async function snapshotFiles(
     .paginate({ cursor: cursor ?? null, numItems: FILE_BATCH_SIZE });
   for (const source of page.page) {
     if (source.deletedAt !== undefined) continue;
+    if (
+      source.kind === "siteAsset" &&
+      !(await isSiteAssetReferencedByDraft(ctx, source))
+    ) {
+      continue;
+    }
     await ctx.db.insert("releaseFiles", {
       releaseId: release._id,
       siteId: release.siteId,

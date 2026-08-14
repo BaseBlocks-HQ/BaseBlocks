@@ -29,7 +29,7 @@ export function buildPublicSiteMetadata(
   const description = truncateDescription(
     result.descriptionText || `${result.title} on ${result.site.name}`,
   );
-  const favicon = result?.site.settings.favicon;
+  const favicon = result.site.faviconUrl;
 
   return {
     title: { absolute: title },

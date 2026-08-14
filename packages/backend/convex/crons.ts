@@ -22,4 +22,11 @@ crons.interval(
   { limit: 25 },
 );
 
+crons.interval(
+  "purge abandoned site assets",
+  { hours: 1 },
+  internal.siteAssetPurge.purge,
+  {},
+);
+
 export default crons;

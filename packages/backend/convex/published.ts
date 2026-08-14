@@ -87,6 +87,9 @@ function projectAccessibleSite(
       logoUrl: release.logoFileId
         ? `/api/files/${release.logoFileId}`
         : undefined,
+      faviconUrl: release.faviconFileId
+        ? `/api/files/${release.faviconFileId}`
+        : undefined,
       visibility: site.visibility,
       settings: release.settings,
       updatedAt: release.createdAt,
@@ -373,7 +376,9 @@ export const getFavicon = query({
       args.siteSlug,
     );
     if (!resolved || !isPubliclyPublishedSite(resolved.site)) return null;
-    return resolved.release.settings.favicon ?? null;
+    return resolved.release.faviconFileId
+      ? `/api/files/${resolved.release.faviconFileId}`
+      : null;
   },
 });
 

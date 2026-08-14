@@ -17,3 +17,17 @@ describe("custom block URL resolution", () => {
     expect(host.resolveUrl("//other.example/file", "asset")).toBeNull();
   });
 });
+
+test("custom block host forwards pending asset disposal", async () => {
+  const discarded: string[] = [];
+  const host = createBaseBlocksCustomBlockHost(
+    new Set(),
+    undefined,
+    async (id) => {
+      discarded.push(id);
+    },
+  );
+
+  await host.assets.discard?.("pending-asset");
+  expect(discarded).toEqual(["pending-asset"]);
+});

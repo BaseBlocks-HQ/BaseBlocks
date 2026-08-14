@@ -1,7 +1,7 @@
 "use client";
 
 import { api, type Id } from "@baseblocks/backend";
-import type { PageListItem } from "@baseblocks/domain";
+import { managedFilePath, type PageListItem } from "@baseblocks/domain";
 import { useQueries, useQuery, type RequestForQueries } from "convex/react";
 import { useMemo } from "react";
 
@@ -49,7 +49,7 @@ export function useSiteNavigation(
     navigation.push({
       _id: site._id,
       name: site.name,
-      logoUrl: site.logoUrl,
+      logoUrl: site.logoFileId ? managedFilePath(site.logoFileId) : undefined,
       logoFileId: site.logoFileId,
       defaultPageId: site.defaultPageId,
       liveReleaseId: site.liveReleaseId,

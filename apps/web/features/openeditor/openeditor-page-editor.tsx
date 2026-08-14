@@ -34,14 +34,13 @@ import {
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useMutation } from "convex/react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
 import {
-  authorizeBaseBlocksCustomBlockAsset,
+  BaseBlocksCustomBlockAssetAuthorization,
   createBaseBlocksCustomBlockEditorConfiguration,
-  extractBaseBlocksCustomBlockAssetIds,
 } from "./custom-blocks";
 import { createBaseBlocksCustomBlockViewerConfiguration } from "./custom-block-viewer";
 import { useBaseBlocksImageRuntime } from "./image-runtime";
@@ -368,33 +367,36 @@ function useBaseBlocksCustomBlockConfigurations(
     pageRuntime: OpenEditorPageRuntime;
   },
 ) {
-  const authorizedAssetIdsRef = useRef<Set<string>>(
-    extractBaseBlocksCustomBlockAssetIds(document),
+  const discardSiteAsset = useMutation(api.siteAssetLifecycle.discard);
+  const [assetAuthorization] = useState(
+    () => new BaseBlocksCustomBlockAssetAuthorization(document),
   );
-  authorizedAssetIdsRef.current =
-    extractBaseBlocksCustomBlockAssetIds(document);
-  const authorizedAssetIds = useRef({
-    has: (id: string) => authorizedAssetIdsRef.current.has(id),
-  }).current;
+  useEffect(() => {
+    assetAuthorization.updateDocument(document);
+  }, [assetAuthorization, document]);
   const pickAsset = async () => {
     const input = await imageRuntime.selectImage?.();
     if (!input || !imageRuntime.uploadImage) return null;
     const uploaded = await imageRuntime.uploadImage(input);
-    return authorizeBaseBlocksCustomBlockAsset(
-      authorizedAssetIdsRef.current,
+    return assetAuthorization.authorize(
       uploaded.imageId
         ? { id: uploaded.imageId, kind: "raster" as const, alt: uploaded.alt }
         : null,
     );
   };
+  const discardAsset = async (id: string) => {
+    if (!assetAuthorization.discard(id)) return;
+    await discardSiteAsset({ fileId: id }).catch(() => undefined);
+  };
   return {
     editor: createBaseBlocksCustomBlockEditorConfiguration(
-      authorizedAssetIds,
+      assetAuthorization,
       pickAsset,
       runtimes,
+      discardAsset,
     ),
     viewer: createBaseBlocksCustomBlockViewerConfiguration(
-      authorizedAssetIdsRef.current,
+      assetAuthorization,
       runtimes,
     ),
   };

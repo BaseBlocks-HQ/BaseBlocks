@@ -47,6 +47,11 @@ async function resolveChange(
         released: release?.logoFileId,
       },
       {
+        detail: "Favicon changed",
+        current: site.faviconFileId,
+        released: release?.faviconFileId,
+      },
+      {
         detail: "Default page changed",
         current: site.defaultPageId,
         released: release?.defaultPageId,

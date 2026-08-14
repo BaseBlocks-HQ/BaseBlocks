@@ -370,6 +370,7 @@ export const publish = mutation({
       number,
       name: site.name,
       logoFileId: site.logoFileId,
+      faviconFileId: site.faviconFileId,
       defaultPageId: site.defaultPageId,
       settings: site.settings,
       sourceDraftRevision: draftRevision,
