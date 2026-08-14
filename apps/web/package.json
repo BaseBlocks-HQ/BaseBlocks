@@ -17,7 +17,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1084.0",
     "@baseblocks/backend": "workspace:*",
     "@baseblocks/custom-blocks": "workspace:*",
-    "@baseblocks/anydoc": "0.1.0-alpha.13",
+    "@baseblocks/anydoc": "0.1.0-alpha.15",
     "@baseblocks/domain": "workspace:*",
     "@baseblocks/i18n": "workspace:*",
     "@baseblocks/openeditor-contracts": "workspace:*",

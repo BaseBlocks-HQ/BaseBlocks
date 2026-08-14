@@ -16,11 +16,7 @@ import {
   TextWrapIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type {
-  ViewerControls,
-  ViewerSearchControls,
-  ViewerZoomControls,
-} from "@baseblocks/anydoc/react";
+import type { ViewerControls } from "@baseblocks/anydoc/react";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -190,7 +186,11 @@ function PageControls({
   );
 }
 
-function ZoomControls({ controls }: { controls: ViewerZoomControls }) {
+function ZoomControls({
+  controls,
+}: {
+  controls: NonNullable<ViewerControls["zoom"]>;
+}) {
   const t = useTranslations("libraries.viewer");
   return (
     <div
@@ -231,7 +231,11 @@ function ZoomControls({ controls }: { controls: ViewerZoomControls }) {
   );
 }
 
-function SearchControl({ controls }: { controls: ViewerSearchControls }) {
+function SearchControl({
+  controls,
+}: {
+  controls: NonNullable<ViewerControls["search"]>;
+}) {
   const t = useTranslations("libraries.viewer");
   return (
     <Popover>
