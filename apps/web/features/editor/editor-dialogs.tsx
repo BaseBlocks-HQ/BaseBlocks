@@ -2,13 +2,13 @@
 
 import type { Id } from "@baseblocks/backend";
 import dynamic from "next/dynamic";
-import type { DraftSummary } from "./release-dialogs";
+import type { DraftSummary } from "./publish-dialog";
 
 const PublishDialog = dynamic(() =>
-  import("./release-dialogs").then((module) => module.PublishDialog),
+  import("./publish-dialog").then((module) => module.PublishDialog),
 );
 const HistoryDialog = dynamic(() =>
-  import("./release-dialogs").then((module) => module.HistoryDialog),
+  import("./version-history-dialog").then((module) => module.HistoryDialog),
 );
 const ShareDialog = dynamic(() =>
   import("./share-dialog").then((module) => module.ShareDialog),

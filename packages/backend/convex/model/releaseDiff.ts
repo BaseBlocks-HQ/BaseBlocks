@@ -1,3 +1,4 @@
+import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
 import {
   parseOpenEditorDocument,
   type OpenEditorNode,
@@ -21,28 +22,29 @@ export type ReleaseDetailedChange = {
   };
 };
 
-const INTERNAL_ATTRIBUTE_KEYS = new Set(["openeditor-id", "id"]);
-
 function inlineText(node: OpenEditorNode): string {
   if (typeof node.text === "string") return node.text;
   return (node.content ?? []).map(inlineText).join("");
 }
 
-function readableAttributes(node: OpenEditorNode): string[] {
-  return Object.entries(node.attrs ?? {})
-    .filter(
-      ([key, value]) =>
-        !INTERNAL_ATTRIBUTE_KEYS.has(key) &&
-        value !== undefined &&
-        value !== null &&
-        value !== "",
-    )
-    .map(([key, value]) => `${key}: ${formatValue(value)}`);
+function readableNodeText(node: OpenEditorNode): string {
+  const text = inlineText(node).trim();
+  if (text) return text;
+  if (node.type === "customBlock") {
+    const resolved = baseBlocksBlockRegistry.resolve(node);
+    return resolved.status === "ready"
+      ? baseBlocksBlockRegistry.toText(node).trim()
+      : "";
+  }
+  const attrs = node.attrs ?? {};
+  return ["name", "title", "label", "description", "alt", "code"]
+    .map((key) => attrs[key])
+    .filter((value): value is string => typeof value === "string" && !!value)
+    .join(" · ");
 }
 
 function nodeLines(node: OpenEditorNode, depth = 0): string[] {
-  const text = inlineText(node).trim();
-  const attrs = readableAttributes(node);
+  const text = readableNodeText(node);
   const indent = "  ".repeat(depth);
 
   if (node.type === "text") return [];
@@ -65,12 +67,11 @@ function nodeLines(node: OpenEditorNode, depth = 0): string[] {
   const title = node.type
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/^./, (value) => value.toUpperCase());
-  const summary = [text, ...attrs].filter(Boolean).join(" · ");
-  if (summary) return [`${indent}${title}: ${summary}`];
+  if (text) return [`${indent}${title}: ${text}`];
   const children = (node.content ?? []).flatMap((child) =>
     nodeLines(child, depth + 1),
   );
-  return children.length > 0 ? [`${indent}${title}`, ...children] : [title];
+  return children;
 }
 
 export function openEditorContentLines(serialized?: string): string[] {
