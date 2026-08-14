@@ -1,13 +1,5 @@
 "use client";
 
-import { AppWindowIcon, Link02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-
-const iconCatalog = [
-  { id: "link", label: "Link" },
-  { id: "app", label: "App" },
-] as const;
-
 const safeUrl = (value: string, _context: "navigation" | "asset") => {
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -28,16 +20,9 @@ export const createBaseBlocksCustomBlockHost = (
 ) => ({
   resolveUrl: safeUrl,
   links: {
-    resolve: ({ href: value, kind }: { href: string; kind?: string }) => {
-      const href =
-        kind === "app" &&
-        /^[a-z][a-z\d+.-]*:\/\//i.test(value) &&
-        !/^(?:javascript|data|vbscript):/i.test(value)
-          ? value.trim()
-          : safeUrl(value, "navigation");
-      return href
-        ? { href, external: kind !== "app" && !href.startsWith("/") }
-        : null;
+    resolve: ({ href: value }: { href: string; kind?: string }) => {
+      const href = safeUrl(value, "navigation");
+      return href ? { href, external: !href.startsWith("/") } : null;
     },
   },
   assets: {
@@ -46,11 +31,5 @@ export const createBaseBlocksCustomBlockHost = (
       authorizedAssetIds.has(id) && /^[A-Za-z0-9_-]+$/.test(id)
         ? { src: `/api/files/${encodeURIComponent(id)}`, alt: "" }
         : null,
-  },
-  icons: {
-    list: () => iconCatalog,
-    render: (id: string) => (
-      <HugeiconsIcon icon={id === "app" ? AppWindowIcon : Link02Icon} />
-    ),
   },
 });

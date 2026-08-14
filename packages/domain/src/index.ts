@@ -52,7 +52,6 @@ export type {
   DirectoryContent,
   SearchContent,
   LibraryContent,
-  QuicklinkType,
   QuicklinkItem,
 } from "./content/elements";
 

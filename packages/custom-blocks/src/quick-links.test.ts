@@ -6,15 +6,61 @@ import {
   updateQuickLink,
   safeQuickLinkHref,
 } from "./quick-links";
+import { quickLinksBlock } from "./index";
 
 describe("quick links data", () => {
+  test("migrates website links and removes unsupported app links and icons", () => {
+    expect(
+      quickLinksBlock.migrate?.({
+        version: 1,
+        data: {
+          links: [
+            {
+              id: "website",
+              title: "Website",
+              url: "https://example.com",
+              linkType: "website",
+              artwork: { kind: "asset", assetId: "website-image" },
+            },
+            {
+              id: "icon",
+              title: "Icon",
+              url: "/icon",
+              linkType: "website",
+              artwork: { kind: "icon", id: "book" },
+            },
+            {
+              id: "app",
+              title: "App",
+              url: "baseblocks://open",
+              linkType: "app",
+            },
+          ],
+        },
+      }),
+    ).toEqual({
+      blockId: "baseblocks.quick-links",
+      version: 2,
+      data: {
+        links: [
+          {
+            id: "website",
+            title: "Website",
+            url: "https://example.com",
+            imageAssetId: "website-image",
+          },
+          { id: "icon", title: "Icon", url: "/icon" },
+        ],
+      },
+    });
+  });
+
   test("accepts site-relative and HTTP links but rejects executable URLs", () => {
     expect(
       safeQuickLinkHref({
         id: "1",
         title: "Page",
         url: "/about",
-        linkType: "website",
       }),
     ).toBe("/about");
     expect(
@@ -22,7 +68,6 @@ describe("quick links data", () => {
         id: "2",
         title: "Web",
         url: "https://example.com",
-        linkType: "website",
       }),
     ).toBe("https://example.com");
     expect(
@@ -30,7 +75,6 @@ describe("quick links data", () => {
         id: "query",
         title: "Query",
         url: "https://example.com/search?a=1&b=2",
-        linkType: "website",
       }),
     ).toBe("https://example.com/search?a=1&b=2");
     expect(
@@ -38,7 +82,6 @@ describe("quick links data", () => {
         id: "3",
         title: "Bad",
         url: "javascript:alert(1)",
-        linkType: "website",
       }),
     ).toBeNull();
     expect(
@@ -46,15 +89,13 @@ describe("quick links data", () => {
         id: "encoded",
         title: "Encoded",
         url: "jav&#x61;script:alert(1)",
-        linkType: "website",
       }),
     ).toBeNull();
     expect(
       safeQuickLinkHref({
-        id: "4",
-        title: "Bad app",
+        id: "scheme",
+        title: "App scheme",
         url: "data://payload",
-        linkType: "app",
       }),
     ).toBeNull();
   });
@@ -65,7 +106,6 @@ describe("quick links data", () => {
         id: "1",
         title: "Page",
         url: "/about",
-        linkType: "website",
       }),
     ).toBe("BaseBlocks page");
     expect(
@@ -73,28 +113,27 @@ describe("quick links data", () => {
         id: "2",
         title: "Docs",
         url: "https://www.example.com/docs",
-        linkType: "website",
       }),
     ).toBe("example.com");
-    const app = {
-      id: "app",
-      title: "Open app",
-      url: "baseblocks://open",
-      linkType: "app" as const,
+    const website = {
+      id: "docs",
+      title: "Open docs",
+      url: "https://example.com/docs",
     };
-    expect(updateQuickLink([app], { ...app, title: "Launch app" })[0]).toEqual({
-      ...app,
-      title: "Launch app",
+    expect(
+      updateQuickLink([website], { ...website, title: "Read docs" })[0],
+    ).toEqual({
+      ...website,
+      title: "Read docs",
     });
   });
 
-  test("duplicates and reorders links with portable artwork references", () => {
+  test("duplicates and reorders links with portable image references", () => {
     const original = {
       id: "one",
       title: "Docs",
       url: "/docs",
-      linkType: "website" as const,
-      artwork: { kind: "icon" as const, id: "book" },
+      imageAssetId: "docs-image",
     };
     expect(duplicateQuickLink(original, "copy")).toEqual({
       ...original,
