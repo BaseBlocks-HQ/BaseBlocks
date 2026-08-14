@@ -2,18 +2,22 @@
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowDown01Icon,
   ArrowRight01Icon,
   Delete01Icon,
   Download01Icon,
   DragDropVerticalIcon,
-  File01Icon,
   Folder01Icon,
   FolderAddIcon,
   Link01Icon,
   PencilEdit01Icon,
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
+import {
+  appSidebarIconSlotClassName,
+  appSidebarRowGapClassName,
+  appSidebarRowHeightClassName,
+  getAppSidebarTreePaddingInlineStart,
+} from "@/features/app-shell/app-sidebar-row";
 import type { FolderId, LibraryEntity } from "@/features/libraries/model";
 import { InlineRename } from "@/components/tree/inline-rename";
 import { MiddleTruncate } from "@/components/tree/middle-truncate";
@@ -47,6 +51,7 @@ import {
 } from "@dnd-kit/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { LibraryFileIcon } from "./library-file-icon";
 
 type LibraryDropData = {
   kind: "library-tree-drop";
@@ -92,6 +97,7 @@ export function LibraryTree(props: {
   }) => Promise<void>;
   onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
   onUploadFiles: () => void;
+  selectedEntityId: string | null;
   title?: string;
   uploadDisabled?: boolean;
 }) {
@@ -182,7 +188,13 @@ export function LibraryTree(props: {
             </div>
           ) : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-auto px-1 pb-2">
+        <div
+          className={cn(
+            "min-h-0 flex-1 flex-col overflow-auto px-1 pt-px pb-2",
+            rows.length > 0 && "flex",
+            appSidebarRowGapClassName,
+          )}
+        >
           {rows.length > 0 ? (
             rows.map((node) => (
               <LibraryTreeRow
@@ -195,6 +207,7 @@ export function LibraryTree(props: {
                 dragDisabled={pendingId !== null}
                 dropDisabled={invalidDropIds.has(node.id)}
                 renaming={renamingId === node.id}
+                selected={props.selectedEntityId === node.id}
                 onToggle={() =>
                   setExpanded((current) => {
                     const next = new Set(current);
@@ -249,6 +262,7 @@ function LibraryTreeRow({
   dragDisabled,
   dropDisabled,
   renaming,
+  selected,
   onToggle,
   onOpen,
   onRename,
@@ -266,6 +280,7 @@ function LibraryTreeRow({
   dragDisabled: boolean;
   dropDisabled: boolean;
   renaming: boolean;
+  selected: boolean;
   onToggle: () => void;
   onOpen: () => void;
   onRename: () => void;
@@ -282,68 +297,93 @@ function LibraryTreeRow({
     data: { kind: "library-tree-entity", entityId: node.id },
   });
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div
-          ref={(element) => {
-            ref(element);
-            handleRef(element);
-          }}
-          role="treeitem"
-          tabIndex={0}
-          aria-level={node.depth + 1}
-          aria-expanded={folder ? expanded : undefined}
-          className={cn(
-            "group relative flex h-8 items-center gap-1 rounded-md px-1 hover:bg-accent",
-            isDragging && "opacity-30",
-          )}
-          style={{ paddingLeft: node.depth * 16 + 4 }}
-        >
-          <LibraryDropZones
-            active={dragActive}
-            disabled={dropDisabled}
-            entityId={node.id}
-            insideEnabled={folder}
-          />
-          {folder ? (
-            <button
-              type="button"
-              aria-label={expanded ? "Collapse" : "Expand"}
-              onClick={onToggle}
-            >
-              {expanded ? (
-                <HugeiconsIcon icon={ArrowDown01Icon} className="size-4" />
-              ) : (
-                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-              )}
-            </button>
-          ) : (
-            <span className="w-4" />
-          )}
-          {folder ? (
-            <HugeiconsIcon icon={Folder01Icon} className="size-4 shrink-0" />
-          ) : (
-            <HugeiconsIcon icon={File01Icon} className="size-4 shrink-0" />
-          )}
-          {renaming ? (
-            <InlineRename
-              label={`Rename ${node.label}`}
-              value={node.label}
-              onCancel={onRenameCancel}
-              onSave={onRenameSave}
+    <ContextMenu modal={false}>
+      <div
+        className="contents"
+        onContextMenu={(event) => event.stopPropagation()}
+      >
+        <ContextMenuTrigger asChild>
+          <div
+            ref={(element) => {
+              ref(element);
+              handleRef(element);
+            }}
+            role="treeitem"
+            tabIndex={0}
+            aria-level={node.depth + 1}
+            aria-expanded={folder ? expanded : undefined}
+            aria-selected={selected}
+            data-selected={selected}
+            className={cn(
+              "group/library relative flex min-w-0 items-center gap-1.5 rounded-md pe-2 text-xs font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:bg-accent data-[selected=true]:font-medium data-[selected=true]:text-foreground",
+              appSidebarRowHeightClassName,
+              isDragging && "opacity-30",
+            )}
+            style={{
+              paddingInlineStart: getAppSidebarTreePaddingInlineStart(
+                node.depth,
+              ),
+            }}
+          >
+            <LibraryDropZones
+              active={dragActive}
+              disabled={dropDisabled}
+              entityId={node.id}
+              insideEnabled={folder}
             />
-          ) : (
-            <button
-              type="button"
-              className="min-w-0 flex-1 truncate text-left text-sm"
-              onDoubleClick={canManage ? onRename : undefined}
-              onClick={onOpen}
-            >
-              <MiddleTruncate text={node.label} />
-            </button>
-          )}
-        </div>
-      </ContextMenuTrigger>
+            <span className={cn("relative", appSidebarIconSlotClassName)}>
+              {folder ? (
+                <>
+                  <HugeiconsIcon
+                    aria-hidden
+                    icon={Folder01Icon}
+                    className="size-3.5 shrink-0 transition-opacity duration-100 group-hover/library:opacity-0 group-focus-within/library:opacity-0 pointer-coarse:opacity-0"
+                    strokeWidth={1.75}
+                  />
+                  <button
+                    type="button"
+                    aria-label={expanded ? "Collapse" : "Expand"}
+                    className="absolute inset-0 z-30 flex items-center justify-center rounded-sm opacity-0 outline-none transition-opacity duration-100 hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/library:opacity-100 pointer-coarse:opacity-100"
+                    onClick={onToggle}
+                  >
+                    <HugeiconsIcon
+                      aria-hidden
+                      icon={ArrowRight01Icon}
+                      className={cn(
+                        "size-3.5 transition-transform duration-150 motion-reduce:transition-none",
+                        expanded && "rotate-90",
+                      )}
+                      strokeWidth={1.75}
+                    />
+                  </button>
+                </>
+              ) : node.data.kind === "file" ? (
+                <LibraryFileIcon
+                  contentType={node.data.file.contentType}
+                  filename={node.data.file.filename}
+                />
+              ) : null}
+            </span>
+            {renaming ? (
+              <InlineRename
+                label={`Rename ${node.label}`}
+                value={node.label}
+                onCancel={onRenameCancel}
+                onSave={onRenameSave}
+              />
+            ) : (
+              <button
+                type="button"
+                className="h-full min-w-0 flex-1 truncate text-left outline-none"
+                onDoubleClick={canManage ? onRename : undefined}
+                onClick={onOpen}
+              >
+                <MiddleTruncate text={node.label} />
+              </button>
+            )}
+          </div>
+        </ContextMenuTrigger>
+      </div>
       <ContextMenuContent className="w-52">
         {!folder ? (
           <>

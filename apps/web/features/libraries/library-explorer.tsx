@@ -407,6 +407,7 @@ export function LibraryExplorer({
       canManage={canManage}
       currentFolderId={currentFolderId}
       nodes={model.nodes}
+      selectedEntityId={openFileId ?? currentFolderId}
       onCreateFolder={createFolder}
       onDeleteEntity={deleteEntity}
       onDownloadFile={(entity) => {

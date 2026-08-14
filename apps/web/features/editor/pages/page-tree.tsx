@@ -14,6 +14,7 @@ import { useEditorSiteOptional } from "@/features/editor/editor-state";
 import {
   appSidebarIconSlotClassName,
   appSidebarRowHeightClassName,
+  getAppSidebarTreePaddingInlineStart,
 } from "@/features/app-shell/app-sidebar-row";
 import { api, type Id } from "@baseblocks/backend";
 import {
@@ -273,7 +274,7 @@ function PageTreeRow({
         asChild
         isActive={selectedPageId === page._id}
         style={{
-          paddingInlineStart: `calc(var(--app-sidebar-leading-inset) + ${item.depth * 0.75}rem)`,
+          paddingInlineStart: getAppSidebarTreePaddingInlineStart(item.depth),
         }}
         className={cn(
           "flex min-w-0 gap-1.5 overflow-hidden rounded-md p-0 text-xs font-normal transition-colors data-[active=true]:font-medium",
