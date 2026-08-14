@@ -85,6 +85,10 @@ export class BaseBlocksCustomBlockAssetAuthorization {
     for (const id of this.documentAssetIds) this.pendingAssetIds.delete(id);
   }
 
+  discard(id: string) {
+    return this.pendingAssetIds.delete(id);
+  }
+
   authorize<T extends { id: string }>(asset: T | null) {
     if (asset) this.pendingAssetIds.add(asset.id);
     return asset;
@@ -138,6 +142,7 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
   authorizedAssetIds: Pick<ReadonlySet<string>, "has">,
   pickAsset?: () => Promise<{ id: string; kind: "raster"; alt: string } | null>,
   runtimes: BaseBlocksNestedRuntimes = {},
+  discardAsset?: (id: string) => Promise<void>,
 ) => {
   const DocumentEditor = (
     props: Omit<
@@ -151,6 +156,7 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
         authorizedAssetIds,
         pickAsset,
         runtimes,
+        discardAsset,
       )}
       runtimes={runtimes}
     />
@@ -161,7 +167,11 @@ export const createBaseBlocksCustomBlockEditorConfiguration = (
     icons: customBlockSlashMenuIcons,
     blockMenuExtensions: [baseBlocksCustomBlockMenuExtension],
     host: {
-      ...createBaseBlocksCustomBlockHost(authorizedAssetIds, pickAsset),
+      ...createBaseBlocksCustomBlockHost(
+        authorizedAssetIds,
+        pickAsset,
+        discardAsset,
+      ),
       fields: { document: DocumentEditor },
     },
   };

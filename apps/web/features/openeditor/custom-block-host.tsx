@@ -17,6 +17,7 @@ const safeUrl = (value: string, _context: "navigation" | "asset") => {
 export const createBaseBlocksCustomBlockHost = (
   authorizedAssetIds: Pick<ReadonlySet<string>, "has">,
   pickAsset?: () => Promise<{ id: string; kind: "raster"; alt: string } | null>,
+  discardAsset?: (id: string) => Promise<void>,
 ) => ({
   resolveUrl: safeUrl,
   links: {
@@ -27,6 +28,7 @@ export const createBaseBlocksCustomBlockHost = (
   },
   assets: {
     pick: pickAsset,
+    discard: discardAsset,
     resolve: async (id: string) =>
       authorizedAssetIds.has(id) && /^[A-Za-z0-9_-]+$/.test(id)
         ? { src: `/api/files/${encodeURIComponent(id)}`, alt: "" }

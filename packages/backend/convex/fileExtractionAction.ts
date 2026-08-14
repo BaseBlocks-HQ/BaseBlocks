@@ -5,8 +5,6 @@ import {
   iterableSource,
 } from "@baseblocks/anydoc-convex/node";
 import { v } from "convex/values";
-import { Files } from "files-sdk";
-import { s3 } from "files-sdk/s3";
 import { internal } from "./_generated/api";
 import { internalAction, type ActionCtx } from "./_generated/server";
 import type { FileIngestionJob, FileIngestionResult } from "./fileExtraction";
@@ -14,42 +12,7 @@ import {
   FILE_EXTRACTION_LIMITS,
   validateStoredSourceMetadata,
 } from "./model/fileExtraction";
-
-function requiredEnv(name: string): string {
-  const value = globalThis.process.env[name]?.trim();
-  if (!value) throw new Error(`Missing ${name}`);
-  return value;
-}
-
-function forcePathStyle(): boolean {
-  const value =
-    globalThis.process.env.FILES_FORCE_PATH_STYLE?.trim().toLowerCase();
-  if (!value || value === "true") return true;
-  if (value === "false") return false;
-  throw new Error("FILES_FORCE_PATH_STYLE must be true or false");
-}
-
-let files: Files | undefined;
-
-function getFiles(): Files {
-  if (files) return files;
-  const adapter = globalThis.process.env.FILES_ADAPTER?.trim() || "s3";
-  if (adapter !== "s3")
-    throw new Error(`Unsupported FILES_ADAPTER "${adapter}"`);
-  files = new Files({
-    adapter: s3({
-      bucket: requiredEnv("FILES_BUCKET"),
-      endpoint: requiredEnv("FILES_ENDPOINT"),
-      region: requiredEnv("FILES_REGION"),
-      forcePathStyle: forcePathStyle(),
-      credentials: {
-        accessKeyId: requiredEnv("FILES_ACCESS_KEY_ID"),
-        secretAccessKey: requiredEnv("FILES_SECRET_ACCESS_KEY"),
-      },
-    }),
-  });
-  return files;
-}
+import { getStorage } from "./storage";
 
 const jobArgs = {
   entityId: v.string(),
@@ -93,7 +56,7 @@ const ingestionHandler = createConvexIngestionHandler<
         retryable: false,
       });
     }
-    const storage = getFiles();
+    const storage = getStorage();
     const metadata = await storage.head(source.objectKey, {
       retries: FILE_EXTRACTION_LIMITS.storageRetries,
       signal: attempt.signal,

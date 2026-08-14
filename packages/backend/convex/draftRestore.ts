@@ -208,6 +208,17 @@ async function validateFiles(
       .unique();
     if (!logo) throw new Error("Historical logo is missing");
   }
+  if (release.faviconFileId) {
+    const favicon = await ctx.db
+      .query("releaseFiles")
+      .withIndex("by_release_file", (q) =>
+        q
+          .eq("releaseId", restore.releaseId)
+          .eq("fileId", release.faviconFileId!),
+      )
+      .unique();
+    if (!favicon) throw new Error("Historical favicon is missing");
+  }
   return continuePage(page);
 }
 
@@ -432,6 +443,15 @@ async function restoreFiles(
       folderId: snapshot.folderId,
       order: snapshot.order,
       deletedAt: undefined,
+      ...(snapshot.kind === "siteAsset"
+        ? {
+            assetState: "attached" as const,
+            assetAttachedAt: previous?.assetAttachedAt ?? Date.now(),
+            assetExpiresAt: undefined,
+            assetPurgeAfter: undefined,
+            assetPurgeError: undefined,
+          }
+        : {}),
     });
     const current = await ctx.db.get(snapshot.fileId);
     if (current) await reconcileRestoredFile(ctx, current);
@@ -487,9 +507,7 @@ async function activate(ctx: MutationCtx, restore: Doc<"draftRestores">) {
   await ctx.db.patch(site._id, {
     name: release.name,
     logoFileId: release.logoFileId,
-    logoUrl: release.logoFileId
-      ? `/api/files/${release.logoFileId}`
-      : undefined,
+    faviconFileId: release.faviconFileId,
     defaultPageId: release.defaultPageId,
     settings: release.settings,
     draftRevision: resultDraftRevision,

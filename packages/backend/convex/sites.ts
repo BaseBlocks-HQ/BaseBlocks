@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { normalizeBrandColor } from "@baseblocks/domain/site-theme";
-import type { Doc, Id } from "./_generated/dataModel";
-import { query, mutation, type MutationCtx } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import {
   requireOrganizationPermission,
   isOrganizationMember,
@@ -10,27 +9,7 @@ import { getAuthOrganizationById } from "./authComponent/model";
 import { siteSidebarVariant, siteThemeSettings } from "./validators/sites";
 import { assertDraftWritable, touchSiteDraft } from "./model/draft";
 import { deleteSiteData } from "./model/siteDeletion";
-import { recordStorageUsageEvent } from "./model/storageTelemetry";
-
-async function softDeleteSiteAsset(
-  ctx: MutationCtx,
-  site: Doc<"sites">,
-  fileId: Id<"files">,
-) {
-  const file = await ctx.db.get(fileId);
-  if (!file || file.deletedAt !== undefined) return;
-  const now = Date.now();
-  await recordStorageUsageEvent(ctx, {
-    organizationId: site.organizationId,
-    siteId: site._id,
-    fileId: file._id,
-    kind: "softDelete",
-    bytes: file.size,
-    idempotencyKey: `file:delete:${file._id}:${now}`,
-    now,
-  });
-  await ctx.db.patch(file._id, { deletedAt: now });
-}
+import { attachSiteAsset, reconcileSiteAsset } from "./model/siteAssets";
 
 export const listByTeam = query({
   args: { organizationId: v.string() },
@@ -199,12 +178,12 @@ export const update = mutation({
     siteId: v.id("sites"),
     name: v.optional(v.string()),
     logoFileId: v.optional(v.id("files")),
+    faviconFileId: v.optional(v.id("files")),
     clearLogo: v.optional(v.boolean()),
     clearFavicon: v.optional(v.boolean()),
     settings: v.optional(
       v.object({
         expandNavigationByDefault: v.optional(v.boolean()),
-        favicon: v.optional(v.string()),
         sidebarVariant: v.optional(siteSidebarVariant),
         showLogo: v.optional(v.boolean()),
         showSiteName: v.optional(v.boolean()),
@@ -215,7 +194,15 @@ export const update = mutation({
   },
   handler: async (
     ctx,
-    { siteId, name, logoFileId, clearLogo, clearFavicon, settings },
+    {
+      siteId,
+      name,
+      logoFileId,
+      faviconFileId,
+      clearLogo,
+      clearFavicon,
+      settings,
+    },
   ) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
@@ -225,46 +212,35 @@ export const update = mutation({
       action: "manage",
     });
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    const now = Date.now();
+    const updates: Record<string, unknown> = { updatedAt: now };
     if (name !== undefined) updates.name = name;
 
     if (clearLogo && logoFileId !== undefined) {
       throw new Error("Cannot replace and remove a site logo simultaneously");
     }
-
-    if (logoFileId !== undefined) {
-      const logoFile = await ctx.db.get(logoFileId);
-      if (
-        !logoFile ||
-        logoFile.siteId !== siteId ||
-        logoFile.kind !== "siteAsset"
-      ) {
-        throw new Error("Invalid site logo asset");
-      }
+    if (clearFavicon && faviconFileId !== undefined) {
+      throw new Error("Cannot replace and remove a favicon simultaneously");
     }
 
-    if (
-      logoFileId !== undefined &&
-      site.logoFileId &&
-      site.logoFileId !== logoFileId
-    ) {
-      await softDeleteSiteAsset(ctx, site, site.logoFileId);
+    if (logoFileId !== undefined) {
+      await attachSiteAsset(ctx, siteId, logoFileId, now);
+    }
+    if (faviconFileId !== undefined) {
+      await attachSiteAsset(ctx, siteId, faviconFileId, now);
     }
 
     if (logoFileId !== undefined) {
       updates.logoFileId = logoFileId;
-      updates.logoUrl = `/api/files/${logoFileId}`;
     }
+    if (faviconFileId !== undefined) updates.faviconFileId = faviconFileId;
 
     if (clearLogo) {
-      if (site.logoFileId) {
-        await softDeleteSiteAsset(ctx, site, site.logoFileId);
-      }
       updates.logoFileId = undefined;
-      updates.logoUrl = undefined;
     }
+    if (clearFavicon) updates.faviconFileId = undefined;
 
-    if (settings !== undefined || clearFavicon) {
+    if (settings !== undefined) {
       let normalizedSettings = settings;
       if (settings?.theme?.brandColor) {
         const brandColor = normalizeBrandColor(settings.theme.brandColor);
@@ -275,17 +251,30 @@ export const update = mutation({
         };
       }
       const nextSettings = { ...site.settings, ...normalizedSettings };
-      if (clearFavicon) delete nextSettings.favicon;
       updates.settings = nextSettings;
     }
 
     await ctx.db.patch(siteId, updates);
+    for (const previousFileId of [site.logoFileId, site.faviconFileId]) {
+      if (
+        previousFileId &&
+        previousFileId !== logoFileId &&
+        previousFileId !== faviconFileId
+      ) {
+        await reconcileSiteAsset(ctx, previousFileId, { now });
+      }
+    }
     await touchSiteDraft(ctx, siteId, Date.now(), [
       { entityType: "site", entityId: siteId },
       ...(site.logoFileId &&
       (clearLogo ||
         (logoFileId !== undefined && site.logoFileId !== logoFileId))
         ? [{ entityType: "file" as const, entityId: site.logoFileId }]
+        : []),
+      ...(site.faviconFileId &&
+      (clearFavicon ||
+        (faviconFileId !== undefined && site.faviconFileId !== faviconFileId))
+        ? [{ entityType: "file" as const, entityId: site.faviconFileId }]
         : []),
     ]);
 

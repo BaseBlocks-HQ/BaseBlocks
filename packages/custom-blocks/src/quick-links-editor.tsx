@@ -32,7 +32,10 @@ import { destinationLabel, type QuickLink } from "./quick-links";
 import { BlockShell } from "./ui";
 
 const createId = () => crypto.randomUUID();
-type LinkDraft = Omit<QuickLink, "id"> & { id: string | null };
+type LinkDraft = Omit<QuickLink, "id"> & {
+  id: string | null;
+  initialImageAssetId?: string;
+};
 
 const emptyDraft = (): LinkDraft => ({
   id: null,
@@ -48,6 +51,14 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
     const resolved = draft
       ? host.links?.resolve({ href: draft.url, kind: "website" })
       : null;
+    const discardUncommittedImage = (value: LinkDraft) => {
+      if (
+        value.imageAssetId &&
+        value.imageAssetId !== value.initialImageAssetId
+      ) {
+        void discardAsset(host, value.imageAssetId);
+      }
+    };
 
     return (
       <BlockShell label="Edit quick links">
@@ -65,7 +76,12 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
               aria-label={`Edit ${link.title}`}
               className="group flex min-h-[70px] min-w-0 items-center gap-3 rounded-2xl bg-card p-3 text-left transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               key={link.id}
-              onClick={() => setDraft({ ...link })}
+              onClick={() =>
+                setDraft({
+                  ...link,
+                  initialImageAssetId: link.imageAssetId,
+                })
+              }
               type="button"
             >
               <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
@@ -97,7 +113,10 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
 
         <Dialog
           onOpenChange={(open) => {
-            if (!open) setDraft(null);
+            if (!open && draft) {
+              discardUncommittedImage(draft);
+              setDraft(null);
+            }
           }}
           open={draft !== null}
         >
@@ -170,8 +189,17 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                         className="group flex h-20 w-28 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/25 bg-background text-muted-foreground transition-[border-color,background-color] hover:border-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                         onClick={async () => {
                           const asset = await host.assets?.pick?.();
-                          if (asset)
+                          if (asset) {
+                            if (
+                              draft.imageAssetId &&
+                              draft.imageAssetId !==
+                                draft.initialImageAssetId &&
+                              draft.imageAssetId !== asset.id
+                            ) {
+                              void discardAsset(host, draft.imageAssetId);
+                            }
                             setDraft({ ...draft, imageAssetId: asset.id });
+                          }
                         }}
                         type="button"
                       >
@@ -199,12 +227,18 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                             <Button
                               aria-label="Remove quick link image"
                               className="absolute top-1 end-1 size-7 bg-background/90 text-muted-foreground opacity-100 shadow-sm transition-opacity hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
-                              onClick={() =>
+                              onClick={() => {
+                                if (
+                                  draft.imageAssetId !==
+                                  draft.initialImageAssetId
+                                ) {
+                                  void discardAsset(host, draft.imageAssetId!);
+                                }
                                 setDraft({
                                   ...draft,
                                   imageAssetId: undefined,
-                                })
-                              }
+                                });
+                              }}
                               size="icon-xs"
                               type="button"
                               variant="ghost"
@@ -230,6 +264,7 @@ export const quickLinksEditor = defineOpenEditorCustomBlockEditor({
                         updateDataJson({
                           links: data.links.filter(({ id }) => id !== draft.id),
                         });
+                        discardUncommittedImage(draft);
                         setDraft(null);
                       }}
                       type="button"
@@ -273,4 +308,16 @@ function QuickLinkEditorAsset({
   ) : (
     <HugeiconsIcon aria-hidden icon={Image01Icon} />
   );
+}
+
+async function discardAsset(
+  host: OpenEditorCustomBlockEditorHost,
+  assetId: string,
+) {
+  const assets = host.assets as
+    | (NonNullable<OpenEditorCustomBlockEditorHost["assets"]> & {
+        discard?: (id: string) => Promise<void>;
+      })
+    | undefined;
+  await assets?.discard?.(assetId);
 }

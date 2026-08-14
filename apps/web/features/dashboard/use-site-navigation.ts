@@ -49,7 +49,7 @@ export function useSiteNavigation(
     navigation.push({
       _id: site._id,
       name: site.name,
-      logoUrl: site.logoUrl,
+      logoUrl: site.logoFileId ? `/api/files/${site.logoFileId}` : undefined,
       logoFileId: site.logoFileId,
       defaultPageId: site.defaultPageId,
       liveReleaseId: site.liveReleaseId,

@@ -14,16 +14,13 @@ import { FaviconSettings } from "./favicon-settings";
 import { ImageAssetDropZone } from "./image-asset-dropzone";
 import { SiteSettingsSectionTitle } from "./site-settings-section-title";
 
-export function SiteBrandSettings({
-  site,
-}: {
-  site: Doc<"sites"> & { logoUrl?: string };
-}) {
+export function SiteBrandSettings({ site }: { site: Doc<"sites"> }) {
   const siteId = site._id;
   const updateSite = useMutation(api.sites.update);
   const { uploadImage, uploadState } = useImageUpload();
   const [name, setName] = useState(site.name);
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
   const [isRemovingLogo, setIsRemovingLogo] = useState(false);
 
   useEffect(() => setName(site.name), [site.name]);
@@ -53,16 +50,17 @@ export function SiteBrandSettings({
       toast.error("Select an image smaller than 5 MB.");
       return;
     }
-    const result = await uploadImage(file, siteId);
-    if (!result) {
-      toast.error(uploadState.error ?? "Unable to upload the logo. Try again.");
-      return;
-    }
+    if (isSavingLogo) return;
+    setIsSavingLogo(true);
     try {
+      const result = await uploadImage(file, siteId);
+      if (!result) throw new Error("Upload failed");
       await updateSite({ siteId, logoFileId: result.fileId });
       toast.success("Logo uploaded");
     } catch {
-      toast.error("Unable to save the logo. Try again.");
+      toast.error(uploadState.error ?? "Unable to save the logo. Try again.");
+    } finally {
+      setIsSavingLogo(false);
     }
   };
 
@@ -90,7 +88,7 @@ export function SiteBrandSettings({
             size="compact"
           >
             {isSavingName ? <Spinner className="size-3.5" /> : null}
-            Save changes
+            Save name
           </Button>
         </div>
         <div className="space-y-2">
@@ -113,22 +111,22 @@ export function SiteBrandSettings({
         <AssetRow label="Logo">
           <ImageAssetDropZone
             alt="Site logo"
-            isUploading={uploadState.isUploading}
+            isUploading={uploadState.isUploading || isSavingLogo}
             isRemoving={isRemovingLogo}
             onFileAccepted={(file) => void uploadLogo(file)}
             onRemove={() => void removeLogo()}
             progress={uploadState.progress?.percentage}
-            src={site.logoUrl}
+            src={site.logoFileId ? `/api/files/${site.logoFileId}` : undefined}
           />
         </AssetRow>
         <AssetRow label="Favicon">
           <FaviconSettings
-            favicon={site.settings.favicon}
+            faviconFileId={site.faviconFileId}
             siteId={siteId}
-            onChange={async (favicon) => {
+            onChange={async (faviconFileId) => {
               await updateSite(
-                favicon
-                  ? { siteId, settings: { favicon } }
+                faviconFileId
+                  ? { siteId, faviconFileId }
                   : { siteId, clearFavicon: true },
               );
             }}

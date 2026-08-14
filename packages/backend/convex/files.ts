@@ -23,6 +23,7 @@ import {
   upsertDraftFileSearch,
 } from "./search";
 import { recordStorageUsageEvent } from "./model/storageTelemetry";
+import { PENDING_SITE_ASSET_TTL_MS } from "./model/siteAssets";
 
 async function isFileReferencedByAccessiblePage(
   ctx: Parameters<typeof getPageAccessOrNull>[0],
@@ -479,6 +480,9 @@ export const createSiteAsset = mutation({
       order: 0,
       uploadedBy: auth.userId,
       createdAt: Date.now(),
+      assetState: "pending",
+      assetExpiresAt: Date.now() + PENDING_SITE_ASSET_TTL_MS,
+      assetPurgeAfter: Date.now() + PENDING_SITE_ASSET_TTL_MS,
     });
     await recordStorageUsageEvent(ctx, {
       organizationId: site.organizationId,
@@ -489,9 +493,6 @@ export const createSiteAsset = mutation({
       bytes: args.size,
       idempotencyKey: `file:upload:${fileId}`,
     });
-    await touchSiteDraft(ctx, args.siteId, Date.now(), [
-      { entityType: "file", entityId: fileId },
-    ]);
     return { fileId, url: buildFileUrl(fileId) };
   },
 });

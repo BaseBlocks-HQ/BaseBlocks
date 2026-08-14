@@ -24,8 +24,8 @@ export default defineSchema({
     organizationId: v.string(),
     name: v.string(),
     slug: v.string(),
-    logoUrl: v.optional(v.string()),
     logoFileId: v.optional(v.id("files")),
+    faviconFileId: v.optional(v.id("files")),
     defaultPageId: v.optional(v.id("pages")),
     createdBy: v.string(),
     createdAt: v.number(),
@@ -268,8 +268,21 @@ export default defineSchema({
     uploadedBy: v.string(),
     createdAt: v.number(),
     deletedAt: v.optional(v.number()),
+    assetState: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("attached"),
+        v.literal("retired"),
+        v.literal("deleting"),
+      ),
+    ),
+    assetExpiresAt: v.optional(v.number()),
+    assetAttachedAt: v.optional(v.number()),
+    assetPurgeAfter: v.optional(v.number()),
+    assetPurgeError: v.optional(v.string()),
   })
     .index("by_site", ["siteId"])
+    .index("by_asset_state_purge", ["kind", "assetState", "assetPurgeAfter"])
     .index("by_site_kind", ["siteId", "kind"])
     .index("by_library", ["libraryId"])
     .index("by_folder", ["libraryId", "folderId"]),
@@ -337,6 +350,7 @@ export default defineSchema({
     number: v.number(),
     name: v.string(),
     logoFileId: v.optional(v.id("files")),
+    faviconFileId: v.optional(v.id("files")),
     defaultPageId: v.optional(v.id("pages")),
     settings: siteSettings,
     sourceDraftRevision: v.number(),
@@ -440,6 +454,7 @@ export default defineSchema({
   })
     .index("by_release", ["releaseId"])
     .index("by_release_file", ["releaseId", "fileId"])
+    .index("by_file", ["fileId"])
     .index("by_release_library", ["releaseId", "libraryId"]),
 
   releaseChanges: defineTable({

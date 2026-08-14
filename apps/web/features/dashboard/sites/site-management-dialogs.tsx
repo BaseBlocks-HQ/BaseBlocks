@@ -20,7 +20,6 @@ import { toast } from "sonner";
 export type SiteManagementTarget = {
   _id: string;
   name: string;
-  logoUrl?: string;
   logoFileId?: string;
 };
 

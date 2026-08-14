@@ -38,6 +38,7 @@ export async function buildReleaseChangeDetail(
       fields: compact([
         changedField("Site name", base?.name, site.name),
         changedField("Logo", base?.logoFileId, site.logoFileId),
+        changedField("Favicon", base?.faviconFileId, site.faviconFileId),
         changedField("Default page", base?.defaultPageId, site.defaultPageId),
         changedField("Settings", base?.settings, site.settings),
       ]),

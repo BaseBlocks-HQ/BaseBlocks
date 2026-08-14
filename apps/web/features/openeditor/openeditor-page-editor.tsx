@@ -367,6 +367,7 @@ function useBaseBlocksCustomBlockConfigurations(
     pageRuntime: OpenEditorPageRuntime;
   },
 ) {
+  const discardSiteAsset = useMutation(api.siteAssetLifecycle.discard);
   const assetAuthorization = useRef(
     new BaseBlocksCustomBlockAssetAuthorization(document),
   ).current;
@@ -381,11 +382,16 @@ function useBaseBlocksCustomBlockConfigurations(
         : null,
     );
   };
+  const discardAsset = async (id: string) => {
+    if (!assetAuthorization.discard(id)) return;
+    await discardSiteAsset({ fileId: id }).catch(() => undefined);
+  };
   return {
     editor: createBaseBlocksCustomBlockEditorConfiguration(
       assetAuthorization,
       pickAsset,
       runtimes,
+      discardAsset,
     ),
     viewer: createBaseBlocksCustomBlockViewerConfiguration(
       assetAuthorization,

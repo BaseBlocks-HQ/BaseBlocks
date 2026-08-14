@@ -98,4 +98,21 @@ describe("custom-block asset authorization", () => {
 
     expect(authorization.has("removed_image")).toBe(false);
   });
+
+  test("discards only assets that have not entered the document", () => {
+    const authorization = new BaseBlocksCustomBlockAssetAuthorization({
+      type: "doc",
+      version: 1,
+      content: [quickLinksWithAsset("saved_image")],
+    } as OpenEditorDocument);
+    authorization.authorize({
+      id: "pending_image",
+      kind: "raster" as const,
+      alt: "",
+    });
+
+    expect(authorization.discard("saved_image")).toBe(false);
+    expect(authorization.discard("pending_image")).toBe(true);
+    expect(authorization.has("pending_image")).toBe(false);
+  });
 });
