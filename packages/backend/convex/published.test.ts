@@ -61,18 +61,14 @@ describe("published page images", () => {
             attrs: {
               "openeditor-id": "quick-links-released",
               blockId: "baseblocks.quick-links",
-              version: 1,
+              version: 2,
               data: {
                 links: [
                   {
                     id: "link-1",
                     title: "Released link",
                     url: "https://example.com",
-                    linkType: "website",
-                    artwork: {
-                      kind: "asset",
-                      assetId: "custom-image-released",
-                    },
+                    imageAssetId: "custom-image-released",
                   },
                 ],
               },

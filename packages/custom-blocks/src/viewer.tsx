@@ -5,7 +5,6 @@
 import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
 import { getDocumentText } from "@openeditor/core";
 import {
-  AppWindowIcon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
   ArrowUpRight01Icon,
@@ -15,7 +14,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { OpenEditorCustomBlockViewerHost } from "@openeditor/custom-block/viewer";
 import type { QuickLink } from "./quick-links";
 import { decisionTreeBlock, directoryBlock, quickLinksBlock } from "./index";
@@ -242,7 +241,7 @@ export const quickLinksViewer = defineOpenEditorCustomBlockViewer({
           {data.links.map((link) => {
             const resolved = host.links?.resolve({
               href: link.url,
-              kind: link.linkType,
+              kind: "website",
             });
             if (!resolved) return null;
             return (
@@ -286,20 +285,11 @@ function QuickLinkArtwork({
 }) {
   const [asset, setAsset] = useState<{ src: string; alt: string } | null>(null);
   const loader = useRef(new QuickLinkAssetLoader());
-  const assetId = link.artwork?.kind === "asset" ? link.artwork.assetId : null;
+  const assetId = link.imageAssetId ?? null;
   useEffect(() => {
     loader.current.load(assetId, host, setAsset);
     return () => loader.current.cancel();
   }, [assetId, host]);
-  if (link.artwork?.kind === "icon")
-    return (
-      <span
-        aria-hidden
-        className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary"
-      >
-        {host.icons?.render(link.artwork.id) as ReactNode}
-      </span>
-    );
   return (
     <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
       {asset ? (
@@ -308,8 +298,6 @@ function QuickLinkArtwork({
           className="size-full object-cover"
           src={asset.src}
         />
-      ) : link.linkType === "app" ? (
-        <HugeiconsIcon aria-hidden className="size-5" icon={AppWindowIcon} />
       ) : (
         <HugeiconsIcon aria-hidden className="size-5" icon={Link02Icon} />
       )}

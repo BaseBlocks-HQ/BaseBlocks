@@ -26,14 +26,11 @@ export interface LibraryContent {
   allowDownloads?: boolean;
 }
 
-export type QuicklinkType = "website" | "app";
-
 export interface QuicklinkItem {
   id: string;
   title: string;
   url: string;
   imageUrl?: string;
-  linkType?: QuicklinkType;
 }
 
 export type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";

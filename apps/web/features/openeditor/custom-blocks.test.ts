@@ -7,15 +7,14 @@ const quickLinksWithAsset = (assetId: string) => ({
   attrs: {
     "openeditor-id": `quick-links-${assetId}`,
     blockId: "baseblocks.quick-links",
-    version: 1,
+    version: 2,
     data: {
       links: [
         {
           id: `link-${assetId}`,
           title: "Documentation",
           url: "https://example.com",
-          linkType: "website",
-          artwork: { kind: "asset", assetId },
+          imageAssetId: assetId,
         },
       ],
     },
