@@ -162,6 +162,7 @@ function SiteEditorScreen({
       ) : (
         <>
           <SiteHeaderContent
+            pageId={selectedPage?._id}
             teamSlug={team.slug}
             siteSlug={site.slug}
             siteId={site._id}

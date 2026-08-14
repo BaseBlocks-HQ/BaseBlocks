@@ -27,6 +27,7 @@ import { SiteHeaderMoreActions } from "./site-header-more-actions";
 
 interface SiteHeaderContentProps {
   isPreviewing?: boolean;
+  pageId?: Id<"pages">;
   teamSlug: string;
   siteSlug: string;
   siteId: Id<"sites">;
@@ -45,6 +46,7 @@ interface SiteHeaderContentProps {
 
 export function SiteHeaderContent({
   isPreviewing = false,
+  pageId,
   teamSlug,
   siteSlug,
   siteId,
@@ -75,6 +77,7 @@ export function SiteHeaderContent({
           onOpenDialog={onOpenDialog}
           onTogglePreview={onTogglePreview}
           onUnpublish={onUnpublish}
+          pageId={pageId}
           saveStatus={saveStatus}
           sitePublished={sitePublished}
           hasUnpublishedChanges={hasUnpublishedChanges}
@@ -111,6 +114,7 @@ function SiteHeaderActions({
   canEdit,
   canManageSites,
   isPreviewing,
+  pageId,
   onOpenDialog,
   onTogglePreview,
   onUnpublish,
@@ -128,6 +132,7 @@ function SiteHeaderActions({
   canEdit: boolean;
   canManageSites: boolean;
   isPreviewing: boolean;
+  pageId?: Id<"pages">;
   onOpenDialog: (
     dialog: EditorDialogName,
     returnFocusTo: HTMLElement | null,
@@ -165,6 +170,7 @@ function SiteHeaderActions({
             onOpenDialog={onOpenDialog}
             onTogglePreview={onTogglePreview}
             onUnpublish={onUnpublish}
+            pageId={pageId}
             sitePublished={sitePublished}
             siteId={siteId}
             siteSlug={siteSlug}
