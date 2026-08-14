@@ -20,6 +20,7 @@ import {
   LinkSquare01Icon,
   PencilEdit01Icon,
   SentIcon,
+  UserAdd01Icon,
   ViewIcon,
   ViewOffIcon,
 } from "@hugeicons/core-free-icons";
@@ -36,6 +37,7 @@ type SiteActionsMenuItemsProps = {
   kind: MenuKind;
   onDelete?: () => void;
   onHistory: () => void;
+  onInviteGuests?: () => void;
   onPreview: () => void;
   onPublish: () => void;
   onSettings: () => void;
@@ -54,6 +56,7 @@ export function SiteActionsMenuItems({
   kind,
   onDelete,
   onHistory,
+  onInviteGuests,
   onPreview,
   onPublish,
   onSettings,
@@ -128,6 +131,14 @@ export function SiteActionsMenuItems({
       {sitePublished ? (
         <>
           {action("share", SentIcon, tHeader("share"), onShare)}
+          {onInviteGuests
+            ? action(
+                "invite-guests",
+                UserAdd01Icon,
+                tHeader("inviteGuests"),
+                onInviteGuests,
+              )
+            : null}
           {action(
             "history",
             FileClockIcon,

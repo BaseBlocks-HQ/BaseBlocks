@@ -1,7 +1,18 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
 import { getSiteUrl } from "@/features/published-sites/urls";
+import { api, type Id } from "@baseblocks/backend";
+import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
+import { cn } from "@baseblocks/ui/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
+import { Spinner } from "@baseblocks/ui/spinner";
 import {
   Copy01Icon,
   GlobeIcon,
@@ -9,186 +20,175 @@ import {
   ViewIcon,
   ViewOffIcon,
 } from "@hugeicons/core-free-icons";
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
-import { Button } from "@baseblocks/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@baseblocks/ui/dialog";
-import { Label } from "@baseblocks/ui/label";
-import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
-import { Spinner } from "@baseblocks/ui/spinner";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { GuestAccessSection } from "@/features/editor/guest-access-section";
 
 type Visibility = "private" | "public";
 
 interface ShareDialogProps {
   onOpenChange: (open: boolean) => void;
-  pageId?: Id<"pages">;
   returnFocusTo?: HTMLElement | null;
   siteId: Id<"sites">;
-  teamSlug: string;
   siteSlug: string;
+  teamSlug: string;
 }
 
-function VisibilityOptionCard({
+function VisibilityOption({
+  active,
   description,
   icon,
-  id,
   label,
   value,
 }: {
+  active: boolean;
   description: string;
   icon: React.ReactNode;
-  id: string;
   label: string;
   value: Visibility;
 }) {
+  const id = `site-visibility-${value}`;
+
   return (
-    <div className="flex items-start space-x-3 rounded-xl border border-sidebar-border/60 bg-background/40 p-3 transition-colors hover:bg-sidebar-accent/30">
-      <RadioGroupItem value={value} id={id} className="mt-0.5" />
-      <div className="flex-1">
-        <Label htmlFor={id} className="flex cursor-pointer items-center gap-2">
-          {icon}
-          {label}
-        </Label>
-        <p className="mt-1 text-sm text-sidebar-foreground/60">{description}</p>
-      </div>
-    </div>
+    <label
+      className={cn(
+        "flex cursor-pointer items-start gap-3 rounded-xl p-3 outline-none transition-colors",
+        "hover:bg-muted/70 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/50",
+        active ? "bg-muted" : "bg-muted/35",
+      )}
+      htmlFor={id}
+    >
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground shadow-xs">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1 pt-0.5">
+        <span className="block text-sm font-medium">{label}</span>
+        <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+          {description}
+        </span>
+      </span>
+      <RadioGroupItem className="mt-2" id={id} value={value} />
+    </label>
   );
 }
 
 export function ShareDialog({
   onOpenChange,
-  pageId,
   returnFocusTo,
   siteId,
-  teamSlug,
   siteSlug,
+  teamSlug,
 }: ShareDialogProps) {
   const t = useTranslations("editor.share");
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const [copied, setCopied] = useState(false);
-  const updateVisibilityMut = useMutation(api.sharing.updateVisibility);
+  const [updating, setUpdating] = useState(false);
+  const updateVisibility = useMutation(api.sharing.updateVisibility);
   const settings = useQuery(api.sharing.getSettings, { siteId });
   const siteUrl = getSiteUrl(teamSlug, siteSlug);
   const visibility = settings?.visibility;
 
-  const handleVisibilityChange = async (value: Visibility) => {
+  const handleVisibilityChange = async (value: string) => {
+    if (value === visibility || updating) return;
+    setUpdating(true);
     try {
-      await updateVisibilityMut({
+      await updateVisibility({
         siteId,
-        visibility: value,
+        visibility: value as Visibility,
       });
       toast.success(t("toastVisibilityUpdated"));
     } catch {
       toast.error(t("toastVisibilityFailed"));
+    } finally {
+      setUpdating(false);
     }
   };
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(siteUrl);
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(siteUrl);
     setCopied(true);
     toast.success(t("toastLinkCopied"));
-    setTimeout(() => setCopied(false), 2000);
+    window.setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent
-        className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-lg`}
+        className="w-[calc(100%-1.5rem)] max-w-[28rem] gap-0 overflow-hidden rounded-2xl border-0 bg-background/80 p-0 text-foreground shadow-2xl backdrop-blur-xl backdrop-saturate-150 sm:max-w-[28rem] [&_[data-slot='dialog-close']]:top-2 [&_[data-slot='dialog-close']]:right-2 [&_[data-slot='dialog-close']]:flex [&_[data-slot='dialog-close']]:size-8 [&_[data-slot='dialog-close']]:items-center [&_[data-slot='dialog-close']]:justify-center [&_[data-slot='dialog-close']]:rounded-lg"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          titleRef.current?.focus();
+        }}
         returnFocusTo={returnFocusTo}
       >
-        <DialogHeader className={"px-5 pt-4 pb-0"}>
-          <DialogTitle className={"text-base font-semibold"}>
+        <DialogHeader className="px-4 pt-4 pe-12">
+          <DialogTitle
+            className="brand-display text-2xl leading-none font-normal tracking-[-0.025em]"
+            ref={titleRef}
+            tabIndex={-1}
+          >
             {t("title")}
           </DialogTitle>
-          <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
-            {t("description")}
-          </DialogDescription>
         </DialogHeader>
-        <div className={"px-5 pb-3"}>
-          <div className="space-y-6 py-1">
-            {visibility ? (
-              <RadioGroup
-                value={visibility}
-                onValueChange={(value) =>
-                  void handleVisibilityChange(value as Visibility)
-                }
-              >
-                <VisibilityOptionCard
-                  description={t("visibilityPublicDescription")}
-                  icon={
-                    <HugeiconsIcon
-                      icon={GlobeIcon}
-                      className="h-4 w-4 text-muted-foreground"
-                    />
-                  }
-                  id="public"
-                  label={t("visibilityPublicLabel")}
-                  value="public"
-                />
-                <VisibilityOptionCard
-                  description={t("visibilityPrivateDescription")}
-                  icon={
-                    <HugeiconsIcon
-                      icon={ViewOffIcon}
-                      className="h-4 w-4 text-muted-foreground"
-                    />
-                  }
-                  id="private"
-                  label={t("visibilityPrivateLabel")}
-                  value="private"
-                />
-              </RadioGroup>
-            ) : (
-              <div className="flex min-h-32 items-center justify-center">
-                <span className="sr-only">Loading sharing settings</span>
-                <Spinner className="size-5 text-muted-foreground" />
-              </div>
-            )}
-            {pageId ? <GuestAccessSection pageId={pageId} /> : null}
-          </div>
 
-          <DialogFooter className="flex-col gap-2 pt-2 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-8 flex-1 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
-              disabled={!visibility}
-              onClick={copyLink}
+        <div className="px-4 pt-4">
+          {visibility ? (
+            <RadioGroup
+              aria-label={t("visibilityLabel")}
+              className="grid gap-2"
+              disabled={updating}
+              onValueChange={(value) => void handleVisibilityChange(value)}
+              value={visibility}
             >
-              {copied ? (
-                <>
-                  <HugeiconsIcon icon={Tick01Icon} className="mr-2 h-4 w-4" />
-                  {t("copied")}
-                </>
-              ) : (
-                <>
-                  <HugeiconsIcon icon={Copy01Icon} className="mr-2 h-4 w-4" />
-                  {t("copyLink")}
-                </>
-              )}
-            </Button>
-            <Button
-              type="button"
-              className="h-8 flex-1 rounded-full px-4 text-sm"
-              disabled={!visibility}
-              onClick={() => window.open(siteUrl, "_blank")}
-            >
-              <HugeiconsIcon icon={ViewIcon} className="mr-2 h-4 w-4" />
-              {t("viewSite")}
-            </Button>
-          </DialogFooter>
+              <VisibilityOption
+                active={visibility === "public"}
+                description={t("visibilityPublicDescription")}
+                icon={<HugeiconsIcon aria-hidden icon={GlobeIcon} />}
+                label={t("visibilityPublicLabel")}
+                value="public"
+              />
+              <VisibilityOption
+                active={visibility === "private"}
+                description={t("visibilityPrivateDescription")}
+                icon={<HugeiconsIcon aria-hidden icon={ViewOffIcon} />}
+                label={t("visibilityPrivateLabel")}
+                value="private"
+              />
+            </RadioGroup>
+          ) : (
+            <div className="flex min-h-36 items-center justify-center">
+              <Spinner className="size-5 text-muted-foreground" />
+              <span className="sr-only">{t("loading")}</span>
+            </div>
+          )}
         </div>
+
+        <DialogFooter className="grid grid-cols-2 gap-2 px-4 pt-4 pb-4 sm:grid-cols-2">
+          <Button
+            disabled={!visibility}
+            onClick={() => void copyLink()}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <HugeiconsIcon
+              aria-hidden
+              icon={copied ? Tick01Icon : Copy01Icon}
+            />
+            {copied ? t("copied") : t("copyLink")}
+          </Button>
+          <Button
+            disabled={!visibility}
+            onClick={() => window.open(siteUrl, "_blank")}
+            size="sm"
+            type="button"
+          >
+            <HugeiconsIcon aria-hidden icon={ViewIcon} />
+            {t("viewSite")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

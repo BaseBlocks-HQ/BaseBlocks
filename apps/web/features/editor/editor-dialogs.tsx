@@ -13,11 +13,19 @@ const HistoryDialog = dynamic(() =>
 const ShareDialog = dynamic(() =>
   import("./share-dialog").then((module) => module.ShareDialog),
 );
+const GuestAccessDialog = dynamic(() =>
+  import("./guest-access-dialog").then((module) => module.GuestAccessDialog),
+);
 const SiteSettingsDialog = dynamic(() =>
   import("./site-settings-dialog").then((module) => module.SiteSettingsDialog),
 );
 
-export type EditorDialogName = "history" | "publish" | "settings" | "share";
+export type EditorDialogName =
+  | "guests"
+  | "history"
+  | "publish"
+  | "settings"
+  | "share";
 
 export interface EditorDialogState {
   name: EditorDialogName;
@@ -65,13 +73,20 @@ export function EditorDialogs({
       return (
         <ShareDialog
           onOpenChange={handleOpenChange}
-          pageId={pageId}
           returnFocusTo={activeDialog.returnFocusTo}
           siteId={siteId}
           siteSlug={siteSlug}
           teamSlug={teamSlug}
         />
       );
+    case "guests":
+      return pageId ? (
+        <GuestAccessDialog
+          onOpenChange={handleOpenChange}
+          pageId={pageId}
+          returnFocusTo={activeDialog.returnFocusTo}
+        />
+      ) : null;
     case "settings":
       return (
         <SiteSettingsDialog

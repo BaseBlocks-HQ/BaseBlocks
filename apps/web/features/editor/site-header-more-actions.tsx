@@ -27,6 +27,7 @@ export function SiteHeaderMoreActions({
   onOpenDialog,
   onTogglePreview,
   onUnpublish,
+  pageId,
   sitePublished,
   siteId,
   siteSlug,
@@ -42,6 +43,7 @@ export function SiteHeaderMoreActions({
   ) => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
+  pageId?: string;
   sitePublished: boolean;
   siteId: string;
   siteSlug: string;
@@ -76,6 +78,11 @@ export function SiteHeaderMoreActions({
             kind="dropdown"
             onDelete={() => setDeleteOpen(true)}
             onHistory={() => onOpenDialog("history", triggerRef.current)}
+            onInviteGuests={
+              pageId
+                ? () => onOpenDialog("guests", triggerRef.current)
+                : undefined
+            }
             onPreview={() => onTogglePreview?.()}
             onPublish={() => onOpenDialog("publish", triggerRef.current)}
             onSettings={() => onOpenDialog("settings", triggerRef.current)}
