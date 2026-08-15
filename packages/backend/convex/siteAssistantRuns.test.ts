@@ -1,10 +1,112 @@
 import { describe, expect, test } from "bun:test";
+import { jsonSchema, tool } from "ai";
+import { MockLanguageModelV4 } from "ai/test";
 import {
   assertSiteAssistantWorkspaceGraph,
+  createSiteAssistantJournal,
   generationReconciliationDelayMs,
+  runSiteAssistantAgent,
   siteAssistantTurnMatches,
   siteAssistantUserText,
 } from "./siteAssistantRuns";
+
+const modelUsage = {
+  inputTokens: {
+    total: 1,
+    noCache: 1,
+    cacheRead: undefined,
+    cacheWrite: undefined,
+  },
+  outputTokens: { total: 1, text: 1, reasoning: undefined },
+};
+const toolCall = {
+  type: "tool-call" as const,
+  toolCallId: "read-page-1",
+  toolName: "readPage",
+  input: "{}",
+};
+const readPageTool = tool({
+  inputSchema: jsonSchema({
+    type: "object",
+    additionalProperties: false,
+    properties: {},
+  }),
+  execute: async () => ({ documentJson: "{}" }),
+});
+
+function mockGeneration(
+  content: [typeof toolCall] | [{ type: "text"; text: string }],
+  finishReason: "tool-calls" | "stop",
+) {
+  return {
+    content,
+    finishReason: { unified: finishReason, raw: undefined },
+    usage: modelUsage,
+    warnings: [],
+  };
+}
+
+describe("site assistant agent boundary", () => {
+  test("runs the official tool loop and returns only compact terminal text", async () => {
+    let nestedOutput: unknown = "page";
+    for (let depth = 0; depth < 20; depth += 1) {
+      nestedOutput = { child: nestedOutput };
+    }
+    const model = new MockLanguageModelV4({
+      doGenerate: [
+        mockGeneration([toolCall], "tool-calls"),
+        mockGeneration([{ type: "text", text: "Workspace updated." }], "stop"),
+      ],
+    });
+
+    const result = await runSiteAssistantAgent(
+      {
+        model,
+        tools: {
+          readPage: { ...readPageTool, execute: async () => nestedOutput },
+        },
+      },
+      [{ role: "user", content: "Update the page" }],
+    );
+
+    expect(model.doGenerateCalls).toHaveLength(2);
+    expect(result).toEqual({ text: "Workspace updated." });
+  });
+
+  test("stops before another model request when a durable write fails", async () => {
+    const cancellation = new Error("SITE_ASSISTANT_CANCELLED");
+    const journal = createSiteAssistantJournal();
+    const model = new MockLanguageModelV4({
+      doGenerate: [
+        mockGeneration([toolCall], "tool-calls"),
+        mockGeneration(
+          [{ type: "text", text: "Must not be requested" }],
+          "stop",
+        ),
+      ],
+    });
+
+    const run = runSiteAssistantAgent(
+      {
+        model,
+        tools: { readPage: readPageTool },
+        prepareStep: async () => {
+          await journal.barrier();
+          return {};
+        },
+        onToolExecutionEnd: () =>
+          journal.append(async () => {
+            throw cancellation;
+          }),
+      },
+      [{ role: "user", content: "Update the page" }],
+    );
+
+    expect(run).rejects.toBe(cancellation);
+    await run.catch(() => undefined);
+    expect(model.doGenerateCalls).toHaveLength(1);
+  });
+});
 
 describe("site assistant generation reconciliation", () => {
   test("backs off retries without creating an unbounded hot loop", () => {
