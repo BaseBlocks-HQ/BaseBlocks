@@ -1713,7 +1713,8 @@ export const executeAgent = internalAction({
         onStepEnd: async (result) => {
           const step = result.stepNumber + 1;
           const gatewayMetadata = result.providerMetadata?.gateway as
-            Record<string, unknown> | undefined;
+            | Record<string, unknown>
+            | undefined;
           const gatewayGenerationId =
             typeof gatewayMetadata?.generationId === "string"
               ? gatewayMetadata.generationId
