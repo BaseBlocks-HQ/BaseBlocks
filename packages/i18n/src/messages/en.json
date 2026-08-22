@@ -544,12 +544,10 @@
     },
     "current": {
       "title": "Current plan",
-      "memberCount": "{count, plural, =1 {1 active member} other {# active members}}",
-      "paidSeatCount": "{count, plural, =1 {1 paid seat} other {# paid seats}}",
+      "memberCount": "{count, plural, =1 {1 workspace member} other {# workspace members}}",
       "aiBalance": "{balance} available",
       "available": "Available",
       "unavailable": "Unavailable",
-      "additionalSeats": "{count, plural, =1 {1 member needs a paid seat} other {# members need paid seats}}",
       "effectiveThrough": "Entitlement confirmed through {date}"
     },
     "plans": {
@@ -557,12 +555,11 @@
       "all": "All plans",
       "current": "Current plan",
       "currentSummary": "You’re on the {plan} plan.",
-      "perMemberMonth": "per member/month",
-      "perMember": "per member/{interval}",
+      "perMember": "per workspace member/{interval}",
       "upgradeTitle": "Upgrade to Plus",
       "free": {
         "name": "Free",
-        "price": "$0",
+        "price": "$0 for the workspace",
         "features": {
           "sites": "Create and organize internal sites",
           "publishing": "Publish pages for your team",
@@ -582,11 +579,10 @@
           "month": "month",
           "year": "year"
         },
-        "pricePerMember": "{price} per member / {interval}",
+        "pricePerMember": "{price} per workspace member / {interval}",
         "features": {
           "everything": "Everything in Free",
-          "ai": "Monthly AI credits that reset each billing period",
-          "seats": "Paid seats for active workspace members"
+          "ai": "Included AI credits that reset at the end of each billing period"
         }
       },
       "comparison": {
@@ -598,17 +594,15 @@
         "publishing": "Publishing",
         "collaboration": "Collaboration",
         "ai": "AI credits",
-        "seats": "Paid seats",
         "included": "Included",
         "unlimited": "Unlimited",
         "prepaid": "Prepaid",
-        "monthly": "Monthly + prepaid",
-        "notIncluded": "—"
+        "includedAndPrepaid": "Included + prepaid"
       }
     },
     "credits": {
       "title": "AI credits",
-      "plusDescription": "Plus credits reset monthly. Purchased credits never expire.",
+      "plusDescription": "Included credits reset at the end of each billing period. Purchased credits never expire.",
       "balance": "Available balance",
       "quickAmounts": "Add credits",
       "customAmount": "Custom amount"

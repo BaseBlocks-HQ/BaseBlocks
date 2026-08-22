@@ -14,6 +14,7 @@ import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
 import type * as billing_checkoutIntent from "../billing/checkoutIntent.js";
 import type * as billing_polar from "../billing/polar.js";
+import type * as billingMigrations from "../billingMigrations.js";
 import type * as billingModel from "../billingModel.js";
 import type * as billingRetention from "../billingRetention.js";
 import type * as billing_webhook_model from "../billing_webhook_model.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   billing: typeof billing;
   "billing/checkoutIntent": typeof billing_checkoutIntent;
   "billing/polar": typeof billing_polar;
+  billingMigrations: typeof billingMigrations;
   billingModel: typeof billingModel;
   billingRetention: typeof billingRetention;
   billing_webhook_model: typeof billing_webhook_model;

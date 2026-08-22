@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import {
   canRequestAi,
   canUsePaidFeatures,
-  getAdditionalSeatCount,
   getBillingCallout,
   type WorkspaceBillingEntitlement,
 } from "./model";
@@ -10,8 +9,7 @@ import {
 const plusEntitlement: WorkspaceBillingEntitlement = {
   plan: "plus",
   subscriptionState: "entitled",
-  billableSeatCount: 3,
-  paidSeatCapacity: 3,
+  workspaceMemberCount: 3,
   plusEnabled: true,
   aiAdmissionAvailable: true,
   availableAiCreditUnits: 500_000n,
@@ -46,22 +44,18 @@ describe("billing presentation model", () => {
     ).toBe(false);
   });
 
-  test("reports seats beyond paid capacity without negative counts", () => {
-    expect(getAdditionalSeatCount(plusEntitlement)).toBe(0);
-    expect(
-      getAdditionalSeatCount({
-        ...plusEntitlement,
-        billableSeatCount: 5,
-        paidSeatCapacity: 3,
-      }),
-    ).toBe(2);
-    expect(
-      getAdditionalSeatCount({
-        ...plusEntitlement,
-        billableSeatCount: 1,
-        paidSeatCapacity: 3,
-      }),
-    ).toBe(0);
+  test("uses the accepted workspace-member count as the only member value", () => {
+    const freeEntitlement: WorkspaceBillingEntitlement = {
+      ...plusEntitlement,
+      plan: "free",
+      subscriptionState: "none",
+      workspaceMemberCount: 8,
+      plusEnabled: false,
+      aiAdmissionAvailable: false,
+      availableAiCreditUnits: 0n,
+    };
+
+    expect(freeEntitlement.workspaceMemberCount).toBe(8);
   });
 
   test("maps non-entitled states to an actionable callout", () => {

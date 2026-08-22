@@ -26,7 +26,6 @@ import {
 } from "@/features/dashboard/layout/dashboard-page";
 import {
   canUsePaidFeatures,
-  getAdditionalSeatCount,
   getBillingCallout,
   type BillingCallout,
   type WorkspaceBillingEntitlement,
@@ -126,9 +125,9 @@ function BillingSupportDialog() {
           {t("description")}{" "}
           <a
             className="font-medium text-sidebar-foreground underline decoration-sidebar-foreground/30 underline-offset-2 transition-colors hover:decoration-sidebar-foreground focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-            href="mailto:support@easylink.com"
+            href="mailto:support@easylink.one"
           >
-            support@easylink.com
+            support@easylink.one
           </a>
           .
         </DialogDescription>
@@ -151,7 +150,6 @@ export function BillingOverview({
   const t = useTranslations("billing");
   const locale = useLocale();
   const isPlus = canUsePaidFeatures(entitlement);
-  const additionalSeats = getAdditionalSeatCount(entitlement);
   const callout = getBillingCallout(entitlement);
   const [selectedPlusSku, setSelectedPlusSku] = useState(
     plusOptions.find((option) => option.recurringInterval === "year")?.sku ??
@@ -189,13 +187,8 @@ export function BillingOverview({
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {t("current.memberCount", {
-                count: entitlement.billableSeatCount,
+                count: entitlement.workspaceMemberCount,
               })}
-              {isPlus
-                ? ` · ${t("current.paidSeatCount", {
-                    count: entitlement.paidSeatCapacity,
-                  })}`
-                : null}
             </p>
             {effectiveThrough ? (
               <p className="mt-1 text-xs text-muted-foreground">
@@ -252,21 +245,11 @@ export function BillingOverview({
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {t("current.memberCount", {
-                count: entitlement.billableSeatCount,
+                count: entitlement.workspaceMemberCount,
               })}
-              {isPlus
-                ? ` · ${t("current.paidSeatCount", {
-                    count: entitlement.paidSeatCapacity,
-                  })}`
-                : null}
             </p>
-            {additionalSeats > 0 || effectiveThrough ? (
+            {effectiveThrough ? (
               <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                {additionalSeats > 0 ? (
-                  <p>
-                    {t("current.additionalSeats", { count: additionalSeats })}
-                  </p>
-                ) : null}
                 {effectiveThrough ? (
                   <p>
                     {t("current.effectiveThrough", { date: effectiveThrough })}

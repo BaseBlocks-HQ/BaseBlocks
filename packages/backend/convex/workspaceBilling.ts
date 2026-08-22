@@ -8,6 +8,15 @@ type MemberPage = {
   isDone: boolean;
 };
 
+export type WorkspaceBillingSnapshot = {
+  organizationId: string;
+  memberIds: string[];
+  workspaceMemberCount: number;
+  seatQuantity: number;
+  membershipRevision: string;
+  source: "better-auth-members";
+};
+
 /**
  * Provider-neutral seat input owned by Workspace Foundation.
  *
@@ -15,11 +24,10 @@ type MemberPage = {
  * Auth membership rules. Page guests and published visitors are deliberately
  * absent from the calculation.
  */
-export const getSeatSnapshot = internalQuery({
+export const getWorkspaceBillingSnapshot = internalQuery({
   args: { organizationId: v.string() },
   handler: async (ctx, { organizationId }) => {
     let cursor: string | null = null;
-    let activeMemberCount = 0;
     const memberIds: string[] = [];
 
     do {
@@ -33,18 +41,18 @@ export const getSeatSnapshot = internalQuery({
           paginationOpts: { numItems: 250, cursor },
         },
       )) as MemberPage;
-      activeMemberCount += result.page.length;
       memberIds.push(...result.page.map((member) => member._id));
       cursor = result.isDone ? null : result.continueCursor;
     } while (cursor !== null);
 
     memberIds.sort();
+    const workspaceMemberCount = memberIds.length;
 
     return {
       organizationId,
-      activeMemberCount,
-      billableSeatCount: Math.max(1, activeMemberCount),
       memberIds,
+      workspaceMemberCount,
+      seatQuantity: Math.max(1, workspaceMemberCount),
       membershipRevision: JSON.stringify(memberIds),
       source: "better-auth-members" as const,
     };

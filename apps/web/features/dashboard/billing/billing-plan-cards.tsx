@@ -157,10 +157,9 @@ export function BillingPlanCards({
               )}
             </div>
           </div>
-          <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             <PlanFeature>{t("plans.plus.features.everything")}</PlanFeature>
             <PlanFeature>{t("plans.plus.features.ai")}</PlanFeature>
-            <PlanFeature>{t("plans.plus.features.seats")}</PlanFeature>
           </ul>
         </div>
       ) : null}

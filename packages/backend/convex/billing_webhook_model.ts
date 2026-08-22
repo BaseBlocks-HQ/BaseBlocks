@@ -299,13 +299,6 @@ export async function applyPolarBillingEvent(
       });
     }
     if (!subscriptionId) throw new Error("Polar subscription was not stored");
-    const latestSeatSnapshot = await ctx.db
-      .query("billingSeatSnapshots")
-      .withIndex("by_organization_observed", (query) =>
-        query.eq("organizationId", command.event.organizationId),
-      )
-      .order("desc")
-      .first();
     const entitlement = await ctx.db
       .query("workspaceEntitlements")
       .withIndex("by_organization", (query) =>
@@ -325,11 +318,6 @@ export async function applyPolarBillingEvent(
       subscriptionStatus: lifecycle.state,
       statusReason: `polar:${command.event.providerStatus}`,
       plusEnabled,
-      paidSeatCapacity: Math.max(1, command.event.seatQuantity),
-      billableSeatCount: Math.max(
-        1,
-        latestSeatSnapshot?.billableSeatCount ?? 1,
-      ),
       sourceSubscriptionId: subscriptionId,
       sourceEventId: billingEventId,
       effectiveFrom: command.event.currentPeriodStart,
