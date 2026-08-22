@@ -544,12 +544,10 @@
     },
     "current": {
       "title": "Offre actuelle",
-      "memberCount": "{count, plural, =1 {1 membre actif} other {# membres actifs}}",
-      "paidSeatCount": "{count, plural, =1 {1 siège payant} other {# sièges payants}}",
+      "memberCount": "{count, plural, =1 {1 membre de l’espace} other {# membres de l’espace}}",
       "aiBalance": "{balance} disponibles",
       "available": "Disponibles",
       "unavailable": "Indisponibles",
-      "additionalSeats": "{count, plural, =1 {1 membre nécessite un siège payant} other {# membres nécessitent des sièges payants}}",
       "effectiveThrough": "Droits confirmés jusqu’au {date}"
     },
     "plans": {
@@ -557,12 +555,11 @@
       "all": "Toutes les offres",
       "current": "Offre actuelle",
       "currentSummary": "Vous utilisez l’offre {plan}.",
-      "perMemberMonth": "par membre/mois",
-      "perMember": "par membre/{interval}",
+      "perMember": "par membre de l’espace/{interval}",
       "upgradeTitle": "Passer à Plus",
       "free": {
         "name": "Gratuite",
-        "price": "0 $",
+        "price": "0 $ pour l’espace",
         "features": {
           "sites": "Créez et organisez des sites internes",
           "publishing": "Publiez des pages pour votre équipe",
@@ -582,11 +579,10 @@
           "month": "mois",
           "year": "an"
         },
-        "pricePerMember": "{price} par membre / {interval}",
+        "pricePerMember": "{price} par membre de l’espace / {interval}",
         "features": {
           "everything": "Tout ce qui est inclus dans l’offre gratuite",
-          "ai": "Crédits IA mensuels réinitialisés à chaque période de facturation",
-          "seats": "Sièges payants pour les membres actifs de l’espace"
+          "ai": "Crédits IA inclus, réinitialisés à la fin de chaque période de facturation"
         }
       },
       "comparison": {
@@ -598,17 +594,15 @@
         "publishing": "Publication",
         "collaboration": "Collaboration",
         "ai": "Crédits IA",
-        "seats": "Sièges payants",
         "included": "Inclus",
         "unlimited": "Illimité",
         "prepaid": "Prépayés",
-        "monthly": "Mensuels + prépayés",
-        "notIncluded": "—"
+        "includedAndPrepaid": "Inclus + prépayés"
       }
     },
     "credits": {
       "title": "Crédits IA",
-      "plusDescription": "Les crédits Plus sont renouvelés chaque mois. Les crédits achetés n’expirent jamais.",
+      "plusDescription": "Les crédits inclus sont réinitialisés à la fin de chaque période de facturation. Les crédits achetés n’expirent jamais.",
       "balance": "Solde disponible",
       "quickAmounts": "Ajouter des crédits",
       "customAmount": "Montant personnalisé"

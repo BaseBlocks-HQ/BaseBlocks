@@ -13,8 +13,7 @@ export type SubscriptionState = (typeof subscriptionStates)[number];
 export interface WorkspaceBillingEntitlement {
   plan: "free" | "plus";
   subscriptionState: SubscriptionState;
-  billableSeatCount: number;
-  paidSeatCapacity: number;
+  workspaceMemberCount: number;
   plusEnabled: boolean;
   aiAdmissionAvailable: boolean;
   availableAiCreditUnits: bigint;
@@ -39,15 +38,6 @@ export function getBillingCallout(
     return "none";
   }
   return entitlement.subscriptionState;
-}
-
-export function getAdditionalSeatCount(
-  entitlement: WorkspaceBillingEntitlement,
-): number {
-  return Math.max(
-    0,
-    entitlement.billableSeatCount - entitlement.paidSeatCapacity,
-  );
 }
 
 export function canUsePaidFeatures(

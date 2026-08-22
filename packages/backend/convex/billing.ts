@@ -31,11 +31,13 @@ import {
 } from "./permissions";
 
 type ProviderEnvironment = "sandbox" | "production";
-type SeatSnapshot = {
+type WorkspaceBillingSnapshot = {
   organizationId: string;
   memberIds: string[];
-  billableSeatCount: number;
+  workspaceMemberCount: number;
+  seatQuantity: number;
   membershipRevision: string;
+  source: "better-auth-members";
 };
 
 const getCatalogItem = makeFunctionReference<
@@ -58,11 +60,11 @@ const listSeatReconciliationCandidates = makeFunctionReference<
   { limit?: number },
   Array<Doc<"billingSubscriptions">>
 >("billingModel:listSeatReconciliationCandidates");
-const getSeatSnapshot = makeFunctionReference<
+const getWorkspaceBillingSnapshot = makeFunctionReference<
   "query",
   { organizationId: string },
-  SeatSnapshot
->("workspaceBilling:getSeatSnapshot");
+  WorkspaceBillingSnapshot
+>("workspaceBilling:getWorkspaceBillingSnapshot");
 const createCheckoutIntent = makeFunctionReference<
   "mutation",
   {
@@ -109,26 +111,27 @@ const recordCustomer = makeFunctionReference<
   },
   null
 >("billingModel:recordCustomer");
-const recordSeatSnapshot = makeFunctionReference<
+const recordBillingSnapshot = makeFunctionReference<
   "mutation",
   {
     organizationId: string;
     subscriptionId?: Id<"billingSubscriptions">;
     membershipRevision: string;
     memberIds: string[];
-    billableSeatCount: number;
+    workspaceMemberCount: number;
+    seatQuantity: number;
     source: "checkout" | "membership" | "webhook" | "reconcile";
   },
   Id<"billingSeatSnapshots">
->("billingModel:recordSeatSnapshot");
+>("billingModel:recordBillingSnapshot");
 const createSeatSyncOperation = makeFunctionReference<
   "mutation",
   {
     organizationId: string;
     subscriptionId: Id<"billingSubscriptions">;
     membershipRevision: string;
-    previousSeats: number;
-    targetSeats: number;
+    previousSeatQuantity: number;
+    targetSeatQuantity: number;
     idempotencyKey: string;
   },
   Doc<"billingSeatSyncOperations"> | null
@@ -305,11 +308,33 @@ function publicBillingError(failure: BillingFailure): ConvexError<{
   });
 }
 
+function assertWorkspaceBillingSnapshot(
+  snapshot: WorkspaceBillingSnapshot,
+  organizationId: string,
+): void {
+  if (
+    snapshot.organizationId !== organizationId ||
+    !Number.isSafeInteger(snapshot.workspaceMemberCount) ||
+    snapshot.workspaceMemberCount < 0 ||
+    snapshot.memberIds.length !== snapshot.workspaceMemberCount ||
+    new Set(snapshot.memberIds).size !== snapshot.workspaceMemberCount ||
+    !Number.isSafeInteger(snapshot.seatQuantity) ||
+    snapshot.seatQuantity !== Math.max(1, snapshot.workspaceMemberCount)
+  ) {
+    throw new Error("Workspace billing snapshot contract was violated");
+  }
+}
+
 export const getWorkspaceEntitlements = query({
   args: { organizationId: v.string() },
   handler: async (ctx, { organizationId }) => {
     await requireOrganizationMember(ctx, organizationId);
-    const [entitlement, creditAccount, canManageBilling] = await Promise.all([
+    const [
+      entitlement,
+      creditAccount,
+      canManageBilling,
+      workspaceBillingSnapshot,
+    ] = await Promise.all([
       ctx.db
         .query("workspaceEntitlements")
         .withIndex("by_organization", (q) =>
@@ -326,6 +351,7 @@ export const getWorkspaceEntitlements = query({
         resource: "organization",
         action: "update",
       }),
+      ctx.runQuery(getWorkspaceBillingSnapshot, { organizationId }),
     ]);
     const availableUnits = creditAccount
       ? creditAccount.availableIncludedUnits +
@@ -334,8 +360,7 @@ export const getWorkspaceEntitlements = query({
     return {
       plan: entitlement?.plan ?? ("free" as const),
       subscriptionState: entitlement?.subscriptionStatus ?? ("none" as const),
-      billableSeatCount: entitlement?.billableSeatCount ?? 1,
-      paidSeatCapacity: entitlement?.paidSeatCapacity ?? 0,
+      workspaceMemberCount: workspaceBillingSnapshot.workspaceMemberCount,
       plusEnabled: entitlement?.plusEnabled ?? false,
       aiAdmissionAvailable: availableUnits > 0n,
       availableAiCreditUnits: availableUnits,
@@ -442,19 +467,12 @@ export const beginCheckout = action({
     }
     const seatSnapshot =
       catalog.kind === "plus"
-        ? await ctx.runQuery(getSeatSnapshot, {
+        ? await ctx.runQuery(getWorkspaceBillingSnapshot, {
             organizationId: args.organizationId,
           })
         : undefined;
-    if (
-      seatSnapshot &&
-      (seatSnapshot.organizationId !== args.organizationId ||
-        seatSnapshot.billableSeatCount < 1 ||
-        seatSnapshot.memberIds.length !== seatSnapshot.billableSeatCount ||
-        new Set(seatSnapshot.memberIds).size !== seatSnapshot.billableSeatCount)
-    ) {
-      throw new Error("Workspace seat snapshot contract was violated");
-    }
+    if (seatSnapshot)
+      assertWorkspaceBillingSnapshot(seatSnapshot, args.organizationId);
     const attemptId = crypto.randomUUID();
     const intent = await ctx.runMutation(createCheckoutIntent, {
       organizationId: args.organizationId,
@@ -462,7 +480,7 @@ export const beginCheckout = action({
       providerEnvironment: environment,
       purpose: catalog.kind,
       sku: catalog.sku,
-      requestedSeats: seatSnapshot?.billableSeatCount,
+      requestedSeats: seatSnapshot?.seatQuantity,
       requestedAmountMinor,
       idempotencyKey,
       attemptId,
@@ -515,7 +533,7 @@ export const beginCheckout = action({
               ? undefined
               : Number(requestedAmountMinor),
           allowDiscountCodes: catalog.kind !== "aiCreditPack",
-          seats: seatSnapshot?.billableSeatCount,
+          seats: seatSnapshot?.seatQuantity,
           metadata: {
             ...billingOperationMetadata({
               workspaceId: args.organizationId,
@@ -545,11 +563,12 @@ export const beginCheckout = action({
         return { url: checkout.url, checkoutId: checkout.id, replay: true };
       }
       if (seatSnapshot) {
-        await ctx.runMutation(recordSeatSnapshot, {
+        await ctx.runMutation(recordBillingSnapshot, {
           organizationId: args.organizationId,
           membershipRevision: seatSnapshot.membershipRevision,
           memberIds: seatSnapshot.memberIds,
-          billableSeatCount: seatSnapshot.billableSeatCount,
+          workspaceMemberCount: seatSnapshot.workspaceMemberCount,
+          seatQuantity: seatSnapshot.seatQuantity,
           source: "checkout",
         });
       }
@@ -620,50 +639,51 @@ async function syncPaidSeatsForOrganization(
       organizationId,
       providerEnvironment: environment,
     }),
-    ctx.runQuery(getSeatSnapshot, { organizationId }),
+    ctx.runQuery(getWorkspaceBillingSnapshot, { organizationId }),
   ]);
   if (!subscription) return { state: "notSubscribed" as const };
-  if (
-    snapshot.billableSeatCount < 1 ||
-    snapshot.memberIds.length !== snapshot.billableSeatCount ||
-    new Set(snapshot.memberIds).size !== snapshot.billableSeatCount
-  ) {
-    throw new Error("Workspace seat snapshot contract was violated");
-  }
-  await ctx.runMutation(recordSeatSnapshot, {
+  assertWorkspaceBillingSnapshot(snapshot, organizationId);
+  await ctx.runMutation(recordBillingSnapshot, {
     organizationId,
     subscriptionId: subscription._id,
     membershipRevision: snapshot.membershipRevision,
     memberIds: snapshot.memberIds,
-    billableSeatCount: snapshot.billableSeatCount,
+    workspaceMemberCount: snapshot.workspaceMemberCount,
+    seatQuantity: snapshot.seatQuantity,
     source: "membership",
   });
-  if (subscription.seatQuantity === snapshot.billableSeatCount) {
-    return { state: "unchanged" as const, seats: subscription.seatQuantity };
+  if (subscription.seatQuantity === snapshot.seatQuantity) {
+    return {
+      state: "unchanged" as const,
+      seatQuantity: subscription.seatQuantity,
+    };
   }
   const idempotencyKey = `seat:${subscription.providerSubscriptionId}:${snapshot.membershipRevision}`;
   const operation = await ctx.runMutation(createSeatSyncOperation, {
     organizationId,
     subscriptionId: subscription._id,
     membershipRevision: snapshot.membershipRevision,
-    previousSeats: subscription.seatQuantity,
-    targetSeats: snapshot.billableSeatCount,
+    previousSeatQuantity: subscription.seatQuantity,
+    targetSeatQuantity: snapshot.seatQuantity,
     idempotencyKey,
   });
   if (!operation) throw new Error("Seat sync operation could not be persisted");
   if (operation.status === "applied")
-    return { state: "applied" as const, seats: operation.targetSeats };
+    return {
+      state: "applied" as const,
+      seatQuantity: operation.targetSeatQuantity,
+    };
   try {
     const polar = provider();
     const remote = await polar.getSubscription(
       subscription.providerSubscriptionId,
     );
     const updated =
-      remote.seats === snapshot.billableSeatCount
+      remote.seats === snapshot.seatQuantity
         ? remote
         : await polar.updateSubscriptionSeats(
             subscription.providerSubscriptionId,
-            snapshot.billableSeatCount,
+            snapshot.seatQuantity,
             "prorate",
           );
     await ctx.runMutation(completeSeatSyncOperation, {
@@ -674,7 +694,7 @@ async function syncPaidSeatsForOrganization(
     });
     return {
       state: "applied" as const,
-      seats: updated.seats ?? snapshot.billableSeatCount,
+      seatQuantity: updated.seats ?? snapshot.seatQuantity,
     };
   } catch (error) {
     await ctx.runMutation(failSeatSyncOperation, {
@@ -806,31 +826,25 @@ export const reconcilePaidSeats = internalAction({
     for (const subscription of subscriptions) {
       let operation: Doc<"billingSeatSyncOperations"> | null = null;
       try {
-        const snapshot = await ctx.runQuery(getSeatSnapshot, {
+        const snapshot = await ctx.runQuery(getWorkspaceBillingSnapshot, {
           organizationId: subscription.organizationId,
         });
-        if (
-          snapshot.organizationId !== subscription.organizationId ||
-          snapshot.billableSeatCount < 1 ||
-          snapshot.memberIds.length !== snapshot.billableSeatCount ||
-          new Set(snapshot.memberIds).size !== snapshot.billableSeatCount
-        ) {
-          throw new Error("Workspace seat snapshot contract was violated");
-        }
-        await ctx.runMutation(recordSeatSnapshot, {
+        assertWorkspaceBillingSnapshot(snapshot, subscription.organizationId);
+        await ctx.runMutation(recordBillingSnapshot, {
           organizationId: subscription.organizationId,
           subscriptionId: subscription._id,
           membershipRevision: snapshot.membershipRevision,
           memberIds: snapshot.memberIds,
-          billableSeatCount: snapshot.billableSeatCount,
+          workspaceMemberCount: snapshot.workspaceMemberCount,
+          seatQuantity: snapshot.seatQuantity,
           source: "reconcile",
         });
         operation = await ctx.runMutation(createSeatSyncOperation, {
           organizationId: subscription.organizationId,
           subscriptionId: subscription._id,
           membershipRevision: snapshot.membershipRevision,
-          previousSeats: subscription.seatQuantity,
-          targetSeats: snapshot.billableSeatCount,
+          previousSeatQuantity: subscription.seatQuantity,
+          targetSeatQuantity: snapshot.seatQuantity,
           idempotencyKey: `seat:${subscription.providerSubscriptionId}:${snapshot.membershipRevision}`,
         });
         if (!operation)
@@ -843,11 +857,11 @@ export const reconcilePaidSeats = internalAction({
           subscription.providerSubscriptionId,
         );
         const updated =
-          remote.seats === snapshot.billableSeatCount
+          remote.seats === snapshot.seatQuantity
             ? remote
             : await polar.updateSubscriptionSeats(
                 subscription.providerSubscriptionId,
-                snapshot.billableSeatCount,
+                snapshot.seatQuantity,
                 "prorate",
               );
         await ctx.runMutation(completeSeatSyncOperation, {
@@ -856,7 +870,7 @@ export const reconcilePaidSeats = internalAction({
             updated.modifiedAt ?? new Date().toISOString(),
           ),
         });
-        if (remote.seats === snapshot.billableSeatCount) unchanged += 1;
+        if (remote.seats === snapshot.seatQuantity) unchanged += 1;
         else applied += 1;
       } catch (error) {
         failed += 1;

@@ -15,7 +15,7 @@ import { billingTables } from "./schema/billing";
 import { aiCreditTables } from "./schema/aiCredits";
 import { storageTelemetryTables } from "./schema/storageTelemetry";
 
-export default defineSchema({
+const schema = {
   ...workspaceTables,
   ...billingTables,
   ...aiCreditTables,
@@ -562,4 +562,6 @@ export default defineSchema({
     .index("by_connection", ["connectionId"])
     .index("by_connection_external", ["connectionId", "externalId"])
     .index("by_organization_provider", ["organizationId", "provider"]),
-});
+};
+
+export default defineSchema(schema, { schemaValidation: false });

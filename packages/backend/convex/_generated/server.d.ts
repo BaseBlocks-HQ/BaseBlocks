@@ -25,12 +25,12 @@ import type { DataModel } from "./dataModel.js";
  * Typesafe environment variables declared in `convex.config.ts`.
  */
 type Env = {
-  readonly BASEBLOCKS_BILLING_ENVIRONMENT: "sandbox" | "production";
+  readonly BASEBLOCKS_BILLING_ENVIRONMENT: "sandbox" | "production" | undefined;
   readonly BASEBLOCKS_PAST_DUE_GRACE_DAYS: string | undefined;
   readonly INTEGRATIONS_ENABLED: "true" | "false";
-  readonly POLAR_ACCESS_TOKEN: string;
-  readonly POLAR_ALLOW_PRODUCTION: "true" | "false";
-  readonly POLAR_WEBHOOK_SECRET: string;
+  readonly POLAR_ACCESS_TOKEN: string | undefined;
+  readonly POLAR_ALLOW_PRODUCTION: "true" | "false" | undefined;
+  readonly POLAR_WEBHOOK_SECRET: string | undefined;
 };
 
 /**

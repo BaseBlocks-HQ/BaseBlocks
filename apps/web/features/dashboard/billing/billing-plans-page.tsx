@@ -80,12 +80,7 @@ export function BillingPlansPage({
         {
           feature: t("plans.comparison.ai"),
           free: t("plans.comparison.prepaid"),
-          plus: t("plans.comparison.monthly"),
-        },
-        {
-          feature: t("plans.comparison.seats"),
-          free: t("plans.comparison.notIncluded"),
-          plus: <Included />,
+          plus: t("plans.comparison.includedAndPrepaid"),
         },
       ],
     },
@@ -150,9 +145,6 @@ export function BillingPlansPage({
                     <p className="mt-1 text-sm text-foreground">
                       <span className="font-semibold">
                         {t("plans.free.price")}
-                      </span>{" "}
-                      <span className="text-xs text-muted-foreground">
-                        {t("plans.perMemberMonth")}
                       </span>
                     </p>
                   </div>

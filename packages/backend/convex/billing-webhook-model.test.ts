@@ -222,6 +222,7 @@ describe("Polar billing event interface", () => {
 
     expect(result.outcome).toBe("applied");
     expect(state.entitlement?.plusEnabled).toBe(true);
-    expect(state.entitlement?.paidSeatCapacity).toBe(2);
+    expect(state.entitlement).not.toHaveProperty("paidSeatCapacity");
+    expect(state.entitlement).not.toHaveProperty("billableSeatCount");
   });
 });

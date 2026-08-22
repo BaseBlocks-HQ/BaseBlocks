@@ -144,7 +144,6 @@ export const terminateSubscriptionForWorkspaceDeletion = internalMutation({
         subscriptionStatus: "terminated",
         statusReason: "workspace-deletion",
         plusEnabled: false,
-        paidSeatCapacity: 0,
         effectiveThrough: args.endedAt ?? now,
         derivedAt: now,
         updatedAt: now,
@@ -367,13 +366,14 @@ export const recordCheckoutFailed = internalMutation({
   },
 });
 
-export const recordSeatSnapshot = internalMutation({
+export const recordBillingSnapshot = internalMutation({
   args: {
     organizationId: v.string(),
     subscriptionId: v.optional(v.id("billingSubscriptions")),
     membershipRevision: v.string(),
     memberIds: v.array(v.string()),
-    billableSeatCount: v.number(),
+    workspaceMemberCount: v.number(),
+    seatQuantity: v.number(),
     source: v.union(
       v.literal("checkout"),
       v.literal("membership"),
@@ -383,12 +383,14 @@ export const recordSeatSnapshot = internalMutation({
   },
   handler: async (ctx, args) => {
     if (
-      !Number.isSafeInteger(args.billableSeatCount) ||
-      args.billableSeatCount < 1 ||
-      args.memberIds.length !== args.billableSeatCount ||
-      new Set(args.memberIds).size !== args.billableSeatCount
+      !Number.isSafeInteger(args.workspaceMemberCount) ||
+      args.workspaceMemberCount < 0 ||
+      args.memberIds.length !== args.workspaceMemberCount ||
+      new Set(args.memberIds).size !== args.workspaceMemberCount ||
+      !Number.isSafeInteger(args.seatQuantity) ||
+      args.seatQuantity !== Math.max(1, args.workspaceMemberCount)
     ) {
-      throw new Error("Invalid billable seat snapshot");
+      throw new Error("Invalid workspace billing snapshot");
     }
     const duplicate = await ctx.db
       .query("billingSeatSnapshots")
@@ -412,13 +414,16 @@ export const createSeatSyncOperation = internalMutation({
     organizationId: v.string(),
     subscriptionId: v.id("billingSubscriptions"),
     membershipRevision: v.string(),
-    previousSeats: v.number(),
-    targetSeats: v.number(),
+    previousSeatQuantity: v.number(),
+    targetSeatQuantity: v.number(),
     idempotencyKey: v.string(),
   },
   handler: async (ctx, args) => {
-    for (const seats of [args.previousSeats, args.targetSeats]) {
-      if (!Number.isSafeInteger(seats) || seats < 1) {
+    for (const seatQuantity of [
+      args.previousSeatQuantity,
+      args.targetSeatQuantity,
+    ]) {
+      if (!Number.isSafeInteger(seatQuantity) || seatQuantity < 1) {
         throw new Error("Seat quantities must be positive integers");
       }
     }
@@ -434,7 +439,7 @@ export const createSeatSyncOperation = internalMutation({
       if (
         existing.subscriptionId !== args.subscriptionId ||
         existing.membershipRevision !== args.membershipRevision ||
-        existing.targetSeats !== args.targetSeats
+        existing.targetSeatQuantity !== args.targetSeatQuantity
       ) {
         throw new ConvexError({
           code: "BILLING_IDEMPOTENCY_CONFLICT",
@@ -473,7 +478,7 @@ export const completeSeatSyncOperation = internalMutation({
     const subscription = await ctx.db.get(operation.subscriptionId);
     if (subscription) {
       await ctx.db.patch(subscription._id, {
-        seatQuantity: operation.targetSeats,
+        seatQuantity: operation.targetSeatQuantity,
         providerModifiedAt: args.providerModifiedAt,
         lastReconciledAt: Date.now(),
         updatedAt: Date.now(),
