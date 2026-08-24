@@ -2,6 +2,6 @@
   "$schema": "./node_modules/convex/schemas/convex.schema.json",
   "functions": "convex/",
   "node": {
-    "externalPackages": ["@baseblocks/anydoc-convex"]
+    "externalPackages": ["@firecrawl/anydoc"]
   }
 }

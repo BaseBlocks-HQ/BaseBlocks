@@ -22,7 +22,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { detectViewerFormat } from "@baseblocks/anydoc/react";
+import { detectViewerFormat } from "@baseblocks/anydoc-viewer/react";
 
 const AnyDocPreview = dynamic(() => import("./anydoc-preview-client"), {
   ssr: false,

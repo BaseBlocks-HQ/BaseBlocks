@@ -1,11 +1,4 @@
-import {
-  ConvexIngestionQueue,
-  decodeConvexIngestionFailure,
-  type ConvexIngestionJob,
-  type ConvexIngestionReceipt,
-  type DurableIngestionBinding,
-  type WorkId,
-} from "@baseblocks/anydoc-convex";
+import type { WorkId } from "@convex-dev/workpool";
 import { vOnCompleteArgs } from "@convex-dev/workpool";
 import { ConvexError, v } from "convex/values";
 import { components, internal } from "./_generated/api";
@@ -17,6 +10,13 @@ import {
   query,
   type QueryCtx,
 } from "./_generated/server";
+import {
+  ConvexIngestionQueue,
+  decodeConvexIngestionFailure,
+  type ConvexIngestionJob,
+  type ConvexIngestionReceipt,
+  type DurableIngestionBinding,
+} from "./fileExtractionQueue";
 import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import {
   FILE_EXTRACTION_LIMITS,

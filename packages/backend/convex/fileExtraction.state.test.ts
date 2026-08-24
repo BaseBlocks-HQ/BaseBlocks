@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { WorkId } from "@baseblocks/anydoc-convex";
+import type { WorkId } from "@convex-dev/workpool";
 import {
   completed,
   fileIngestion,

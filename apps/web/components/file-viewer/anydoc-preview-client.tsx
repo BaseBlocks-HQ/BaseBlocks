@@ -1,12 +1,12 @@
 "use client";
 
 import type { PreviewFile } from "@/components/file-viewer/file-viewer";
-import { isSafeExternalUrl } from "@baseblocks/anydoc";
+import { isSafeExternalUrl } from "@baseblocks/anydoc-contracts";
 import {
   AnyDocumentViewer,
   type ViewerControls,
   type ViewerError,
-} from "@baseblocks/anydoc/react";
+} from "@baseblocks/anydoc-viewer/react";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMemo } from "react";
 import { UnifiedViewerControls } from "./anydoc-viewer-controls";

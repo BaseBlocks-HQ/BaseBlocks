@@ -25,6 +25,7 @@ import type * as draftRestores from "../draftRestores.js";
 import type * as editorWorkspace from "../editorWorkspace.js";
 import type * as fileExtraction from "../fileExtraction.js";
 import type * as fileExtractionAction from "../fileExtractionAction.js";
+import type * as fileExtractionQueue from "../fileExtractionQueue.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as integrationAccess from "../integrationAccess.js";
@@ -112,6 +113,7 @@ declare const fullApi: ApiFromModules<{
   editorWorkspace: typeof editorWorkspace;
   fileExtraction: typeof fileExtraction;
   fileExtractionAction: typeof fileExtractionAction;
+  fileExtractionQueue: typeof fileExtractionQueue;
   files: typeof files;
   http: typeof http;
   integrationAccess: typeof integrationAccess;
