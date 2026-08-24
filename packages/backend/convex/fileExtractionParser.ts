@@ -1,3 +1,5 @@
+"use node";
+
 // Bounded document parsing for file extraction. Pure logic with no Convex
 // runtime dependencies so it can be unit-tested directly; the extraction
 // action in fileExtractionAction.ts supplies storage and mutation plumbing.
