@@ -30,11 +30,16 @@ bunx convex run deploymentPreflight:checkFileExtractionEnvironment
 ```
 
 The check returns only variable names and non-secret configuration. Convex
-validates and installs the AnyDoc adapter's Node dependency closure when the
-functions are deployed.
+validates and installs the parser's Node dependency closure (`@firecrawl/anydoc`)
+when the functions are deployed.
 
-`convex.json` externalizes only `@baseblocks/anydoc-convex`; keep that adapter
-pinned to the exact registry version verified by the application lockfile.
+`convex.json` externalizes `@firecrawl/anydoc`, whose native NAPI binary must
+stay out of the Convex bundle; keep it pinned to the exact registry version
+verified by the application lockfile. `@baseblocks/anydoc-contracts` is pure
+TypeScript and bundles normally. The extraction queue and its failure encoding
+live in `convex/fileExtractionQueue.ts`; bounded parsing and failure
+classification live in `convex/fileExtractionParser.ts`; the Node action handler
+is in `convex/fileExtractionAction.ts`.
 Uploads enqueue extraction immediately. Operators retry a terminal extraction
 through the product's file-extraction retry action; there is no polling cron or
 permanent backfill API.

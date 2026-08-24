@@ -2,7 +2,10 @@ import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { getFiles } from "@/lib/files/server";
 import { assertStoredChecksum, type PageExportAsset } from "./page-export";
-import { iterableSource, readSource } from "@baseblocks/anydoc/sources";
+import {
+  iterableSource,
+  readSource,
+} from "@baseblocks/anydoc-contracts/sources";
 import { api } from "@baseblocks/backend";
 import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts";
 import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";

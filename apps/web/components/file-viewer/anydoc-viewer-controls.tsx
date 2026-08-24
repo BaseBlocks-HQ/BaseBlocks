@@ -16,7 +16,7 @@ import {
   TextWrapIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { ViewerControls } from "@baseblocks/anydoc/react";
+import type { ViewerControls } from "@baseblocks/anydoc-viewer/react";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { cn } from "@baseblocks/ui/lib/utils";
