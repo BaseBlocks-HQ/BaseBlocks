@@ -5,6 +5,7 @@ import {
 import {
   createDirectoryContent,
   directoryToText,
+  migrateDirectoryContentV1,
   parseDirectoryContent,
 } from "./directory";
 import { parseDecisionTreeValue } from "./decision-tree";
@@ -13,7 +14,7 @@ import { parseQuickLinksData, safeQuickLinkHref } from "./quick-links";
 export const directoryBlock = defineOpenEditorCustomBlock({
   id: "baseblocks.directory",
   label: "Directory",
-  version: 1,
+  version: 2,
   createData: createDirectoryContent,
   parseData: parseDirectoryContent,
   toHtml: ({ data }) => ({
@@ -33,10 +34,10 @@ export const directoryBlock = defineOpenEditorCustomBlock({
               children: [
                 {
                   tag: "tr" as const,
-                  children: directory.columnIds.map((_columnId, index) => ({
+                  children: directory.columns.map((column) => ({
                     tag: "th" as const,
                     attrs: { scope: "col" as const },
-                    children: [`Column ${index + 1}`],
+                    children: [column.name],
                   })),
                 },
               ],
@@ -45,9 +46,9 @@ export const directoryBlock = defineOpenEditorCustomBlock({
               tag: "tbody" as const,
               children: directory.rows.map((row) => ({
                 tag: "tr" as const,
-                children: directory.columnIds.map((columnId) => ({
+                children: directory.columns.map(({ id }) => ({
                   tag: "td" as const,
-                  children: [row.cells[columnId] ?? ""],
+                  children: [row.cells[id] ?? ""],
                 })),
               })),
             },
@@ -178,3 +179,5 @@ export const baseBlocksCustomBlocks = [
   decisionTreeBlock,
   quickLinksBlock,
 ] as const;
+
+export { migrateDirectoryContentV1 };

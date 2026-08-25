@@ -78,7 +78,7 @@ const queryPublicReleasePage = unstable_cache(
     queryReleasePage(releaseId, path),
   // The response contains the parsed document shape. Bump this key whenever
   // that shape changes so a rollback cannot keep an incompatible document.
-  ["published-release-page-v4"],
+  ["published-release-page-v5"],
 );
 
 const queryPublicReleasePageMetadata = unstable_cache(

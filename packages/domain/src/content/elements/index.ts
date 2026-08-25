@@ -1,4 +1,5 @@
 export type {
+  DirectoryColumn,
   DirectoryRow,
   Directory,
   DirectoryContent,

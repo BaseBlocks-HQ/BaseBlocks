@@ -5,6 +5,8 @@ import {
   createOpenEditorPageTabs,
   deleteOpenEditorTextRange,
   readOpenEditorPageTabs,
+  resolveOpenEditorPageTabId,
+  setOpenEditorPageTabQuery,
 } from "./page-tabs-model";
 
 describe("page tabs model", () => {
@@ -32,5 +34,20 @@ describe("page tabs model", () => {
       ...document,
       content: [document.content[0], { ...document.content[1], content: [] }],
     });
+  });
+
+  test("resolves a stable tab ID and preserves unrelated URL state", () => {
+    const tabs = [
+      { id: "first", label: "First", document: createDocument([]) },
+      { id: "second", label: "Second", document: createDocument([]) },
+    ];
+    expect(resolveOpenEditorPageTabId(tabs, "second")).toBe("second");
+    expect(resolveOpenEditorPageTabId(tabs, "missing")).toBe("first");
+
+    const params = setOpenEditorPageTabQuery(
+      new URLSearchParams("page=page-1&from=editor"),
+      "second",
+    );
+    expect(params.toString()).toBe("page=page-1&from=editor&tab=second");
   });
 });

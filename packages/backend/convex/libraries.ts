@@ -43,6 +43,15 @@ const libraryFileSummary = v.object({
   downloadUrl: v.string(),
   folderId: v.optional(v.id("documentFolders")),
   order: v.number(),
+  extractionStatus: v.optional(
+    v.union(
+      v.literal("queued"),
+      v.literal("processing"),
+      v.literal("ready"),
+      v.literal("failed"),
+    ),
+  ),
+  extractionFailure: v.optional(v.string()),
 });
 
 const explorerPayload = v.object({
@@ -65,14 +74,23 @@ export async function buildExplorerPayload(
     organizationId: string;
   },
 ) {
-  const folders = await ctx.db
-    .query("documentFolders")
-    .withIndex("by_parent", (q) => q.eq("libraryId", library._id))
-    .collect();
-  const files = await ctx.db
-    .query("files")
-    .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
-    .collect();
+  const [folders, files, extractions] = await Promise.all([
+    ctx.db
+      .query("documentFolders")
+      .withIndex("by_parent", (q) => q.eq("libraryId", library._id))
+      .collect(),
+    ctx.db
+      .query("files")
+      .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
+      .collect(),
+    ctx.db
+      .query("fileExtractions")
+      .withIndex("by_site", (q) => q.eq("siteId", site._id))
+      .collect(),
+  ]);
+  const extractionByFileId = new Map(
+    extractions.map((extraction) => [extraction.fileId, extraction]),
+  );
 
   return {
     library: {
@@ -97,15 +115,20 @@ export async function buildExplorerPayload(
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
     files: files
       .filter((file) => file.deletedAt === undefined)
-      .map((file) => ({
-        _id: file._id,
-        filename: file.filename,
-        contentType: file.contentType,
-        size: file.size,
-        downloadUrl: buildFileUrl(file._id),
-        folderId: file.folderId,
-        order: file.order,
-      }))
+      .map((file) => {
+        const extraction = extractionByFileId.get(file._id);
+        return {
+          _id: file._id,
+          filename: file.filename,
+          contentType: file.contentType,
+          size: file.size,
+          downloadUrl: buildFileUrl(file._id),
+          folderId: file.folderId,
+          order: file.order,
+          extractionStatus: extraction?.status,
+          extractionFailure: extraction?.failure?.message,
+        };
+      })
       .sort(
         (a, b) => a.order - b.order || a.filename.localeCompare(b.filename),
       ),
@@ -171,6 +194,8 @@ export async function buildReleaseExplorerPayload(
         downloadUrl: buildFileUrl(file.fileId),
         folderId: file.folderId,
         order: file.order,
+        extractionStatus: "ready" as const,
+        extractionFailure: undefined,
       }))
       .sort(
         (a, b) => a.order - b.order || a.filename.localeCompare(b.filename),

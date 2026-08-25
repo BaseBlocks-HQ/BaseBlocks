@@ -2,6 +2,8 @@
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  ArrowDown01Icon,
+  ArrowReloadHorizontalIcon,
   ArrowRight01Icon,
   Delete01Icon,
   Download01Icon,
@@ -12,13 +14,11 @@ import {
   PencilEdit01Icon,
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
-import {
-  appSidebarIconSlotClassName,
-  appSidebarRowGapClassName,
-  appSidebarRowHeightClassName,
-  getAppSidebarTreePaddingInlineStart,
-} from "@/features/app-shell/app-sidebar-row";
-import type { FolderId, LibraryEntity } from "@/features/libraries/model";
+import type {
+  FolderId,
+  LibraryEntity,
+  LibraryFile,
+} from "@/features/libraries/model";
 import { InlineRename } from "@/components/tree/inline-rename";
 import { MiddleTruncate } from "@/components/tree/middle-truncate";
 import { formatFileSize } from "@/components/file-viewer/file-ui";
@@ -49,7 +49,7 @@ import {
   useDraggable,
   useDroppable,
 } from "@dnd-kit/react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { LibraryFileIcon } from "./library-file-icon";
 
@@ -96,10 +96,12 @@ export function LibraryTree(props: {
     placement: TreeDropPlacement;
   }) => Promise<void>;
   onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
+  onRetryExtraction: (file: LibraryFile) => void;
   onUploadFiles: () => void;
   selectedEntityId: string | null;
   title?: string;
   uploadDisabled?: boolean;
+  headerContent?: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(
     () =>
@@ -157,10 +159,8 @@ export function LibraryTree(props: {
         role="tree"
         aria-label="Library files"
       >
-        <div className="flex h-10 shrink-0 items-center justify-between border-b bg-muted/70 px-2 text-foreground">
-          <span className="truncate pl-1 text-xs font-medium">
-            {props.title}
-          </span>
+        <div className="flex h-10 shrink-0 items-center justify-between border-b bg-muted/70 px-3 text-foreground">
+          <span className="truncate text-xs font-medium">{props.title}</span>
           {props.canManage ? (
             <div className="flex gap-1">
               <Button
@@ -188,11 +188,13 @@ export function LibraryTree(props: {
             </div>
           ) : null}
         </div>
+        {props.headerContent ? (
+          <div className="shrink-0 border-b p-2">{props.headerContent}</div>
+        ) : null}
         <div
           className={cn(
-            "min-h-0 flex-1 flex-col overflow-auto px-1 pt-px pb-2",
+            "min-h-0 flex-1 flex-col overflow-auto px-1 pb-2",
             rows.length > 0 && "flex",
-            appSidebarRowGapClassName,
           )}
         >
           {rows.length > 0 ? (
@@ -227,6 +229,11 @@ export function LibraryTree(props: {
                 onCopy={() => void props.onCopyLink(node.data)}
                 onDownload={() => props.onDownloadFile(node.data)}
                 onDelete={() => props.onDeleteEntity(node.data)}
+                onRetry={() => {
+                  if (node.data.kind === "file") {
+                    props.onRetryExtraction(node.data.file);
+                  }
+                }}
               />
             ))
           ) : (
@@ -271,6 +278,7 @@ function LibraryTreeRow({
   onCopy,
   onDownload,
   onDelete,
+  onRetry,
 }: {
   node: ProjectedTreeNode<LibraryEntity>;
   expanded: boolean;
@@ -289,6 +297,7 @@ function LibraryTreeRow({
   onCopy: () => void;
   onDownload: () => void;
   onDelete: () => void;
+  onRetry: () => void;
 }) {
   const folder = node.data.kind === "folder";
   const { ref, handleRef, isDragging } = useDraggable({
@@ -315,14 +324,11 @@ function LibraryTreeRow({
             aria-selected={selected}
             data-selected={selected}
             className={cn(
-              "group/library relative flex min-w-0 items-center gap-1.5 rounded-md pe-2 text-xs font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:bg-accent data-[selected=true]:font-medium data-[selected=true]:text-foreground",
-              appSidebarRowHeightClassName,
+              "group/library relative flex h-8 shrink-0 min-w-0 items-center gap-1 rounded-md px-1 pe-2 text-sm font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:bg-accent data-[selected=true]:font-medium data-[selected=true]:text-foreground",
               isDragging && "opacity-30",
             )}
             style={{
-              paddingInlineStart: getAppSidebarTreePaddingInlineStart(
-                node.depth,
-              ),
+              paddingInlineStart: node.depth * 16 + 4,
             }}
           >
             <LibraryDropZones
@@ -331,39 +337,37 @@ function LibraryTreeRow({
               entityId={node.id}
               insideEnabled={folder}
             />
-            <span className={cn("relative", appSidebarIconSlotClassName)}>
-              {folder ? (
-                <>
-                  <HugeiconsIcon
-                    aria-hidden
-                    icon={Folder01Icon}
-                    className="size-3.5 shrink-0 transition-opacity duration-100 group-hover/library:opacity-0 group-focus-within/library:opacity-0 pointer-coarse:opacity-0"
-                    strokeWidth={1.75}
-                  />
-                  <button
-                    type="button"
-                    aria-label={expanded ? "Collapse" : "Expand"}
-                    className="absolute inset-0 z-30 flex items-center justify-center rounded-sm opacity-0 outline-none transition-opacity duration-100 hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/library:opacity-100 pointer-coarse:opacity-100"
-                    onClick={onToggle}
-                  >
-                    <HugeiconsIcon
-                      aria-hidden
-                      icon={ArrowRight01Icon}
-                      className={cn(
-                        "size-3.5 transition-transform duration-150 motion-reduce:transition-none",
-                        expanded && "rotate-90",
-                      )}
-                      strokeWidth={1.75}
-                    />
-                  </button>
-                </>
-              ) : node.data.kind === "file" ? (
-                <LibraryFileIcon
-                  contentType={node.data.file.contentType}
-                  filename={node.data.file.filename}
+            {folder ? (
+              <button
+                type="button"
+                aria-label={expanded ? "Collapse" : "Expand"}
+                className="flex size-4 shrink-0 items-center justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                onClick={onToggle}
+              >
+                <HugeiconsIcon
+                  aria-hidden
+                  icon={expanded ? ArrowDown01Icon : ArrowRight01Icon}
+                  className="size-4"
+                  strokeWidth={1.75}
                 />
-              ) : null}
-            </span>
+              </button>
+            ) : (
+              <span aria-hidden className="size-4 shrink-0" />
+            )}
+            {folder ? (
+              <HugeiconsIcon
+                aria-hidden
+                icon={Folder01Icon}
+                className="size-4 shrink-0"
+                strokeWidth={1.75}
+              />
+            ) : node.data.kind === "file" ? (
+              <LibraryFileIcon
+                className="size-4"
+                contentType={node.data.file.contentType}
+                filename={node.data.file.filename}
+              />
+            ) : null}
             {renaming ? (
               <InlineRename
                 label={`Rename ${node.label}`}
@@ -374,13 +378,16 @@ function LibraryTreeRow({
             ) : (
               <button
                 type="button"
-                className="h-full min-w-0 flex-1 truncate text-left outline-none"
+                className="h-full min-w-0 flex-1 truncate text-left text-sm outline-none"
                 onDoubleClick={canManage ? onRename : undefined}
                 onClick={onOpen}
               >
                 <MiddleTruncate text={node.label} />
               </button>
             )}
+            {!folder && node.data.kind === "file" ? (
+              <ExtractionStatus file={node.data.file} onRetry={onRetry} />
+            ) : null}
           </div>
         </ContextMenuTrigger>
       </div>
@@ -403,6 +410,10 @@ function LibraryTreeRow({
                 Download
               </ContextMenuItem>
             ) : null}
+            <ContextMenuItem onSelect={onRetry}>
+              <HugeiconsIcon icon={ArrowReloadHorizontalIcon} />
+              Retry extraction
+            </ContextMenuItem>
           </>
         ) : null}
         {canManage ? (
@@ -419,6 +430,83 @@ function LibraryTreeRow({
         ) : null}
       </ContextMenuContent>
     </ContextMenu>
+  );
+}
+
+function ExtractionStatus({
+  file,
+  onRetry,
+}: {
+  file: LibraryFile;
+  onRetry: () => void;
+}) {
+  const status = file.extractionStatus ?? "missing";
+  const details = {
+    queued: {
+      label: "Queued",
+      color: "bg-amber-500",
+      className: "text-amber-700 dark:text-amber-300",
+    },
+    processing: {
+      label: "Processing",
+      color: "bg-blue-500",
+      className: "text-blue-700 dark:text-blue-300",
+    },
+    ready: {
+      label: "Ready",
+      color: "bg-emerald-500",
+      className: "text-emerald-700 dark:text-emerald-300",
+    },
+    failed: {
+      label: "Failed",
+      color: "bg-destructive",
+      className: "text-destructive",
+    },
+    missing: {
+      label: "Not indexed",
+      color: "bg-muted-foreground",
+      className: "text-muted-foreground",
+    },
+  }[status];
+  const retryable = status === "failed" || status === "missing";
+  const ariaLabel = file.extractionFailure
+    ? `${details.label}: ${file.extractionFailure}`
+    : details.label;
+
+  return (
+    <div
+      aria-label={ariaLabel}
+      className={cn(
+        "flex shrink-0 items-center gap-1 text-[10px] font-medium uppercase tracking-wide",
+        details.className,
+      )}
+      title={file.extractionFailure ?? details.label}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "size-1.5 rounded-full",
+          details.color,
+          status === "processing" && "animate-pulse",
+        )}
+      />
+      <span className="hidden sm:inline">{details.label}</span>
+      {retryable ? (
+        <Button
+          aria-label={`Retry extraction for ${file.filename}`}
+          className="h-5 rounded px-1.5 text-[10px] uppercase tracking-wide"
+          onClick={(event) => {
+            event.stopPropagation();
+            onRetry();
+          }}
+          size="xs"
+          type="button"
+          variant="ghost"
+        >
+          Retry
+        </Button>
+      ) : null}
+    </div>
   );
 }
 

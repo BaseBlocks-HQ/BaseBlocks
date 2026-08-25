@@ -4,6 +4,7 @@ import {
   completed,
   fileIngestion,
   fileIngestionBinding,
+  storeResult,
   type FileIngestionJob,
   queueFileExtraction,
 } from "./fileExtraction";
@@ -103,6 +104,35 @@ describe("AnyDoc Workpool binding", () => {
       result: { kind: "success", returnValue: { status: "applied" } },
     });
     expect(state.workId).toBeUndefined();
+  });
+
+  test("late results are fenced after the file is deleted", async () => {
+    const state = projection("work-1");
+    const ctx = {
+      db: {
+        query: () => ({
+          withIndex: () => ({ unique: async () => state }),
+        }),
+        get: async () => ({
+          _id: state.fileId,
+          kind: "file",
+          deletedAt: 2,
+        }),
+      },
+    };
+
+    await expect(
+      invoke(storeResult, ctx, {
+        entityId: state.fileId,
+        sourceVersion: state.sourceVersion,
+        generation: state.generation,
+        idempotencyKey: state.idempotencyKey,
+        source: { fileId: state.fileId },
+        text: "late result",
+        format: "markdown",
+        inputBytes: 12,
+      }),
+    ).resolves.toEqual({ status: "superseded" });
   });
 
   test("force retry replaces a ready generation without cancelling finished work", async () => {

@@ -229,7 +229,15 @@ export async function cancelFileExtraction(
     .unique();
   if (!extraction) return;
   const receipt = receiptFor(extraction);
-  if (receipt) await fileIngestion.cancel(ctx, receipt);
+  if (receipt) {
+    try {
+      await fileIngestion.cancel(ctx, receipt);
+    } catch {
+      // Deletion remains authoritative even if the queue provider cannot cancel
+      // a job that has already started. The missing extraction row fences all
+      // later result writes for this file.
+    }
+  }
   await ctx.db.delete(extraction._id);
 }
 

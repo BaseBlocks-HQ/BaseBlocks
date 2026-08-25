@@ -5,7 +5,6 @@ import {
   ArrowDown01Icon,
   ArrowRight01Icon,
   Download01Icon,
-  File01Icon,
   Folder01Icon,
   Link01Icon,
 } from "@hugeicons/core-free-icons";
@@ -30,6 +29,7 @@ import { useQuery } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { LibraryFileIcon } from "@/features/libraries/library-file-icon";
 
 export function readLibrary(value: unknown): LibraryContent {
   const candidate =
@@ -167,7 +167,7 @@ export function ReadOnlyLibraryExplorer({
               <div
                 aria-expanded={folder ? isExpanded : undefined}
                 aria-level={node.depth + 1}
-                className="group flex h-8 items-center gap-1 rounded-md px-1 hover:bg-accent"
+                className="group flex h-8 shrink-0 items-center gap-1 rounded-md px-1 hover:bg-accent"
                 key={node.id}
                 role="treeitem"
                 style={{ paddingLeft: node.depth * 16 + 4 }}
@@ -176,6 +176,7 @@ export function ReadOnlyLibraryExplorer({
                 {folder ? (
                   <button
                     aria-label={isExpanded ? "Collapse" : "Expand"}
+                    className="flex size-4 shrink-0 items-center justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     onClick={() =>
                       setExpanded((current) => {
                         const next = new Set(current);
@@ -189,23 +190,33 @@ export function ReadOnlyLibraryExplorer({
                   >
                     {isExpanded ? (
                       <HugeiconsIcon
+                        aria-hidden
                         icon={ArrowDown01Icon}
                         className="size-4"
                       />
                     ) : (
                       <HugeiconsIcon
+                        aria-hidden
                         icon={ArrowRight01Icon}
                         className="size-4"
                       />
                     )}
                   </button>
                 ) : (
-                  <span className="w-4" />
+                  <span aria-hidden className="size-4 shrink-0" />
                 )}
                 {folder ? (
-                  <HugeiconsIcon icon={Folder01Icon} className="size-4" />
+                  <HugeiconsIcon
+                    aria-hidden
+                    icon={Folder01Icon}
+                    className="size-4 shrink-0"
+                  />
                 ) : (
-                  <HugeiconsIcon icon={File01Icon} className="size-4" />
+                  <LibraryFileIcon
+                    className="size-4"
+                    contentType={file?.contentType ?? ""}
+                    filename={file?.filename ?? node.label}
+                  />
                 )}
                 <button
                   className="min-w-0 flex-1 truncate text-left text-sm"

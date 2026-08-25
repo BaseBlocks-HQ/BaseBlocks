@@ -25,6 +25,7 @@ import type {
   LibraryExplorerPayload,
   LibraryFile,
 } from "@/features/libraries/model";
+import { SearchBox } from "@/features/search";
 import { deleteFile } from "@/lib/files/client";
 import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
@@ -191,6 +192,7 @@ export function LibraryExplorer({
   const removeFolder = useMutation(api.libraries.removeFolder);
   const renameFile = useMutation(api.files.rename);
   const createFile = useMutation(api.files.create);
+  const retryFileExtraction = useMutation(api.fileExtraction.retry);
 
   const canManage = true;
   const model = buildLibraryExplorerModel(
@@ -373,6 +375,16 @@ export function LibraryExplorer({
     toast.success(tExplorer("toastRenamed"));
   };
 
+  const retryExtraction = (file: LibraryFile) => {
+    void retryFileExtraction({ fileId: file._id })
+      .then(() => toast.success("Extraction queued"))
+      .catch((error: unknown) => {
+        toast.error(
+          error instanceof Error ? error.message : "Extraction retry failed",
+        );
+      });
+  };
+
   const deleteEntity = (entity: LibraryEntity) => {
     setDeleteTarget(
       entity.kind === "folder"
@@ -424,9 +436,19 @@ export function LibraryExplorer({
         });
       }}
       onRenameEntity={renameEntity}
+      onRetryExtraction={retryExtraction}
       onUploadFiles={() => fileInputRef.current?.click()}
       title={explorer.library.name}
       uploadDisabled={uploadPercent !== null}
+      headerContent={
+        <SearchBox
+          className="w-full"
+          maxResults={10}
+          placeholder="Search files and pages..."
+          siteId={explorer.site._id}
+          surface="soft"
+        />
+      }
     />
   );
   const previewFile: PreviewFile | null = openFile
@@ -487,7 +509,9 @@ export function LibraryExplorer({
         className={cn(
           "flex min-h-[28rem] min-w-0 flex-col overflow-hidden",
           embedded
-            ? "h-[32rem] rounded-2xl bg-card"
+            ? openFile
+              ? "sticky top-(--app-header-height) z-10 h-[calc(100dvh-var(--app-header-height))] rounded-2xl bg-card"
+              : "h-[32rem] rounded-2xl bg-card"
             : "h-full flex-1 rounded-lg border bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
           className,
         )}

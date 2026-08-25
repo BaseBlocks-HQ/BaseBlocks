@@ -88,7 +88,7 @@ export function FilePreview({
           "fixed z-[100] flex flex-col border bg-background shadow-xl",
           fullscreen
             ? "inset-0"
-            : "inset-x-3 bottom-3 top-3 sm:inset-x-auto sm:bottom-0 sm:right-0 sm:top-0 sm:w-[50vw] sm:min-w-[400px] sm:max-w-[800px] sm:border-l",
+            : "inset-x-3 bottom-3 top-[calc(var(--app-header-height)+0.75rem)] sm:inset-x-auto sm:bottom-0 sm:right-0 sm:top-(--app-header-height) sm:w-[50vw] sm:min-w-[400px] sm:max-w-[800px] sm:border-l",
         );
 
   const preview = (

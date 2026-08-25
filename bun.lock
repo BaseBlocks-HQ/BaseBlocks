@@ -115,6 +115,7 @@
       "name": "@baseblocks/custom-blocks",
       "version": "0.0.0",
       "dependencies": {
+        "@baseblocks/domain": "workspace:*",
         "@baseblocks/ui": "workspace:*",
         "@dnd-kit/collision": "0.5.0",
         "@dnd-kit/dom": "0.5.0",

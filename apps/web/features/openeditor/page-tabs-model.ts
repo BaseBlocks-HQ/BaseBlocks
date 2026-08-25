@@ -11,6 +11,24 @@ export type OpenEditorPageTab = {
   document: OpenEditorDocument;
 };
 
+export const OPEN_EDITOR_PAGE_TAB_QUERY_PARAM = "tab";
+
+export function resolveOpenEditorPageTabId(
+  tabs: readonly OpenEditorPageTab[],
+  requestedId: string | null | undefined,
+): string {
+  return tabs.find(({ id }) => id === requestedId)?.id ?? tabs[0]?.id ?? "";
+}
+
+export function setOpenEditorPageTabQuery(
+  searchParams: URLSearchParams,
+  tabId: string,
+): URLSearchParams {
+  const next = new URLSearchParams(searchParams.toString());
+  next.set(OPEN_EDITOR_PAGE_TAB_QUERY_PARAM, tabId);
+  return next;
+}
+
 type OpenEditorPageTabs = {
   tabs: OpenEditorPageTab[];
 };

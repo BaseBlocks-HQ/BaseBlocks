@@ -7,6 +7,7 @@ import {
   deleteDecisionTree,
   duplicateDecisionTree,
   renameDecisionTree,
+  reorderDecisionTrees,
   updateDecisionDocument,
   type DecisionTree,
   type DecisionTreeValue,
@@ -80,6 +81,20 @@ describe("decision tree collections", () => {
         { id: "child-copy", parentId: "root-copy" },
       ],
     });
+  });
+
+  test("reorders trees by stable IDs", () => {
+    const value: DecisionTreeValue = {
+      tabsMode: "row",
+      trees: [
+        { id: "one", label: "One", nodes: [] },
+        { id: "two", label: "Two", nodes: [] },
+        { id: "three", label: "Three", nodes: [] },
+      ],
+    };
+    expect(
+      reorderDecisionTrees(value, "three", "one").trees.map(({ id }) => id),
+    ).toEqual(["three", "one", "two"]);
   });
 });
 

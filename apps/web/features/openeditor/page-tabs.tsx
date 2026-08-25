@@ -9,6 +9,7 @@ import {
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   createDocument,
   textBlock,
@@ -29,12 +30,23 @@ import {
   OpenEditorSlashMenu,
   OpenEditorTableMenu,
 } from "@openeditor/ui";
-import { useEffect, useRef, useState, type ComponentProps } from "react";
 import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
+import {
+  OPEN_EDITOR_PAGE_TAB_QUERY_PARAM,
   readOpenEditorPageTabs,
+  resolveOpenEditorPageTabId,
+  setOpenEditorPageTabQuery,
   updateOpenEditorPageTabs,
   type OpenEditorPageTab,
 } from "./page-tabs-model";
+import { useOpenEditorDocumentSync } from "./use-open-editor-document-sync";
 
 function TabBar({
   activeId,
@@ -74,7 +86,7 @@ function TabBar({
         <TabsList className="!h-9 max-w-full justify-start gap-0.5 overflow-x-auto rounded-[var(--radius-pill,calc(var(--radius)+2px))] bg-sidebar/95 p-0.5 text-sidebar-foreground backdrop-blur-md">
           {tabs.map((tab) => (
             <div
-              className="group/tab flex h-8 shrink-0 items-center rounded-[var(--radius-pill,var(--radius))] transition-colors hover:bg-accent/70 has-[button[data-state=active]]:bg-accent"
+              className="group/tab flex h-8 shrink-0 items-center rounded-[var(--radius-pill,var(--radius))] transition-[background-color,box-shadow] hover:bg-accent/70 has-[button[data-state=active]]:bg-accent has-[button[data-state=active]]:shadow-sm"
               key={tab.id}
             >
               {renamingId === tab.id ? (
@@ -94,13 +106,13 @@ function TabBar({
               ) : (
                 <>
                   <TabsTrigger
-                    className="h-8 rounded-[var(--radius-pill,var(--radius))] border-transparent bg-transparent px-3 text-sidebar-foreground/60 shadow-none after:hidden hover:text-sidebar-foreground data-[state=active]:border-transparent data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-transparent dark:data-[state=active]:text-accent-foreground"
+                    className="h-8 rounded-[var(--radius-pill,var(--radius))] border-transparent bg-transparent px-3 text-sidebar-foreground/60 !shadow-none after:hidden hover:bg-transparent hover:text-sidebar-foreground data-[state=active]:border-transparent data-[state=active]:bg-transparent data-[state=active]:text-accent-foreground data-[state=active]:!bg-transparent data-[state=active]:!shadow-none dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-transparent dark:data-[state=active]:text-accent-foreground"
                     value={tab.id}
                   >
                     {tab.label}
                   </TabsTrigger>
                   {editable ? (
-                    <div className="mr-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-[width,opacity] duration-150 group-hover/tab:w-12 group-hover/tab:opacity-100 group-has-[:focus-visible]/tab:w-12 group-has-[:focus-visible]/tab:opacity-100">
+                    <div className="ml-0 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-[width,margin-left,opacity] duration-150 group-hover/tab:ml-1 group-hover/tab:w-12 group-hover/tab:opacity-100 group-has-[:focus-visible]/tab:ml-1 group-has-[:focus-visible]/tab:w-12 group-has-[:focus-visible]/tab:opacity-100">
                       <Button
                         aria-label={`Rename ${tab.label}`}
                         className="rounded-[var(--radius-pill,max(0px,calc(var(--radius)-4px)))] hover:bg-transparent hover:text-foreground"
@@ -183,22 +195,11 @@ function ActiveTabEditor({
     onChange: handleChange,
     customBlocks,
   });
-  useEffect(() => {
-    if (!controller.ready) return;
-    if (initialDocument === locallyEmittedDocumentRef.current) {
-      locallyEmittedDocumentRef.current = undefined;
-      return;
-    }
-    let active = true;
-    const frame = requestAnimationFrame(() => {
-      if (!active || !controller.ready) return;
-      controller.setContent(initialDocument, { emitChange: false });
-    });
-    return () => {
-      active = false;
-      cancelAnimationFrame(frame);
-    };
-  }, [controller, controller.ready, initialDocument]);
+  useOpenEditorDocumentSync({
+    controller,
+    document: initialDocument,
+    locallyEmittedDocumentRef,
+  });
   return (
     <>
       <OpenEditorContent controller={controller} />
@@ -229,11 +230,45 @@ export function OpenEditorTabbedPage({
   viewerCustomBlocks?: ComponentProps<typeof OpenEditorViewer>["customBlocks"];
   onChange?: (document: OpenEditorDocument) => void;
 }) {
-  const value = readOpenEditorPageTabs(document);
-  const [activeId, setActiveId] = useState(value?.tabs[0]?.id ?? "");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const value = useMemo(() => readOpenEditorPageTabs(document), [document]);
+  const tabs = value?.tabs ?? [];
+  const requestedTabId = searchParams.get(OPEN_EDITOR_PAGE_TAB_QUERY_PARAM);
+  const [activeId, setActiveId] = useState(() =>
+    resolveOpenEditorPageTabId(tabs, requestedTabId),
+  );
+  const replaceTabInUrl = useCallback(
+    (id: string) => {
+      if (!pathname) return;
+      const next = setOpenEditorPageTabQuery(
+        new URLSearchParams(searchParams.toString()),
+        id,
+      );
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
+  useEffect(() => {
+    const nextId = resolveOpenEditorPageTabId(tabs, requestedTabId);
+    setActiveId(nextId);
+    if (requestedTabId && nextId && requestedTabId !== nextId) {
+      replaceTabInUrl(nextId);
+    }
+  }, [requestedTabId, replaceTabInUrl, tabs]);
   if (!value) return null;
-  const active = value.tabs.find((tab) => tab.id === activeId) ?? value.tabs[0];
+  const active = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
   if (!active) return null;
+
+  const handleActiveIdChange = (id: string) => {
+    if (!tabs.some((tab) => tab.id === id)) return;
+    setActiveId(id);
+    replaceTabInUrl(id);
+  };
 
   const updateTabs = (tabs: OpenEditorPageTab[]) => {
     const nextDocument = updateOpenEditorPageTabs(document, { tabs });
@@ -251,16 +286,19 @@ export function OpenEditorTabbedPage({
       label: `Tab ${value.tabs.length + 1}`,
       document: createDocument([textBlock("paragraph", "")]),
     };
-    updateTabs([...value.tabs, tab]);
+    updateTabs([...tabs, tab]);
     setActiveId(tab.id);
+    replaceTabInUrl(tab.id);
   };
   const removeTab = (id: string) => {
-    if (value.tabs.length <= 1) return;
-    const index = value.tabs.findIndex((tab) => tab.id === id);
-    const tabs = value.tabs.filter((tab) => tab.id !== id);
+    if (tabs.length <= 1) return;
+    const index = tabs.findIndex((tab) => tab.id === id);
+    const nextTabs = tabs.filter((tab) => tab.id !== id);
     if (active.id === id)
-      setActiveId(tabs[Math.min(index, tabs.length - 1)]?.id ?? "");
-    updateTabs(tabs);
+      handleActiveIdChange(
+        nextTabs[Math.min(index, nextTabs.length - 1)]?.id ?? "",
+      );
+    updateTabs(nextTabs);
   };
 
   return (
@@ -268,15 +306,15 @@ export function OpenEditorTabbedPage({
       <TabBar
         activeId={active.id}
         editable={editable}
-        onActiveIdChange={setActiveId}
+        onActiveIdChange={handleActiveIdChange}
         onAdd={addTab}
         onRemove={removeTab}
         onRename={(id, label) =>
           updateTabs(
-            value.tabs.map((tab) => (tab.id === id ? { ...tab, label } : tab)),
+            tabs.map((tab) => (tab.id === id ? { ...tab, label } : tab)),
           )
         }
-        tabs={value.tabs}
+        tabs={tabs}
       />
       {editable ? (
         <ActiveTabEditor

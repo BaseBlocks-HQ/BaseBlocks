@@ -3,10 +3,15 @@ export interface DirectoryRow {
   cells: Record<string, string>;
 }
 
+export interface DirectoryColumn {
+  id: string;
+  name: string;
+}
+
 export interface Directory {
   id: string;
   label: string;
-  columnIds: string[];
+  columns: DirectoryColumn[];
   rows: DirectoryRow[];
   pageSize: number | null;
 }

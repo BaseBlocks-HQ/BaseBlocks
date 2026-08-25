@@ -37,6 +37,43 @@ async function readReleasePageContent(
   return emptyOpenEditorDocument();
 }
 
+function getImageReferenceIds(
+  references: ReturnType<typeof extractOpenEditorReferences>,
+): string[] {
+  return [
+    ...new Set([...references.imageIds, ...references.customAssetIds]),
+  ].sort();
+}
+
+async function readReleaseImageAssets(
+  ctx: QueryCtx,
+  releaseId: Id<"siteReleases">,
+  revisionFileIds: readonly Id<"files">[],
+  imageReferenceIds: readonly string[],
+): Promise<Doc<"releaseFiles">[]> {
+  const revisionFileIdsByString = new Map(
+    revisionFileIds.map((fileId) => [String(fileId), fileId]),
+  );
+  return (
+    await Promise.all(
+      imageReferenceIds.map(async (imageId) => {
+        const fileId = revisionFileIdsByString.get(imageId);
+        if (!fileId) return null;
+        const asset = await ctx.db
+          .query("releaseFiles")
+          .withIndex("by_release_file", (q) =>
+            q.eq("releaseId", releaseId).eq("fileId", fileId),
+          )
+          .unique();
+        return asset?.kind === "siteAsset" &&
+          asset.contentType.toLowerCase().startsWith("image/")
+          ? asset
+          : null;
+      }),
+    )
+  ).filter((asset): asset is Doc<"releaseFiles"> => asset !== null);
+}
+
 async function getPublishedSiteBySlug(
   ctx: QueryCtx,
   organizationSlug: string,
@@ -161,30 +198,13 @@ export const getPage = query({
           return id ? [id] : [];
         })
         .sort();
-    const revisionFileIds = new Map(
-      (revision?.fileIds ?? []).map((fileId) => [String(fileId), fileId]),
-    );
     const references = extractOpenEditorReferences(content);
-    const imageIds = (
-      await Promise.all(
-        Array.from(references.fileIds)
-          .sort()
-          .map(async (imageId) => {
-            const fileId = revisionFileIds.get(imageId);
-            if (!fileId) return null;
-            const asset = await ctx.db
-              .query("releaseFiles")
-              .withIndex("by_release_file", (q) =>
-                q.eq("releaseId", releaseId).eq("fileId", fileId),
-              )
-              .unique();
-            return asset?.kind === "siteAsset" &&
-              asset.contentType.toLowerCase().startsWith("image/")
-              ? imageId
-              : null;
-          }),
-      )
-    ).filter((imageId): imageId is string => imageId !== null);
+    const imageAssets = await readReleaseImageAssets(
+      ctx,
+      releaseId,
+      revision?.fileIds ?? [],
+      getImageReferenceIds(references),
+    );
 
     return {
       page: {
@@ -203,7 +223,7 @@ export const getPage = query({
         updatedAt: resolved.page.updatedAt,
       },
       content,
-      imageIds,
+      imageIds: imageAssets.map((asset) => String(asset.fileId)),
       libraryIds,
       canonicalPath: canonicalPagePath(context.release, resolved),
       updatedAt: resolved.page.updatedAt,
@@ -403,46 +423,20 @@ export const getPageExport = query({
     const revision = page.contentRevisionId
       ? await ctx.db.get(page.contentRevisionId)
       : null;
-    const imageIds = [...extractOpenEditorReferences(content).imageIds];
-    if (imageIds.length > MAX_PAGE_EXPORT_ASSETS) {
+    const imageReferenceIds = getImageReferenceIds(
+      extractOpenEditorReferences(content),
+    );
+    if (imageReferenceIds.length > MAX_PAGE_EXPORT_ASSETS) {
       throw new Error(
         `Page export exceeds the ${MAX_PAGE_EXPORT_ASSETS}-image limit`,
       );
     }
-    const revisionFileIds = new Set(revision?.fileIds ?? []);
-    const releaseImageIds = imageIds.filter((fileId) =>
-      revisionFileIds.has(fileId as Id<"files">),
+    const assets = await readReleaseImageAssets(
+      ctx,
+      site.liveReleaseId,
+      revision?.fileIds ?? [],
+      imageReferenceIds,
     );
-    const assets = revision
-      ? (
-          await Promise.all(
-            releaseImageIds.map((fileId) =>
-              ctx.db
-                .query("releaseFiles")
-                .withIndex("by_release_file", (q) =>
-                  q
-                    .eq("releaseId", site.liveReleaseId!)
-                    .eq("fileId", fileId as Id<"files">),
-                )
-                .unique(),
-            ),
-          )
-        ).flatMap((asset) =>
-          asset?.kind === "siteAsset" &&
-          asset.contentType.toLowerCase().startsWith("image/")
-            ? [
-                {
-                  fileId: asset.fileId,
-                  objectKey: asset.objectKey,
-                  filename: asset.filename,
-                  contentType: asset.contentType,
-                  size: asset.size,
-                  checksum: asset.checksum,
-                },
-              ]
-            : [],
-        )
-      : [];
     return {
       page: {
         _id: page.pageId,
@@ -452,7 +446,14 @@ export const getPageExport = query({
         parentId: page.parentId,
       },
       content,
-      assets,
+      assets: assets.map((asset) => ({
+        fileId: asset.fileId,
+        objectKey: asset.objectKey,
+        filename: asset.filename,
+        contentType: asset.contentType,
+        size: asset.size,
+        checksum: asset.checksum,
+      })),
     };
   },
 });

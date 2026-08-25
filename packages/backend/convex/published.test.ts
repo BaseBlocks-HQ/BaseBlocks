@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getPage } from "./published";
+import { getPage, getPageExport } from "./published";
 
 type RegisteredFunction = {
   _handler: (ctx: unknown, args: unknown) => Promise<unknown>;
@@ -127,6 +127,7 @@ describe("published page images", () => {
     const records = new Map<string, unknown>([
       [release._id, release],
       [site._id, site],
+      [release.defaultPageId, { _id: release.defaultPageId, siteId: site._id }],
       [revision._id, revision],
       [payload._id, payload],
     ]);
@@ -167,6 +168,15 @@ describe("published page images", () => {
     })) as { imageIds?: string[] };
 
     expect(result.imageIds).toEqual([
+      "custom-image-released",
+      "image-released",
+    ]);
+
+    const exportResult = (await invoke(getPageExport, ctx, {
+      pageId: release.defaultPageId,
+    })) as { assets?: { fileId: string }[] };
+
+    expect(exportResult.assets?.map((asset) => String(asset.fileId))).toEqual([
       "custom-image-released",
       "image-released",
     ]);

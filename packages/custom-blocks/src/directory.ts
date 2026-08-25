@@ -1,19 +1,11 @@
-export interface DirectoryRow {
-  id: string;
-  cells: Record<string, string>;
-}
+import type {
+  Directory,
+  DirectoryColumn,
+  DirectoryContent,
+  DirectoryRow,
+} from "@baseblocks/domain";
 
-export interface Directory {
-  id: string;
-  label: string;
-  columnIds: string[];
-  rows: DirectoryRow[];
-  pageSize: number | null;
-}
-
-export interface DirectoryContent {
-  directories: Directory[];
-}
+export type { Directory, DirectoryColumn, DirectoryContent, DirectoryRow };
 
 const object = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value))
@@ -35,16 +27,23 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
     directoryIds.add(input.id);
     if (typeof input.label !== "string")
       throw new Error("Each directory needs a label.");
-    if (!Array.isArray(input.columnIds) || input.columnIds.length < 1)
+    if (!Array.isArray(input.columns) || input.columns.length < 1)
       throw new Error("Each directory needs at least one column.");
-    const columnIds = input.columnIds.map((id) => {
-      if (typeof id !== "string" || !id)
+    const columns = input.columns.map((value, columnIndex) => {
+      const column = object(value);
+      if (typeof column.id !== "string" || !column.id)
         throw new Error("Each directory column needs an ID.");
-      return id;
+      if (typeof column.name !== "string")
+        throw new Error(`Directory column ${columnIndex + 1} needs a name.`);
+      if (column.name.length > 200)
+        throw new Error(
+          "Directory column names must be 200 characters or less.",
+        );
+      return { id: column.id, name: column.name.trim() };
     });
-    if (new Set(columnIds).size !== columnIds.length)
+    if (new Set(columns.map(({ id }) => id)).size !== columns.length)
       throw new Error("Directory column IDs must be unique.");
-    const columnIdSet = new Set(columnIds);
+    const columnIdSet = new Set(columns.map(({ id }) => id));
     if (!Array.isArray(input.rows) || input.rows.length < 1)
       throw new Error("Each directory needs at least one row.");
     const rowIds = new Set<string>();
@@ -57,12 +56,12 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
       rowIds.add(row.id);
       const rawCells = object(row.cells);
       if (
-        Object.keys(rawCells).length !== columnIds.length ||
+        Object.keys(rawCells).length !== columns.length ||
         Object.keys(rawCells).some((id) => !columnIdSet.has(id))
       )
         throw new Error("Directory cells must match the directory columns.");
       const cells = Object.fromEntries(
-        columnIds.map((id) => {
+        columns.map(({ id }) => {
           const cell = rawCells[id];
           if (typeof cell !== "string")
             throw new Error("Directory cell values must be strings.");
@@ -82,7 +81,7 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
     return {
       id: input.id,
       label: input.label,
-      columnIds,
+      columns,
       rows,
       pageSize: pageSize === null ? null : Number(pageSize),
     };
@@ -90,15 +89,40 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
   return { directories };
 }
 
+/**
+ * Convert the persisted directory shape from version 1 to version 2.
+ * Version 1 stored only column IDs, so the migration preserves the existing
+ * display that the viewer generated for those columns.
+ */
+export function migrateDirectoryContentV1(value: unknown): DirectoryContent {
+  const root = object(value);
+  if (!Array.isArray(root.directories))
+    throw new Error("Directory data must contain directories.");
+  const directories = root.directories.map((value) => {
+    const input = object(value);
+    if (Array.isArray(input.columns)) return input;
+    if (!Array.isArray(input.columnIds))
+      throw new Error("Directory version 1 data must contain column IDs.");
+    const columns = input.columnIds.map((id, index) => {
+      if (typeof id !== "string" || !id)
+        throw new Error("Each directory column needs an ID.");
+      return { id, name: `Column ${index + 1}` };
+    });
+    const { columnIds: _columnIds, ...rest } = input;
+    return { ...rest, columns };
+  });
+  return parseDirectoryContent({ directories });
+}
+
 export type DirectoryIdFactory = (kind: "column" | "row") => string;
 
 export function createDirectoryRow(
-  columnIds: readonly string[],
+  columns: readonly DirectoryColumn[],
   rowId: string,
 ): DirectoryRow {
   return {
     id: rowId,
-    cells: Object.fromEntries(columnIds.map((id) => [id, ""])),
+    cells: Object.fromEntries(columns.map(({ id }) => [id, ""])),
   };
 }
 
@@ -123,7 +147,7 @@ export function insertDirectoryRow(
     rows: insertAt(
       directory.rows,
       target,
-      createDirectoryRow(directory.columnIds, createId("row")),
+      createDirectoryRow(directory.columns, createId("row")),
       after,
     ),
   };
@@ -135,15 +159,16 @@ export function insertDirectoryColumn(
   after: boolean,
   createId: DirectoryIdFactory,
 ): Directory {
-  const columnId = createId("column");
-  const columnIds = insertAt(directory.columnIds, targetId, columnId, after);
-  if (columnIds === directory.columnIds) return directory;
+  const column = { id: createId("column"), name: "New column" };
+  const target = directory.columns.find(({ id }) => id === targetId);
+  if (!target) return directory;
+  const columns = insertAt(directory.columns, target, column, after);
   return {
     ...directory,
-    columnIds,
+    columns,
     rows: directory.rows.map((row) => ({
       ...row,
-      cells: { ...row.cells, [columnId]: "" },
+      cells: { ...row.cells, [column.id]: "" },
     })),
   };
 }
@@ -154,11 +179,29 @@ export function removeDirectoryColumn(
 ): Directory {
   return {
     ...directory,
-    columnIds: directory.columnIds.filter((id) => id !== columnId),
+    columns: directory.columns.filter(({ id }) => id !== columnId),
     rows: directory.rows.map(({ cells, ...row }) => {
       const { [columnId]: _, ...nextCells } = cells;
       return { ...row, cells: nextCells };
     }),
+  };
+}
+
+export function deleteDirectoryColumns(
+  directory: Directory,
+  columnIds: readonly string[],
+): Directory {
+  const selected = new Set(columnIds);
+  const remaining = directory.columns.filter(({ id }) => !selected.has(id));
+  if (remaining.length === directory.columns.length) return directory;
+  const columns = remaining.length > 0 ? remaining : [directory.columns[0]!];
+  return {
+    ...directory,
+    columns,
+    rows: directory.rows.map(({ cells, ...row }) => ({
+      ...row,
+      cells: Object.fromEntries(columns.map(({ id }) => [id, cells[id] ?? ""])),
+    })),
   };
 }
 
@@ -196,11 +239,17 @@ export function duplicateDirectoryColumn(
   columnId: string,
   createId: DirectoryIdFactory,
 ): Directory {
-  if (!directory.columnIds.includes(columnId)) return directory;
+  const source = directory.columns.find(({ id }) => id === columnId);
+  if (!source) return directory;
   const nextId = createId("column");
   return {
     ...directory,
-    columnIds: insertAt(directory.columnIds, columnId, nextId, true),
+    columns: insertAt(
+      directory.columns,
+      source,
+      { ...source, id: nextId, name: `${source.name} copy` },
+      true,
+    ),
     rows: directory.rows.map((row) => ({
       ...row,
       cells: { ...row.cells, [nextId]: row.cells[columnId] ?? "" },
@@ -214,18 +263,21 @@ export function pasteDirectoryRow(
   values: readonly string[],
   createId: DirectoryIdFactory,
 ): Directory {
-  const missing = Math.max(0, values.length - directory.columnIds.length);
-  const columnIds = [
-    ...directory.columnIds,
-    ...Array.from({ length: missing }, () => createId("column")),
+  const missing = Math.max(0, values.length - directory.columns.length);
+  const columns = [
+    ...directory.columns,
+    ...Array.from({ length: missing }, () => ({
+      id: createId("column"),
+      name: "New column",
+    })),
   ];
   return {
     ...directory,
-    columnIds,
+    columns,
     rows: directory.rows.map((row) => ({
       ...row,
       cells: Object.fromEntries(
-        columnIds.map((id, index) => [
+        columns.map(({ id }, index) => [
           id,
           row.id === rowId ? (values[index] ?? "") : (row.cells[id] ?? ""),
         ]),
@@ -244,7 +296,7 @@ export function pasteDirectoryColumn(
   const rows = [
     ...directory.rows,
     ...Array.from({ length: missing }, () =>
-      createDirectoryRow(directory.columnIds, createId("row")),
+      createDirectoryRow(directory.columns, createId("row")),
     ),
   ];
   return {
@@ -265,9 +317,22 @@ export function createDirectory(
   return {
     id,
     label,
-    columnIds: [columnId],
+    columns: [{ id: columnId, name: "Name" }],
     rows: [{ id: rowId, cells: { [columnId]: "" } }],
     pageSize: null,
+  };
+}
+
+export function renameDirectoryColumn(
+  directory: Directory,
+  columnId: string,
+  name: string,
+): Directory {
+  return {
+    ...directory,
+    columns: directory.columns.map((column) =>
+      column.id === columnId ? { ...column, name: name.trim() } : column,
+    ),
   };
 }
 
@@ -311,18 +376,21 @@ export function duplicateDirectory(
 ): { content: DirectoryContent; activeId: string } {
   const source = content.directories.find(({ id }) => id === directoryId);
   if (!source) return { content, activeId: directoryId };
-  const columnIds = source.columnIds.map(() => createId("column"));
+  const columns = source.columns.map((column) => ({
+    ...column,
+    id: createId("column"),
+  }));
   const directory: Directory = {
     ...source,
     id: createId("directory"),
     label: `${source.label} copy`,
-    columnIds,
+    columns,
     rows: source.rows.map((row) => ({
       id: createId("row"),
       cells: Object.fromEntries(
-        columnIds.map((id, index) => [
+        columns.map(({ id }, index) => [
           id,
-          row.cells[source.columnIds[index] ?? ""] ?? "",
+          row.cells[source.columns[index]?.id ?? ""] ?? "",
         ]),
       ),
     })),
@@ -362,6 +430,16 @@ export function renameDirectory(
   };
 }
 
+export function reorderDirectories(
+  content: DirectoryContent,
+  sourceId: string,
+  targetId: string,
+): DirectoryContent {
+  return {
+    directories: moveDirectoryItem(content.directories, sourceId, targetId),
+  };
+}
+
 export function moveDirectoryItem<T extends string | { id: string }>(
   items: T[],
   sourceId: string,
@@ -378,12 +456,23 @@ export function moveDirectoryItem<T extends string | { id: string }>(
   return next;
 }
 
+export function filterDirectoryRows(
+  directory: Directory,
+  query: string,
+): DirectoryRow[] {
+  const normalized = query.trim().toLocaleLowerCase();
+  if (!normalized) return directory.rows;
+  return directory.rows.filter((row) =>
+    directory.columns.some(({ id }) =>
+      (row.cells[id] ?? "").toLocaleLowerCase().includes(normalized),
+    ),
+  );
+}
+
 export function directoryToTsv(directory: Directory): string {
   return directory.rows
     .map((row) =>
-      directory.columnIds
-        .map((columnId) => row.cells[columnId] ?? "")
-        .join("\t"),
+      directory.columns.map(({ id }) => row.cells[id] ?? "").join("\t"),
     )
     .join("\n");
 }

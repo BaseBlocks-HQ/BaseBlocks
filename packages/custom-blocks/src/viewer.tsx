@@ -14,6 +14,13 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@baseblocks/ui/select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { OpenEditorCustomBlockViewerHost } from "@openeditor/custom-block/viewer";
 import type { QuickLink } from "./quick-links";
@@ -25,6 +32,7 @@ import {
 import { DecisionTreeState } from "./decision-tree-state";
 import { QuickLinkAssetLoader } from "./quick-link-asset-loader";
 import { destinationLabel } from "./quick-links";
+import { filterDirectoryRows } from "./directory";
 import { BlockShell, selectClassName } from "./ui";
 
 export const directoryViewer = defineOpenEditorCustomBlockViewer({
@@ -36,66 +44,66 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
     const active =
       data.directories.find(({ id }) => id === activeId) ?? data.directories[0];
     if (!active) return null;
-    const filtered = active.rows.filter((row) =>
-      Object.values(row.cells).some((cell) =>
-        cell.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
-      ),
-    );
+    const filtered = filterDirectoryRows(active, query);
     const pageSize = active.pageSize ?? Math.max(1, filtered.length);
     const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
     const visible = filtered.slice(page * pageSize, (page + 1) * pageSize);
     return (
       <BlockShell label="Directory">
         {data.directories.length > 1 ? (
-          <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <span>Directory</span>
-            <select
-              className={`${selectClassName} max-w-56`}
-              onChange={(event) => {
-                setActiveId(event.target.value);
-                setPage(0);
-              }}
-              value={active.id}
+          <Select
+            onValueChange={(value) => {
+              setActiveId(value);
+              setPage(0);
+            }}
+            value={active.id}
+          >
+            <SelectTrigger
+              aria-label="Select directory"
+              className="max-w-56 rounded-xl"
             >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start" className="rounded-xl">
               {data.directories.map((directory) => (
-                <option key={directory.id} value={directory.id}>
+                <SelectItem key={directory.id} value={directory.id}>
                   {directory.label}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-          </label>
+            </SelectContent>
+          </Select>
         ) : null}
-        {active.rows.length > 5 ? (
-          <div className="relative max-w-sm">
-            <HugeiconsIcon
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              icon={Search01Icon}
-            />
-            <Input
-              aria-label="Search directory"
-              className="rounded-xl pl-10 shadow-none"
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(0);
-              }}
-              placeholder="Search"
-              type="search"
-              value={query}
-            />
-          </div>
-        ) : null}
+        <div className="relative w-full rounded-2xl">
+          <HugeiconsIcon
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            icon={Search01Icon}
+          />
+          <Input
+            aria-label="Search directory"
+            className="rounded-2xl border-0 bg-card pl-10 shadow-none dark:bg-card"
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setPage(0);
+            }}
+            placeholder="Search directory"
+            type="search"
+            value={query}
+          />
+        </div>
         <div className="overflow-x-auto rounded-xl border bg-card">
           <table className="w-full table-fixed text-sm">
             <caption className="sr-only">{active.label}</caption>
             <thead>
               <tr className="border-b border-border/60 bg-muted/30">
-                {active.columnIds.map((columnId, index) => (
+                {active.columns.map((column) => (
                   <th
                     className="border-l border-border/60 px-3 py-2 text-left text-xs font-medium text-muted-foreground first:border-l-0"
-                    key={columnId}
+                    key={column.id}
                     scope="col"
-                  >{`Column ${index + 1}`}</th>
+                  >
+                    {column.name}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -105,12 +113,12 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
                   className="border-b border-border/50 last:border-0"
                   key={row.id}
                 >
-                  {active.columnIds.map((columnId) => (
+                  {active.columns.map(({ id }) => (
                     <td
                       className="whitespace-normal border-l border-border/60 px-3 py-2 align-top first:border-l-0 [overflow-wrap:anywhere]"
-                      key={columnId}
+                      key={id}
                     >
-                      {row.cells[columnId] ?? ""}
+                      {row.cells[id] ?? ""}
                     </td>
                   ))}
                 </tr>

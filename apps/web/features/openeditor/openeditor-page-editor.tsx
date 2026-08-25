@@ -46,6 +46,7 @@ import { createBaseBlocksCustomBlockViewerConfiguration } from "./custom-block-v
 import { useBaseBlocksImageRuntime } from "./image-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
+import { useOpenEditorDocumentSync } from "./use-open-editor-document-sync";
 import { useVersionedPageDocument } from "./use-versioned-page-document";
 import type { VersionedDocument } from "./versioned-document";
 import {
@@ -306,22 +307,11 @@ function OpenEditorDocumentEditor({
     customBlocks: customBlocks.editor,
     onChange: handleChange,
   });
-  useEffect(() => {
-    if (!controller.ready) return;
-    if (document === locallyEmittedDocumentRef.current) {
-      locallyEmittedDocumentRef.current = undefined;
-      return;
-    }
-    let active = true;
-    const frame = requestAnimationFrame(() => {
-      if (!active || !controller.ready) return;
-      controller.setContent(document, { emitChange: false });
-    });
-    return () => {
-      active = false;
-      cancelAnimationFrame(frame);
-    };
-  }, [controller, controller.ready, document]);
+  useOpenEditorDocumentSync({
+    controller,
+    document,
+    locallyEmittedDocumentRef,
+  });
 
   return (
     <OpenEditorThemeProvider

@@ -122,6 +122,20 @@ export function renameDecisionTree(
   };
 }
 
+export function reorderDecisionTrees(
+  value: DecisionTreeValue,
+  sourceId: string,
+  targetId: string,
+): DecisionTreeValue {
+  const from = value.trees.findIndex(({ id }) => id === sourceId);
+  const to = value.trees.findIndex(({ id }) => id === targetId);
+  if (from < 0 || to < 0 || from === to) return value;
+  const trees = [...value.trees];
+  const [tree] = trees.splice(from, 1);
+  if (tree) trees.splice(to, 0, tree);
+  return { ...value, trees };
+}
+
 export function duplicateDecisionTree(
   value: DecisionTreeValue,
   treeId: string,

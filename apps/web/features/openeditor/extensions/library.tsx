@@ -195,7 +195,7 @@ function LibraryEditor({
 export const libraryEditor = defineOpenEditorCustomBlockEditor({
   block: libraryBlock,
   render: ({ data, updateData }) => (
-    <section className="not-prose my-4">
+    <section className="not-prose my-4 scroll-mt-(--app-header-height)">
       <LibraryEditor
         onChange={({ allowDownloads, libraryId }) =>
           updateData({

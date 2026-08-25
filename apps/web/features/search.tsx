@@ -143,6 +143,7 @@ export function SearchBox({
         )}
       >
         <HugeiconsIcon
+          aria-hidden
           icon={Search01Icon}
           className={cn(
             "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none",
@@ -150,7 +151,7 @@ export function SearchBox({
           )}
         />
         <Input
-          type="text"
+          type="search"
           placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -282,6 +283,7 @@ export function SearchBox({
                               variant="ghost"
                             >
                               <a
+                                aria-label={`Download ${result.title}`}
                                 download={result.title}
                                 href={result.downloadUrl}
                                 rel="noopener noreferrer"

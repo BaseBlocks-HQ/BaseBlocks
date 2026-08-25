@@ -47,6 +47,7 @@ export {
 } from "./sites/site-theme";
 
 export type {
+  DirectoryColumn,
   DirectoryRow,
   Directory,
   DirectoryContent,

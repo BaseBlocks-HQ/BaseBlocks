@@ -16,7 +16,7 @@ import type {
   OpenEditorImageRuntime,
   OpenEditorPageRuntime,
 } from "@openeditor/core";
-import { useEffect, useRef, type ComponentProps } from "react";
+import { useRef, type ComponentProps } from "react";
 import { libraryEditor } from "./extensions/library";
 import { searchEditor } from "./extensions/search";
 
@@ -24,6 +24,7 @@ import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 import { createBaseBlocksCustomBlockHost } from "./custom-block-host";
 import { createOpenEditorIcon } from "./slash-menu";
 import { baseBlocksCustomBlockMenuExtension } from "./custom-block-menu";
+import { useOpenEditorDocumentSync } from "./use-open-editor-document-sync";
 export { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 
 const customBlockSlashMenuIcons = {
@@ -114,7 +115,13 @@ function DocumentEditorSurface({
   >;
   runtimes: BaseBlocksNestedRuntimes;
 }) {
-  const emitted = useRef<OpenEditorDocument | undefined>(undefined);
+  const locallyEmittedDocumentRef = useRef<OpenEditorDocument | undefined>(
+    undefined,
+  );
+  const handleChange = (nextDocument: OpenEditorDocument) => {
+    locallyEmittedDocumentRef.current = nextDocument;
+    onChange(nextDocument);
+  };
   const controller = useOpenEditorController({
     initialDocument: value,
     editable: true,
@@ -122,15 +129,13 @@ function DocumentEditorSurface({
     attachmentRuntime: runtimes.attachmentRuntime,
     imageRuntime: runtimes.imageRuntime,
     pageRuntime: runtimes.pageRuntime,
-    onChange: (document) => {
-      emitted.current = document;
-      onChange(document);
-    },
+    onChange: handleChange,
   });
-  useEffect(() => {
-    if (!controller.ready || value === emitted.current) return;
-    controller.setContent(value, { emitChange: false });
-  }, [controller, controller.ready, value]);
+  useOpenEditorDocumentSync({
+    controller,
+    document: value,
+    locallyEmittedDocumentRef,
+  });
   return (
     <section aria-label={ariaLabel}>
       <OpenEditorContent controller={controller} />

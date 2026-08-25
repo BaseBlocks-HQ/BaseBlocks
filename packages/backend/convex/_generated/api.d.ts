@@ -18,6 +18,7 @@ import type * as billingModel from "../billingModel.js";
 import type * as billingRetention from "../billingRetention.js";
 import type * as billing_webhook_model from "../billing_webhook_model.js";
 import type * as billing_webhooks from "../billing_webhooks.js";
+import type * as contentMigrations from "../contentMigrations.js";
 import type * as crons from "../crons.js";
 import type * as deploymentPreflight from "../deploymentPreflight.js";
 import type * as draftRestore from "../draftRestore.js";
@@ -107,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   billingRetention: typeof billingRetention;
   billing_webhook_model: typeof billing_webhook_model;
   billing_webhooks: typeof billing_webhooks;
+  contentMigrations: typeof contentMigrations;
   crons: typeof crons;
   deploymentPreflight: typeof deploymentPreflight;
   draftRestore: typeof draftRestore;

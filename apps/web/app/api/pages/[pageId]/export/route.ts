@@ -1,7 +1,12 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { getFiles } from "@/lib/files/server";
-import { assertStoredChecksum, type PageExportAsset } from "./page-export";
+import {
+  assertStoredChecksum,
+  detectRasterMediaType,
+  isFatalExportWarning,
+  type PageExportAsset,
+} from "./page-export";
 import {
   iterableSource,
   readSource,
@@ -15,18 +20,17 @@ import {
   exportOpenEditorDocument,
   openEditorExportFormats,
 } from "@openeditor/exporters/export";
+import type { ProseMirrorNode } from "@openeditor/core";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 const MAX_EXPORT_ASSET_BYTES = 10 * 1024 * 1024;
 const EXPORT_ASSET_DEADLINE_MS = 45_000;
-const ASSET_FAILURE_CODES = new Set([
-  "asset_rejected",
-  "asset_unavailable",
-  "unsafe_url",
-]);
-
+type ExportAssetContext = {
+  path: readonly number[];
+  signal?: AbortSignal;
+};
 function expectedSha256(checksum: string | undefined): string | undefined {
   return checksum && /^[a-f\d]{64}$/iu.test(checksum)
     ? checksum.toLowerCase()
@@ -76,7 +80,7 @@ export async function GET(
     const assetsById = new Map<string, PageExportAsset>(
       result.assets.map((asset: PageExportAsset) => [asset.fileId, asset]),
     );
-    const assetResolver = createOpenEditorImageAssetResolver({
+    const strictAssetResolver = createOpenEditorImageAssetResolver({
       lookup: (imageId) => assetsById.get(imageId) ?? null,
       load: async (asset, { signal }) => {
         const stored = await getFiles().download(asset.objectKey, {
@@ -106,14 +110,29 @@ export async function GET(
         return {
           data,
           fileName: asset.filename,
-          mediaType: asset.contentType,
+          mediaType: detectRasterMediaType(data) ?? asset.contentType,
         };
       },
     });
+    const assetResolver = async (
+      node: ProseMirrorNode,
+      context: ExportAssetContext,
+    ) => {
+      try {
+        return await strictAssetResolver(node, context);
+      } catch (error) {
+        if (context.signal?.aborted) throw error;
+        return null;
+      }
+    };
     const exportDocument =
       format === "json"
         ? result.content
-        : projectBaseBlocksDocumentForPortableExport(result.content);
+        : projectBaseBlocksDocumentForPortableExport(result.content, {
+            imageAssetIds: new Set(
+              result.assets.map((asset: PageExportAsset) => asset.fileId),
+            ),
+          });
     const exported = await exportOpenEditorDocument(exportDocument, {
       format,
       includeTitle: true,
@@ -123,7 +142,7 @@ export async function GET(
       customBlocks: baseBlocksBlockRegistry,
     });
     if (
-      exported.warnings.some((warning) => ASSET_FAILURE_CODES.has(warning.code))
+      exported.warnings.some((warning) => isFatalExportWarning(warning.code))
     ) {
       return NextResponse.json(
         { error: "One or more page images could not be exported safely." },

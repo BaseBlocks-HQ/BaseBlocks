@@ -1,14 +1,7 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ArrowRight01Icon,
-  File01Icon,
-  LanguageCircleIcon,
-  MoonIcon,
-  Sun01Icon,
-  Tick01Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
@@ -20,7 +13,6 @@ import {
 import { useTreeDisclosure } from "@/components/tree/use-tree-disclosure";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
-import type { Locale } from "@baseblocks/i18n";
 import {
   DEFAULT_SITE_SIDEBAR_VARIANT,
   indexTree,
@@ -29,14 +21,7 @@ import {
   type TreeNode,
 } from "@baseblocks/domain";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
-import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -48,15 +33,13 @@ import {
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useLocale, useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PublicPageContent } from "./page-content";
 import { buildPublishedPageTargets } from "./page-targets";
 import type { PublishedPageResult } from "./read-model";
-import { WordLogoIcon } from "./word-logo-icon";
+import { PublicSiteOptionsMenu } from "./site-options-menu";
 
 interface PublicSiteShellProps {
   result: PublishedPageResult;
@@ -174,40 +157,6 @@ function PublicSiteHeader({
         <div className="relative flex h-14 items-center gap-3 px-4">
           <SidebarTrigger />
           <div className="ml-auto flex items-center gap-3">
-            {pageId ? (
-              <div className="flex items-center gap-1">
-                <Button
-                  aria-label="Export as Word"
-                  onClick={() =>
-                    window.location.assign(
-                      `/api/pages/${pageId}/export?format=docx`,
-                    )
-                  }
-                  size="sm"
-                  title="Export as Word"
-                  type="button"
-                  variant="ghost"
-                >
-                  <WordLogoIcon className="size-4" />
-                  <span className="hidden sm:inline">Export Word</span>
-                </Button>
-                <Button
-                  aria-label="Export as Markdown"
-                  onClick={() =>
-                    window.location.assign(
-                      `/api/pages/${pageId}/export?format=markdown`,
-                    )
-                  }
-                  size="sm"
-                  title="Export as Markdown"
-                  type="button"
-                  variant="ghost"
-                >
-                  <HugeiconsIcon icon={File01Icon} />
-                  <span className="hidden sm:inline">Export Markdown</span>
-                </Button>
-              </div>
-            ) : null}
             {site.settings.showHeaderSearch === true ? (
               <SearchBox
                 siteId={site._id}
@@ -219,70 +168,11 @@ function PublicSiteHeader({
                 onOpenPageResult={(pageId) => onOpenPage(pageId)}
               />
             ) : null}
-            <PublicSiteLanguageMenu />
-            <PublicSiteThemeMenu />
+            <PublicSiteOptionsMenu pageId={pageId} />
           </div>
         </div>
       </div>
     </header>
-  );
-}
-
-function publicLocalePath(pathname: string, locale: Locale) {
-  const localePattern = /^\/(en|fr)(?=\/|$)/;
-  const unprefixed = pathname.replace(localePattern, "") || "/";
-  return locale === "en" ? unprefixed : `/fr${unprefixed}`;
-}
-
-function PublicSiteLanguageMenu() {
-  const locale = useLocale() as Locale;
-  const t = useTranslations("language");
-
-  const selectLocale = (selection: Locale | "browser") => {
-    if (selection === "browser") {
-      // biome-ignore lint/suspicious/noDocumentCookie: NEXT_LOCALE is also read by the edge proxy.
-      document.cookie = "NEXT_LOCALE=; Path=/; Max-Age=0; SameSite=Lax";
-    } else {
-      // biome-ignore lint/suspicious/noDocumentCookie: NEXT_LOCALE is also read by the edge proxy.
-      document.cookie = `NEXT_LOCALE=${selection}; Path=/; Max-Age=31536000; SameSite=Lax`;
-    }
-    window.location.assign(
-      selection === "browser"
-        ? publicLocalePath(window.location.pathname, "en")
-        : publicLocalePath(window.location.pathname, selection),
-    );
-  };
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={t("select")}
-          className="text-muted-foreground hover:text-foreground"
-          size="icon"
-          variant="ghost"
-        >
-          <HugeiconsIcon icon={LanguageCircleIcon} className="size-[1.2rem]" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => selectLocale("browser")}>
-          <span className="flex-1">{t("browserDefault")}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => selectLocale("en")}>
-          <span className="flex-1">{t("english")}</span>
-          {locale === "en" ? (
-            <HugeiconsIcon icon={Tick01Icon} className="size-4" />
-          ) : null}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => selectLocale("fr")}>
-          <span className="flex-1">{t("french")}</span>
-          {locale === "fr" ? (
-            <HugeiconsIcon icon={Tick01Icon} className="size-4" />
-          ) : null}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -363,44 +253,6 @@ function SiteLogoImage({
       height={32}
       unoptimized
     />
-  );
-}
-
-function PublicSiteThemeMenu() {
-  const { setTheme } = useTheme();
-  const t = useTranslations("common");
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          className="relative text-muted-foreground hover:text-foreground"
-          size="icon"
-          variant="ghost"
-        >
-          <HugeiconsIcon
-            icon={Sun01Icon}
-            className="size-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-          />
-          <HugeiconsIcon
-            icon={MoonIcon}
-            className="absolute size-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-          />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          {t("themeLight")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          {t("themeDark")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          {t("themeSystem")}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 

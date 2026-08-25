@@ -55,6 +55,7 @@ import {
   deleteDecisionTree,
   duplicateDecisionTree,
   renameDecisionTree,
+  reorderDecisionTrees,
   updateDecisionDocument,
   updateDecisionTree,
   type DecisionNode,
@@ -163,13 +164,23 @@ function DecisionAnswer({
           aria-label={`Rename ${node.name}`}
           autoFocus
           className="min-w-0 flex-1 border-transparent !bg-transparent font-medium shadow-none focus-visible:!bg-background"
-          onBlur={() => setRenaming(false)}
-          onChange={(event) => onRename(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === "Escape")
-              setRenaming(false);
+          defaultValue={node.name}
+          onBeforeInputCapture={(event) => event.stopPropagation()}
+          onBlur={(event) => {
+            const nextName = event.currentTarget.value;
+            if (nextName !== node.name) onRename(nextName);
+            setRenaming(false);
           }}
-          value={node.name}
+          onInputCapture={(event) => event.stopPropagation()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              setRenaming(false);
+            }
+          }}
         />
       ) : (
         <button
@@ -432,17 +443,25 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
               aria-label="Decision tree name"
               autoFocus
               className="min-w-36 max-w-72 bg-background font-semibold"
-              onBlur={() => setRenaming(false)}
-              onChange={(event) =>
-                updateDataJson(
-                  renameDecisionTree(data, tree.id, event.target.value),
-                )
-              }
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === "Escape")
-                  setRenaming(false);
+              defaultValue={tree.label}
+              onBeforeInputCapture={(event) => event.stopPropagation()}
+              onBlur={(event) => {
+                const nextLabel = event.currentTarget.value;
+                if (nextLabel !== tree.label) {
+                  updateDataJson(renameDecisionTree(data, tree.id, nextLabel));
+                }
+                setRenaming(false);
               }}
-              value={tree.label}
+              onInputCapture={(event) => event.stopPropagation()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  event.currentTarget.blur();
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  setRenaming(false);
+                }
+              }}
             />
           ) : (
             <CollectionMenu
@@ -496,6 +515,9 @@ export const decisionTreeEditor = defineOpenEditorCustomBlockEditor({
                 setEditorPath([]);
                 setPreviewPath([]);
               }}
+              onReorder={(sourceId, targetId) =>
+                updateDataJson(reorderDecisionTrees(data, sourceId, targetId))
+              }
               options={data.trees}
               valueLabel={tree.label}
             />

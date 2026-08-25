@@ -81,13 +81,13 @@ describe("parseOpenEditorDocument", () => {
           attrs: {
             "openeditor-id": "directory-1",
             blockId: "baseblocks.directory",
-            version: 1,
+            version: 2,
             data: {
               directories: [
                 {
                   id: "directory",
                   label: "Directory",
-                  columnIds: ["name"],
+                  columns: [{ id: "name", name: "Name" }],
                   rows: [{ id: "row", cells: { name: "Ada" } }],
                   pageSize: 25,
                 },
@@ -113,13 +113,13 @@ describe("parseOpenEditorDocument", () => {
             attrs: {
               "openeditor-id": "directory-1",
               blockId: "baseblocks.directory",
-              version: 2,
+              version: 3,
               data: { directories: [] },
             },
           },
         ],
       }),
-    ).toThrow("Stored version 2 is newer");
+    ).toThrow("Stored version 3 is newer");
     expect(() =>
       parseOpenEditorDocument({
         type: "doc",
@@ -358,8 +358,40 @@ describe("extractOpenEditorReferences", () => {
     const references = extractOpenEditorReferences(content);
     expect([...references.attachmentIds]).toEqual(["file-1"]);
     expect([...references.imageIds]).toEqual(["asset-1"]);
+    expect([...references.customAssetIds]).toEqual([]);
     expect([...references.fileIds]).toEqual(["file-1", "asset-1"]);
     expect([...references.pageIds]).toEqual(["page-2"]);
+  });
+
+  test("indexes image assets referenced by custom blocks as files", () => {
+    const content = parseOpenEditorDocument({
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "customBlock",
+          attrs: {
+            "openeditor-id": "quick-links-1",
+            blockId: "baseblocks.quick-links",
+            version: 2,
+            data: {
+              links: [
+                {
+                  id: "link-1",
+                  title: "Docs",
+                  url: "https://example.com",
+                  imageAssetId: "custom-image-1",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+
+    const references = extractOpenEditorReferences(content);
+    expect([...references.customAssetIds]).toEqual(["custom-image-1"]);
+    expect([...references.fileIds]).toEqual(["custom-image-1"]);
   });
 });
 

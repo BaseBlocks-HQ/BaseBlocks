@@ -67,4 +67,50 @@ describe("portable BaseBlocks export", () => {
     expect(projected.content[0]?.content?.[0]?.text).toBe("Overview");
     expect(projected.content[2]?.content?.[0]?.text).toBe("Details");
   });
+
+  test("materializes quick-link images for portable export", () => {
+    const document = {
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "customBlock",
+          attrs: {
+            "openeditor-id": "quick-links-1",
+            blockId: "baseblocks.quick-links",
+            version: 2,
+            data: {
+              links: [
+                {
+                  id: "link-1",
+                  title: "Docs",
+                  url: "https://example.com/docs",
+                  imageAssetId: "docs-image",
+                },
+                {
+                  id: "link-2",
+                  title: "Support",
+                  url: "https://example.com/support",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    } as OpenEditorDocument;
+
+    const projected = projectBaseBlocksDocumentForPortableExport(document, {
+      imageAssetIds: new Set(["docs-image"]),
+    });
+
+    expect(projected.content.map(({ type }) => type)).toEqual([
+      "image",
+      "paragraph",
+      "paragraph",
+    ]);
+    expect(projected.content[0]?.attrs?.imageId).toBe("docs-image");
+    expect(projected.content[1]?.content?.[0]?.marks).toEqual([
+      { type: "link", attrs: { href: "https://example.com/docs" } },
+    ]);
+  });
 });

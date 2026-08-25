@@ -11,6 +11,7 @@ import {
 import type { SaveStatus } from "@baseblocks/domain";
 import type { OpenEditorDocument } from "@openeditor/core";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { areOpenEditorDocumentsEqual } from "./open-editor-document-sync";
 import type { VersionedDocument } from "./versioned-document";
 
 type SaveResult = VersionedDocument & {
@@ -113,8 +114,8 @@ export function useVersionedPageDocument({
         baseDocumentRef.current = result.document;
         const local = documentRef.current;
         const rebased = reconcileChildPageProjection(local, result.document);
-        apply(rebased);
-        if (JSON.stringify(rebased) !== JSON.stringify(result.document)) {
+        if (!areOpenEditorDocumentsEqual(local, rebased)) apply(rebased);
+        if (!areOpenEditorDocumentsEqual(rebased, result.document)) {
           pendingRef.current = rebased;
         }
         continue;
@@ -127,8 +128,10 @@ export function useVersionedPageDocument({
       baseHashRef.current = result.contentHash;
       baseDocumentRef.current = result.document;
       const current = documentRef.current;
-      if (JSON.stringify(current) === JSON.stringify(submitted)) {
-        apply(result.document);
+      if (areOpenEditorDocumentsEqual(current, submitted)) {
+        if (!areOpenEditorDocumentsEqual(current, result.document)) {
+          apply(result.document);
+        }
       } else {
         pendingRef.current = current;
       }
@@ -199,8 +202,8 @@ export function useVersionedPageDocument({
     baseHashRef.current = remote.contentHash;
     baseDocumentRef.current = incoming;
     const rebased = reconcileChildPageProjection(local, incoming);
-    apply(rebased);
-    if (JSON.stringify(rebased) !== JSON.stringify(incoming)) {
+    if (!areOpenEditorDocumentsEqual(local, rebased)) apply(rebased);
+    if (!areOpenEditorDocumentsEqual(rebased, incoming)) {
       pendingRef.current = rebased;
       schedule(0);
     }
