@@ -49,7 +49,7 @@ export const directoryViewer = defineOpenEditorCustomBlockViewer({
     const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
     const visible = filtered.slice(page * pageSize, (page + 1) * pageSize);
     return (
-      <BlockShell label="Directory">
+      <BlockShell label="Directory" width={data.width}>
         {data.directories.length > 1 ? (
           <Select
             onValueChange={(value) => {

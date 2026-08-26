@@ -27,19 +27,48 @@ function DirectorySettingsPanel({ target }: OpenEditorBlockPanelProps) {
   const block = useOpenEditorBlockTarget(target);
   if (!block) return null;
   const value = directoryBlock.parseData(block.attributes.data);
+  const update = (next: typeof value) =>
+    target.commands.updateAttributes({ data: next });
   const updatePageSize = (directoryId: string, pageSize: number | null) =>
-    target.commands.updateAttributes({
-      data: {
-        directories: value.directories.map((directory) =>
-          directory.id === directoryId ? { ...directory, pageSize } : directory,
-        ),
-      },
+    update({
+      ...value,
+      directories: value.directories.map((directory) =>
+        directory.id === directoryId ? { ...directory, pageSize } : directory,
+      ),
     });
 
   return (
     <div className="w-72 p-4">
       <h2 className="mb-4 font-medium text-sm">Directory settings</h2>
       <div className="grid gap-4">
+        <div className="grid gap-1.5">
+          <Label
+            className="text-xs font-medium tracking-wide text-sidebar-foreground/55"
+            htmlFor="directory-width"
+          >
+            Width
+          </Label>
+          <Select
+            onValueChange={(next) =>
+              update({
+                ...value,
+                width: next === "full" ? "full" : "default",
+              })
+            }
+            value={value.width === "full" ? "full" : "default"}
+          >
+            <SelectTrigger
+              className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
+              id="directory-width"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+              <SelectItem value="default">Content width</SelectItem>
+              <SelectItem value="full">Full width</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {value.directories.map((directory) => {
           const id = `directory-page-size-${directory.id}`;
           return (

@@ -32,6 +32,16 @@ describe("directory collections", () => {
   first.rows[0]!.cells.name = "Ada";
   const content: DirectoryContent = { directories: [first] };
 
+  test("parses the optional block width and rejects invalid values", () => {
+    expect(parseDirectoryContent(content).width).toBeUndefined();
+    expect(parseDirectoryContent({ ...content, width: "full" }).width).toBe(
+      "full",
+    );
+    expect(() =>
+      parseDirectoryContent({ ...content, width: "wide" } as DirectoryContent),
+    ).toThrow();
+  });
+
   test("creates, renames, duplicates, switches to, and deletes directories", () => {
     const added = addDirectory(content, sequence("two", "role", "r2"));
     expect(added.activeId).toBe("two");

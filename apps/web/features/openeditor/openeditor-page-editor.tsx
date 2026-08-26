@@ -59,6 +59,7 @@ const PageTabsMenuIcon = createOpenEditorIcon(LayoutTopIcon);
 
 export function OpenEditorPageEditor({
   authoritativeRefreshRevision,
+  fullWidth,
   onSaveStatusChange,
   pageId,
   pages,
@@ -67,6 +68,11 @@ export function OpenEditorPageEditor({
   siteId,
 }: {
   authoritativeRefreshRevision?: number;
+  /**
+   * CSS length for full-width blocks (--bb-full-width). Omit in embedded
+   * contexts to keep blocks at the document column width.
+   */
+  fullWidth?: string;
   onSaveStatusChange?: (status: SaveStatus) => void;
   pageId: Id<"pages">;
   pages: Doc<"pages">[];
@@ -172,12 +178,17 @@ export function OpenEditorPageEditor({
     />
   ) : null;
 
+  const fullWidthStyle = fullWidth
+    ? ({ "--bb-full-width": fullWidth } as React.CSSProperties)
+    : undefined;
+
   return (
     <SiteRenderActionsProvider actions={{ siteId }}>
       {readOpenEditorPageTabs(document) ? (
         <OpenEditorTabbedPageEditor
           attachmentRuntime={attachmentRuntime}
           canEdit={canEdit}
+          fullWidthStyle={fullWidthStyle}
           imageRuntime={imageRuntime}
           document={document}
           onChange={onChange}
@@ -189,6 +200,7 @@ export function OpenEditorPageEditor({
         <OpenEditorDocumentEditor
           attachmentRuntime={attachmentRuntime}
           canEdit={canEdit}
+          fullWidthStyle={fullWidthStyle}
           imageRuntime={imageRuntime}
           document={document}
           onChange={onChange}
@@ -205,6 +217,7 @@ function OpenEditorTabbedPageEditor({
   attachmentRuntime,
   canEdit,
   document,
+  fullWidthStyle,
   imageRuntime,
   onChange,
   pageHeading,
@@ -214,6 +227,7 @@ function OpenEditorTabbedPageEditor({
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
   canEdit: boolean;
   document: OpenEditorDocument;
+  fullWidthStyle?: React.CSSProperties;
   imageRuntime: OpenEditorImageRuntime<File>;
   onChange: (document: OpenEditorDocument) => void;
   pageHeading: ReactNode;
@@ -230,7 +244,10 @@ function OpenEditorTabbedPageEditor({
       className="contents"
       theme={baseBlocksOpenEditorTheme}
     >
-      <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
+      <div
+        className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10"
+        style={fullWidthStyle}
+      >
         {pageHeading}
         <OpenEditorTabbedPage
           attachmentRuntime={attachmentRuntime}
@@ -251,6 +268,7 @@ function OpenEditorDocumentEditor({
   attachmentRuntime,
   canEdit,
   document,
+  fullWidthStyle,
   imageRuntime,
   onChange,
   pageHeading,
@@ -260,6 +278,7 @@ function OpenEditorDocumentEditor({
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
   canEdit: boolean;
   document: OpenEditorDocument;
+  fullWidthStyle?: React.CSSProperties;
   imageRuntime: OpenEditorImageRuntime<File>;
   onChange: (document: OpenEditorDocument) => void;
   pageHeading: ReactNode;
@@ -318,7 +337,10 @@ function OpenEditorDocumentEditor({
       className="contents"
       theme={baseBlocksOpenEditorTheme}
     >
-      <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
+      <div
+        className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10"
+        style={fullWidthStyle}
+      >
         {pageHeading}
         {preview ? (
           <OpenEditorViewer

@@ -36,14 +36,26 @@ import { cn } from "@baseblocks/ui/lib/utils";
 export const selectClassName =
   "h-9 min-w-0 rounded-xl border border-input bg-background px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
 
+export type BlockWidth = "default" | "full";
+
+/**
+ * Breakout width for blocks allowed to leave the document text column. Host
+ * layouts opt in by defining --bb-full-width; without it the block keeps the
+ * column width, so embedded contexts are unaffected.
+ */
+const fullWidthClassName =
+  "mx-[calc((100%-var(--bb-full-width,100%))/2)] w-[var(--bb-full-width,100%)]";
+
 export function BlockShell({
   children,
   label,
   surface = false,
+  width = "default",
 }: {
   children: ReactNode;
   label: string;
   surface?: boolean;
+  width?: BlockWidth;
 }) {
   return (
     <section
@@ -53,6 +65,7 @@ export function BlockShell({
         surface
           ? "overflow-hidden rounded-[1.5rem] border border-border/80 bg-card shadow-[0_1px_2px_oklch(0_0_0/0.04),0_12px_36px_oklch(0_0_0/0.06)]"
           : "space-y-3",
+        width === "full" ? fullWidthClassName : null,
       )}
     >
       {children}

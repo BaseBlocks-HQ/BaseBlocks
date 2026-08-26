@@ -130,10 +130,14 @@ function SiteEditorScreen({
     return <EditorRevealBoundary state="missing" />;
   }
 
+  const fullWidthBlocks =
+    "max(100%, min(calc(100vw - var(--sidebar-width, 0px) - var(--bb-chrome-inset, 0px) - 4rem), calc(100% + 24rem), 90rem))";
+
   const pageEditor =
     selectedPage && selectedDocument?.pageId === selectedPage._id ? (
       <OpenEditorPageEditor
         authoritativeRefreshRevision={aiApplyRevision}
+        fullWidth={fullWidthBlocks}
         key={selectedPage._id}
         onSaveStatusChange={setSaveStatus}
         pageId={selectedPage._id}
@@ -189,6 +193,7 @@ function SiteEditorScreen({
                 "relative min-h-0 min-w-0 flex-1 overflow-hidden",
                 aiChatOpen && "max-lg:pointer-events-none",
                 aiChatOpen && "lg:mr-[26rem]",
+                aiChatOpen && "lg:[--bb-chrome-inset:26rem]",
               )}
             >
               <PortalContainerProvider value={portalContainer ?? undefined}>

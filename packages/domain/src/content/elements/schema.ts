@@ -18,6 +18,11 @@ export interface Directory {
 
 export interface DirectoryContent {
   directories: Directory[];
+  /**
+   * Block width on the page. "default" keeps the document text column;
+   * "full" lets the block break out to the surrounding layout's full width.
+   */
+  width?: "default" | "full";
 }
 
 export interface SearchContent {

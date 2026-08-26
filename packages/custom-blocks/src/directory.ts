@@ -86,7 +86,16 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
       pageSize: pageSize === null ? null : Number(pageSize),
     };
   });
-  return { directories };
+  if (
+    root.width !== undefined &&
+    root.width !== "default" &&
+    root.width !== "full"
+  )
+    throw new Error('Directory width must be "default" or "full".');
+  return {
+    directories,
+    ...(root.width === undefined ? {} : { width: root.width }),
+  };
 }
 
 /**

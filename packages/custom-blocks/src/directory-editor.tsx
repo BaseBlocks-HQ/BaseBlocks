@@ -554,7 +554,7 @@ export const directoryEditor = defineOpenEditorCustomBlockEditor({
       });
 
     return (
-      <BlockShell label="Edit directory">
+      <BlockShell label="Edit directory" width={data.width}>
         <div className="flex flex-wrap items-center justify-between gap-2 px-1">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {renaming ? (

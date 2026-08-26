@@ -61,7 +61,7 @@ export function PublicPageContent({
 
   return (
     <div className="h-full min-h-0 min-w-0 overflow-y-auto overflow-x-hidden pt-[var(--bb-header-height)]">
-      <article className="mx-auto max-w-4xl px-4 py-8 md:px-8 [&_.oe-page-arrow]:hidden">
+      <article className="mx-auto max-w-4xl px-4 py-8 md:px-8 [--bb-full-width:max(100%,min(calc(100vw-3rem),calc(100%+24rem),90rem))] md:[--bb-full-width:max(100%,min(calc(100vw-5rem),calc(100%+24rem),90rem))] [&_.oe-page-arrow]:hidden">
         <div className="mb-8 flex min-w-0 items-center gap-2">
           {canGoBack && onGoBack ? (
             <Button
