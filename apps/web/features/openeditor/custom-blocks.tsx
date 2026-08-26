@@ -23,7 +23,10 @@ import { searchEditor } from "./extensions/search";
 import { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 import { createBaseBlocksCustomBlockHost } from "./custom-block-host";
 import { createOpenEditorIcon } from "./slash-menu";
-import { baseBlocksCustomBlockMenuExtension } from "./custom-block-menu";
+import {
+  baseBlocksBlockMenuExtensions,
+  baseBlocksCustomBlockMenuExtension,
+} from "./custom-block-menu";
 import { useOpenEditorDocumentSync } from "./use-open-editor-document-sync";
 export { baseBlocksCustomBlockRegistry } from "./custom-block-registry";
 
@@ -125,6 +128,7 @@ function DocumentEditorSurface({
   const controller = useOpenEditorController({
     initialDocument: value,
     editable: true,
+    blockMenuExtensions: baseBlocksBlockMenuExtensions,
     customBlocks,
     attachmentRuntime: runtimes.attachmentRuntime,
     imageRuntime: runtimes.imageRuntime,

@@ -187,3 +187,7 @@ export const baseBlocksCustomBlockMenuExtension = {
     ],
   },
 };
+
+export const baseBlocksBlockMenuExtensions = [
+  baseBlocksCustomBlockMenuExtension,
+] as const;

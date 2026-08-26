@@ -43,6 +43,7 @@ import {
   createBaseBlocksCustomBlockEditorConfiguration,
 } from "./custom-blocks";
 import { createBaseBlocksCustomBlockViewerConfiguration } from "./custom-block-viewer";
+import { baseBlocksBlockMenuExtensions } from "./custom-block-menu";
 import { useBaseBlocksImageRuntime } from "./image-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
@@ -319,6 +320,7 @@ function OpenEditorDocumentEditor({
   const controller = useOpenEditorController({
     initialDocument: document,
     editable: canEdit,
+    blockMenuExtensions: baseBlocksBlockMenuExtensions,
     pageRuntime,
     attachmentRuntime,
     imageRuntime,

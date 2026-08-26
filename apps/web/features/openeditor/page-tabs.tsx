@@ -46,6 +46,7 @@ import {
   updateOpenEditorPageTabs,
   type OpenEditorPageTab,
 } from "./page-tabs-model";
+import { baseBlocksBlockMenuExtensions } from "./custom-block-menu";
 import { useOpenEditorDocumentSync } from "./use-open-editor-document-sync";
 
 function TabBar({
@@ -190,6 +191,7 @@ function ActiveTabEditor({
   const controller = useOpenEditorController({
     initialDocument,
     attachmentRuntime,
+    blockMenuExtensions: baseBlocksBlockMenuExtensions,
     imageRuntime,
     pageRuntime,
     onChange: handleChange,
