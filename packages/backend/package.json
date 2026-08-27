@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@baseblocks/tsconfig": "workspace:*",
-    "@types/bun": "1.3.14",
+    "@types/bun": "1.4.0",
     "convex-test": "0.0.55"
   },
   "peerDependencies": {
