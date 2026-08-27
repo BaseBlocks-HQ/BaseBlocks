@@ -87,10 +87,22 @@ type BenchmarkReport = {
 
 const root = resolve(import.meta.dir, "..");
 const bunPath = process.execPath;
-const defaultOutput = join(root, "benchmarks", "results", `${process.env.BENCHMARK_LABEL ?? "local"}.json`);
-const outputPath = process.env.BENCHMARK_OUTPUT ?? defaultOutput;
-const label = process.env.BENCHMARK_LABEL ?? "local";
-const skippedBenchmarks = new Set((process.env.BENCHMARK_SKIP ?? "").split(",").filter(Boolean));
+
+function readEnv(name: string): string | undefined {
+  return Bun.env[name];
+}
+
+const defaultOutput = join(
+  root,
+  "benchmarks",
+  "results",
+  `${readEnv("BENCHMARK_LABEL") ?? "local"}.json`,
+);
+const outputPath = readEnv("BENCHMARK_OUTPUT") ?? defaultOutput;
+const label = readEnv("BENCHMARK_LABEL") ?? "local";
+const skippedBenchmarks = new Set(
+  (readEnv("BENCHMARK_SKIP") ?? "").split(",").filter(Boolean),
+);
 const tailLength = 4_000;
 
 const buildEnvironment: Record<string, string> = {
@@ -110,11 +122,21 @@ const buildEnvironment: Record<string, string> = {
   NEXT_PUBLIC_SITE_URL: "https://baseblocks.dev",
   NEXT_TELEMETRY_DISABLED: "1",
   TURBO_FORCE: "1",
-  ...(process.env.GITHUB_TOKEN ? { GITHUB_TOKEN: process.env.GITHUB_TOKEN } : {}),
+  ...(readEnv("GITHUB_TOKEN") ? { GITHUB_TOKEN: readEnv("GITHUB_TOKEN") } : {}),
 };
 
+function log(message: string) {
+  process.stdout.write(`${message}\n`);
+}
+
+function logError(message: string) {
+  process.stderr.write(`${message}\n`);
+}
+
 function commandForDisplay(args: string[]): string[] {
-  return args.map((arg, index) => (index === 0 && arg === bunPath ? "bun" : arg));
+  return args.map((arg, index) =>
+    index === 0 && arg === bunPath ? "bun" : arg,
+  );
 }
 
 function bytes(text: string): number {
@@ -150,12 +172,19 @@ function parseResourceMetrics(stderr: string): ResourceMetrics {
       ? metric(stderr, /([\d]+)\s+involuntary context switches/m)
       : metric(stderr, / involuntary context switches:\s+([\d]+)/m),
     maxRssBytes: rss === undefined ? undefined : isMac ? rss : rss * 1024,
-    pageFaults: isMac ? metric(stderr, /([\d]+)\s+page faults/m) : metric(stderr, /Page faults:\s+([\d]+)/m),
+    pageFaults: isMac
+      ? metric(stderr, /([\d]+)\s+page faults/m)
+      : metric(stderr, /Page faults:\s+([\d]+)/m),
     pageReclaims: isMac
       ? metric(stderr, /([\d]+)\s+page reclaims/m)
       : metric(stderr, /Page reclaims:\s+([\d]+)/m),
-    peakMemoryFootprintBytes: metric(stderr, /([\d]+)\s+peak memory footprint/m),
-    swaps: isMac ? metric(stderr, /([\d]+)\s+swaps/m) : metric(stderr, /Swaps:\s+([\d]+)/m),
+    peakMemoryFootprintBytes: metric(
+      stderr,
+      /([\d]+)\s+peak memory footprint/m,
+    ),
+    swaps: isMac
+      ? metric(stderr, /([\d]+)\s+swaps/m)
+      : metric(stderr, /Swaps:\s+([\d]+)/m),
     systemMs: systemSeconds === undefined ? undefined : systemSeconds * 1_000,
     userMs: userSeconds === undefined ? undefined : userSeconds * 1_000,
     voluntaryContextSwitches: isMac
@@ -167,7 +196,9 @@ function parseResourceMetrics(stderr: string): ResourceMetrics {
 function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
 }
 
 function timeCommand(args: string[]): string[] {
@@ -176,7 +207,12 @@ function timeCommand(args: string[]): string[] {
   return args;
 }
 
-async function runCommand(args: string[], cwd: string, env: Record<string, string>, iteration: number) {
+async function runCommand(
+  args: string[],
+  cwd: string,
+  env: Record<string, string>,
+  iteration: number,
+) {
   const startedAt = performance.now();
   const processHandle = Bun.spawn(timeCommand(args), {
     cwd,
@@ -207,7 +243,11 @@ async function runCommand(args: string[], cwd: string, env: Record<string, strin
 }
 
 async function readGitValue(args: string[]): Promise<string> {
-  const processHandle = Bun.spawn(["git", ...args], { cwd: root, stdout: "pipe", stderr: "ignore" });
+  const processHandle = Bun.spawn(["git", ...args], {
+    cwd: root,
+    stdout: "pipe",
+    stderr: "ignore",
+  });
   return (await new Response(processHandle.stdout).text()).trim();
 }
 
@@ -234,7 +274,9 @@ async function createCleanInstallWorkspace(): Promise<string> {
 }
 
 async function getPackageManagerVersion(): Promise<string> {
-  const packageJson = JSON.parse(await readFile(join(root, "package.json"), "utf8")) as {
+  const packageJson = JSON.parse(
+    await readFile(join(root, "package.json"), "utf8"),
+  ) as {
     packageManager?: string;
   };
   return packageJson.packageManager ?? "unspecified";
@@ -251,14 +293,21 @@ async function getTypeScriptVersion(): Promise<string> {
     new Response(processHandle.stdout).text(),
     new Response(processHandle.stderr).text(),
   ]);
-  if (exitCode !== 0) throw new Error(`Unable to read TypeScript version: ${stderr || stdout}`);
+  if (exitCode !== 0)
+    throw new Error(`Unable to read TypeScript version: ${stderr || stdout}`);
   return stdout.trim().replace(/^Version\s+/, "");
 }
 
 function commandSpecs(cleanInstallRoot: string): CommandSpec[] {
   return [
     {
-      args: [bunPath, "install", "--frozen-lockfile", "--ignore-scripts", "--no-progress"],
+      args: [
+        bunPath,
+        "install",
+        "--frozen-lockfile",
+        "--ignore-scripts",
+        "--no-progress",
+      ],
       category: "bun",
       cwd: cleanInstallRoot,
       name: "bun:clean-install",
@@ -269,7 +318,11 @@ function commandSpecs(cleanInstallRoot: string): CommandSpec[] {
       name: "bun:warm-install",
     },
     {
-      args: [bunPath, "-e", "let total = 0; for (let index = 0; index < 1_000_000; index++) total += index; console.log(total);"],
+      args: [
+        bunPath,
+        "-e",
+        "let total = 0; for (let index = 0; index < 1_000_000; index++) total += index; console.log(total);",
+      ],
       category: "bun",
       name: "bun:runtime-startup-and-loop",
       repeats: 3,
@@ -316,14 +369,16 @@ function commandSpecs(cleanInstallRoot: string): CommandSpec[] {
 async function main() {
   const cleanInstallRoot = await createCleanInstallWorkspace();
   const baseEnvironment = Object.fromEntries(
-    Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
+    Object.entries(process.env).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined,
+    ),
   );
   const results: BenchmarkResult[] = [];
 
   try {
     for (const spec of commandSpecs(cleanInstallRoot)) {
       if (skippedBenchmarks.has(spec.name)) {
-        console.log(`${spec.name}: skipped`);
+        log(`${spec.name}: skipped`);
         continue;
       }
       for (const relativePath of spec.clean ?? []) {
@@ -341,10 +396,14 @@ async function main() {
         );
         samples.push(sample);
         const status = sample.exitCode === 0 ? "pass" : "fail";
-        console.log(`${spec.name} ${iteration}/${repeats}: ${status} ${Math.round(sample.wallMs)}ms`);
+        log(
+          `${spec.name} ${iteration}/${repeats}: ${status} ${Math.round(sample.wallMs)}ms`,
+        );
         if (sample.exitCode !== 0) {
           passed = false;
-          console.error(`${spec.name} failed with exit code ${sample.exitCode}; continuing benchmark suite`);
+          logError(
+            `${spec.name} failed with exit code ${sample.exitCode}; continuing benchmark suite`,
+          );
           break;
         }
       }
@@ -356,7 +415,8 @@ async function main() {
         samples,
         summary: {
           maxWallMs: Math.max(...wallTimes),
-          meanWallMs: wallTimes.reduce((sum, value) => sum + value, 0) / wallTimes.length,
+          meanWallMs:
+            wallTimes.reduce((sum, value) => sum + value, 0) / wallTimes.length,
           medianWallMs: median(wallTimes),
           minWallMs: Math.min(...wallTimes),
           passed,
@@ -398,7 +458,7 @@ async function main() {
   };
   await mkdir(dirname(outputPath), { recursive: true });
   await Bun.write(outputPath, JSON.stringify(report, null, 2));
-  console.log(`Wrote ${outputPath}`);
+  log(`Wrote ${outputPath}`);
   if (results.some((result) => !result.summary.passed)) process.exitCode = 1;
 }
 
