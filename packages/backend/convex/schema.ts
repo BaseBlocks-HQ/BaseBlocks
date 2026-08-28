@@ -106,27 +106,6 @@ export default defineSchema({
     .index("by_page", ["pageId"])
     .index("by_revision", ["revisionId"]),
 
-  directoryDataMigrations: defineTable({
-    migrationKey: v.string(),
-    organizationId: v.string(),
-    siteIds: v.array(v.id("sites")),
-    siteIndex: v.number(),
-    cursor: v.optional(v.string()),
-    status: v.union(
-      v.literal("running"),
-      v.literal("completed"),
-      v.literal("failed"),
-    ),
-    scannedCount: v.number(),
-    migratedCount: v.number(),
-    startedAt: v.number(),
-    updatedAt: v.number(),
-    completedAt: v.optional(v.number()),
-    failure: v.optional(v.string()),
-  })
-    .index("by_key_organization", ["migrationKey", "organizationId"])
-    .index("by_organization", ["organizationId"]),
-
   draftChanges: defineTable({
     siteId: v.id("sites"),
     entityType: v.union(

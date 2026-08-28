@@ -5,7 +5,6 @@ import {
 import {
   createDirectoryContent,
   directoryToText,
-  migrateDirectoryContentV1,
   parseDirectoryContent,
 } from "./directory";
 import { parseDecisionTreeValue } from "./decision-tree";
@@ -17,14 +16,6 @@ export const directoryBlock = defineOpenEditorCustomBlock({
   version: 2,
   createData: createDirectoryContent,
   parseData: parseDirectoryContent,
-  migrate: ({ version, data }) => {
-    if (version !== 1) throw new Error("Unsupported Directory version.");
-    return {
-      blockId: "baseblocks.directory",
-      version: 2,
-      data: migrateDirectoryContentV1(data),
-    };
-  },
   toHtml: ({ data }) => ({
     tag: "div",
     children: data.directories.map((directory) => ({
@@ -187,5 +178,3 @@ export const baseBlocksCustomBlocks = [
   decisionTreeBlock,
   quickLinksBlock,
 ] as const;
-
-export { migrateDirectoryContentV1 };

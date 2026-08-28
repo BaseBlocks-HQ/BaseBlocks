@@ -17,7 +17,6 @@ import {
   renameDirectoryColumn,
   reorderDirectories,
   filterDirectoryRows,
-  migrateDirectoryContentV1,
   parseDirectoryContent,
   type DirectoryContent,
 } from "./directory";
@@ -162,28 +161,6 @@ describe("directory grid operations", () => {
     expect(deleteDirectoryColumns(base, ["c2"]).columns).toEqual([
       { id: "c1", name: "Name" },
     ]);
-  });
-
-  test("migrates version 1 column IDs to named columns", () => {
-    const migrated = migrateDirectoryContentV1({
-      directories: [
-        {
-          id: "one",
-          label: "People",
-          columnIds: ["name", "role"],
-          rows: [{ id: "r1", cells: { name: "Ada", role: "Admin" } }],
-          pageSize: null,
-        },
-      ],
-    });
-    expect(migrated.directories[0]?.columns).toEqual([
-      { id: "name", name: "Column 1" },
-      { id: "role", name: "Column 2" },
-    ]);
-    expect(migrated.directories[0]?.rows[0]?.cells).toEqual({
-      name: "Ada",
-      role: "Admin",
-    });
   });
 });
 

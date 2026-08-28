@@ -98,31 +98,6 @@ export function parseDirectoryContent(value: unknown): DirectoryContent {
   };
 }
 
-/**
- * Convert the persisted directory shape from version 1 to version 2.
- * Version 1 stored only column IDs, so the migration preserves the existing
- * display that the viewer generated for those columns.
- */
-export function migrateDirectoryContentV1(value: unknown): DirectoryContent {
-  const root = object(value);
-  if (!Array.isArray(root.directories))
-    throw new Error("Directory data must contain directories.");
-  const directories = root.directories.map((value) => {
-    const input = object(value);
-    if (Array.isArray(input.columns)) return input;
-    if (!Array.isArray(input.columnIds))
-      throw new Error("Directory version 1 data must contain column IDs.");
-    const columns = input.columnIds.map((id, index) => {
-      if (typeof id !== "string" || !id)
-        throw new Error("Each directory column needs an ID.");
-      return { id, name: `Column ${index + 1}` };
-    });
-    const { columnIds: _columnIds, ...rest } = input;
-    return { ...rest, columns };
-  });
-  return parseDirectoryContent({ directories });
-}
-
 export type DirectoryIdFactory = (kind: "column" | "row") => string;
 
 export function createDirectoryRow(
