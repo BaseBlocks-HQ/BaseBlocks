@@ -24,12 +24,12 @@ async function queryPublishedSite(
   });
 }
 
-const queryPublicPublishedSite = unstable_cache(
-  (organizationSlug: string, siteSlug: string) =>
-    queryPublishedSite(organizationSlug, siteSlug),
-  ["published-site-resolution-v1"],
-  { revalidate: 30 },
-);
+// The site record contains the mutable live-release pointer. Do not cache
+// this lookup: publication and unpublish happen in Convex and cannot
+// invalidate Next.js's data cache. The immutable release reads below are
+// still cached by release ID.
+const queryPublicPublishedSite = (organizationSlug: string, siteSlug: string) =>
+  queryPublishedSite(organizationSlug, siteSlug);
 
 async function queryReleasePage(
   releaseId: Id<"siteReleases">,
@@ -101,22 +101,19 @@ const queryPublicReleaseLibraries = unstable_cache(
   ["published-release-libraries-v2"],
 );
 
-const queryCustomDomain = unstable_cache(
-  (hostname: string) =>
-    getServerConvexClient().query(api.siteDomains.resolve, { hostname }),
-  ["published-custom-domain"],
-  { revalidate: 300 },
-);
+// Domain resolution also depends on the site's mutable live-release pointer.
+// Keep it request-current so unpublish takes effect immediately on custom
+// domains as well as subdomain routes.
+const queryCustomDomain = (hostname: string) =>
+  getServerConvexClient().query(api.siteDomains.resolve, { hostname });
 
-const queryPublishedSitemap = unstable_cache(
-  (organizationSlug: string, siteSlug?: string) =>
-    getServerConvexClient().query(api.published.sitemap, {
-      organizationSlug,
-      siteSlug,
-    }),
-  ["published-sitemap"],
-  { revalidate: 300 },
-);
+// Sitemap entries also depend on each site's mutable live-release pointer.
+// Keep this lookup request-current for the same reason as site resolution.
+const queryPublishedSitemap = (organizationSlug: string, siteSlug?: string) =>
+  getServerConvexClient().query(api.published.sitemap, {
+    organizationSlug,
+    siteSlug,
+  });
 
 type PublishedSiteResolution = NonNullable<
   Awaited<ReturnType<typeof queryPublishedSite>>

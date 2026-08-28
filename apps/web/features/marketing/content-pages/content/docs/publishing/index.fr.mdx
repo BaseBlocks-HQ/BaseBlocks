@@ -8,14 +8,11 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 ## État de publication
 
-Un site est soit **publié**, soit **non publié**. La publication active sa
-surface en ligne. La visibilité détermine ensuite si elle est publique ou
-réservée aux membres connectés de l'équipe. Le retrait coupe entièrement la
-surface en ligne.
-
-<Callout type="warn" title="Modèle de publication actuel">
-  Les sites publiés lisent actuellement le dernier contenu enregistré. Modifier un site publié peut donc changer ce que voient les visiteurs sans déploiement d'un instantané séparé. L'historique des instantanés et la restauration ne sont pas disponibles actuellement.
-</Callout>
+Un site est soit **publié**, soit **non publié**. La publication crée une version
+immuable à partir du brouillon enregistré et active cette version atomiquement.
+La visibilité détermine ensuite si la surface en ligne est publique ou réservée
+aux membres connectés de l'équipe. Le retrait coupe entièrement la surface en
+ligne.
 
 ## Publier
 
@@ -31,12 +28,19 @@ Créez des pages et modifiez le contenu. Les changements sont enregistrés autom
 
 ### Publier
 
-Cliquez sur **Déployer** dans l'en-tête de l'éditeur. Un site Public devient
+Cliquez sur **Publier** dans l'en-tête de l'éditeur. Un site Public devient
 accessible à tous. Un site Privé devient accessible uniquement aux membres
 authentifiés depuis son adresse BaseBlocks générée.
 
 </Step>
 </Steps>
+
+## Historique des versions
+
+Ouvrez **Historique des versions** pour consulter les changements d'une version
+publiée. Choisissez **Définir comme version en ligne** pour restaurer une version
+précédente sans modifier le brouillon. Choisissez **Restaurer comme brouillon**
+pour copier cette version dans l'éditeur, puis publiez le brouillon restauré.
 
 ## Retirer un site
 

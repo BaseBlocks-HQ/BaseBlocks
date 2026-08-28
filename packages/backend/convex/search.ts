@@ -3,13 +3,9 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, query } from "./_generated/server";
+import { readContentRevisionSearchText } from "./model/contentObjects";
 import { assertDraftReadable } from "./model/draft";
-import { readPageContent } from "./model/pageDocuments";
-import {
-  extractOpenEditorText,
-  parseOpenEditorDocument,
-  type OpenEditorDocument,
-} from "./pageContentFormat";
+import { isReleaseAvailable } from "./model/releaseState";
 import { isOrganizationMember } from "./permissions";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 
@@ -30,8 +26,25 @@ export function draftSearchScope(siteId: Id<"sites">): string {
   return `draft:${siteId}`;
 }
 
+/**
+ * One search scope per site for the published surface, rebuilt from the
+ * live release manifest by the post-publication projection. Full text is
+ * stored once per site, not once per historical release.
+ */
+export function liveSearchScope(siteId: Id<"sites">): string {
+  return `live:${siteId}`;
+}
+
+/** Compatibility scope used by releases created before live projection. */
 export function releaseSearchScope(releaseId: Id<"siteReleases">): string {
   return `release:${releaseId}`;
+}
+
+export function isPublishedSearchEntryForRelease(
+  entry: Pick<Doc<"searchEntries">, "releaseId">,
+  releaseId: Id<"siteReleases">,
+): boolean {
+  return entry.releaseId === releaseId;
 }
 
 export async function upsertSearchEntry(
@@ -39,6 +52,7 @@ export async function upsertSearchEntry(
   value: {
     siteId: Id<"sites">;
     scopeId: string;
+    releaseId?: Id<"siteReleases">;
     kind: SearchKind;
     sourceId: string;
     title: string;
@@ -104,19 +118,20 @@ export async function queuePageContentIndex(
 export async function indexPageContent(
   ctx: MutationCtx,
   pageId: Id<"pages">,
-  document?: OpenEditorDocument,
 ): Promise<void> {
   const page = await ctx.db.get(pageId);
   if (!page || page.deletedAt !== undefined) return;
-  const searchableDocument =
-    document ?? (await readPageContent(ctx, pageId)).document;
+  const record = await ctx.db
+    .query("pageDocuments")
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
+    .unique();
   await upsertSearchEntry(ctx, {
     siteId: page.siteId,
     scopeId: draftSearchScope(page.siteId),
     kind: "page",
     sourceId: pageId,
     title: page.title,
-    text: searchableDocument ? extractOpenEditorText(searchableDocument) : "",
+    text: await readContentRevisionSearchText(ctx, record?.revisionId),
   });
 }
 
@@ -132,17 +147,7 @@ export const flushPageIndex = internalMutation({
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .unique();
     if (!current || current.revisionId !== revisionId) return null;
-    const revision = await ctx.db.get(revisionId);
-    if (!revision) return null;
-    const payload = await ctx.db.get(revision.payloadId);
-    if (!payload) return null;
-    const page = await ctx.db.get(pageId);
-    if (!page || page.deletedAt !== undefined) return null;
-    await indexPageContent(
-      ctx,
-      pageId,
-      parseOpenEditorDocument(payload.content),
-    );
+    await indexPageContent(ctx, pageId);
     return null;
   },
 });
@@ -342,8 +347,10 @@ export const run = query({
     } else {
       const access = await resolvePublishedSiteAccess(ctx, site);
       if (!canRenderPublishedSite(access) || !site.liveReleaseId) return [];
+      const release = await ctx.db.get(site.liveReleaseId);
+      if (!release || !isReleaseAvailable(release)) return [];
       releaseId = site.liveReleaseId;
-      scopeId = releaseSearchScope(releaseId);
+      scopeId = liveSearchScope(siteId);
     }
 
     const matches = await searchScope(
@@ -352,8 +359,24 @@ export const run = query({
       searchTerm,
       normalizeSearchLimit(limit),
     );
+    let currentMatches = releaseId
+      ? matches.filter(({ doc }) =>
+          isPublishedSearchEntryForRelease(doc, releaseId),
+        )
+      : matches;
+    if (releaseId && currentMatches.length === 0) {
+      const legacyMatches = await searchScope(
+        ctx,
+        releaseSearchScope(releaseId),
+        searchTerm,
+        normalizeSearchLimit(limit),
+      );
+      if (legacyMatches.length > 0) {
+        currentMatches = legacyMatches;
+      }
+    }
     const hydrated = await Promise.all(
-      matches.map(({ doc, match }) =>
+      currentMatches.map(({ doc, match }) =>
         releaseId
           ? hydrateReleaseResult(ctx, releaseId, doc, match, searchTerm)
           : hydrateDraftResult(ctx, doc, match, searchTerm),

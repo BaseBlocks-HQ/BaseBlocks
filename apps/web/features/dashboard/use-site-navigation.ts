@@ -17,6 +17,12 @@ export type SiteNavigationItem = {
   pages: Array<PageListItem & { updatedAt: number }>;
 };
 
+export function getSitesWithReadablePages<
+  T extends { activeDraftRestoreId?: unknown },
+>(sites: readonly T[]): T[] {
+  return sites.filter((site) => !site.activeDraftRestoreId);
+}
+
 /**
  * Builds the workspace navigation from the long-lived site and page queries.
  * Keeping the dynamic query set behind one hook gives callers a single loading
@@ -30,7 +36,7 @@ export function useSiteNavigation(
     if (!sites) return {};
 
     return Object.fromEntries(
-      sites.map((site) => [
+      getSitesWithReadablePages(sites).map((site) => [
         site._id,
         { query: api.pages.list, args: { siteId: site._id } },
       ]),
@@ -42,7 +48,7 @@ export function useSiteNavigation(
 
   const navigation: SiteNavigationItem[] = [];
   for (const site of sites) {
-    const pages = pageResults[site._id];
+    const pages = site.activeDraftRestoreId ? [] : pageResults[site._id];
     if (pages === undefined) return undefined;
     if (pages instanceof Error) throw pages;
 

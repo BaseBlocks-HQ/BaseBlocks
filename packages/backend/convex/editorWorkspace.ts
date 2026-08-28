@@ -5,6 +5,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { buildDraftSummary } from "./model/draftSummary";
 import { readPageContent } from "./model/pageDocuments";
 import { hashOpenEditorContent } from "./pageContentFormat";
+import { getEffectiveDraftRestoreStatus } from "./draftRestores";
 
 export function draftRestoreView(
   restoreId: Id<"draftRestores">,
@@ -44,6 +45,9 @@ export const get = query({
 
     if (site.activeDraftRestoreId) {
       const restore = await ctx.db.get(site.activeDraftRestoreId);
+      const restoreStatus = restore
+        ? await getEffectiveDraftRestoreStatus(ctx, restore)
+        : null;
       return {
         status: "restoring" as const,
         site,
@@ -51,7 +55,13 @@ export const get = query({
         selectedPage: null,
         selectedDocument: null,
         draftSummary,
-        restore: draftRestoreView(site.activeDraftRestoreId, restore),
+        restore: restore
+          ? {
+              _id: restore._id,
+              status: restoreStatus?.status ?? restore.status,
+              failure: restoreStatus?.failure ?? restore.failure,
+            }
+          : draftRestoreView(site.activeDraftRestoreId, null),
       };
     }
 

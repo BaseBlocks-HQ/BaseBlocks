@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { draftChangeMatchesPublication } from "./releasePublication";
-import { makeLive, publish } from "./releases";
+import { internal } from "./_generated/api";
+import { cleanupFailedRelease, recover } from "./releasePublication";
 
 type RegisteredFunction = {
   _handler: (ctx: unknown, args: unknown) => Promise<unknown>;
@@ -10,148 +10,176 @@ function invoke(fn: unknown, ctx: unknown, args: unknown): Promise<unknown> {
   return (fn as RegisteredFunction)._handler(ctx, args);
 }
 
-describe("release publication fencing", () => {
-  test("authorization runs before publication state is disclosed", async () => {
-    let permissionChecks = 0;
-    const release = {
-      _id: "release-1",
-      siteId: "site-1",
-      publicationStatus: "building",
-    };
-    const site = { _id: "site-1", organizationId: "organization-1" };
-    const ctx = {
-      auth: {
-        getUserIdentity: async () => ({ subject: "unauthorized-user" }),
-      },
-      db: {
-        get: async (id: string) => (id === release._id ? release : site),
-      },
-      runQuery: async () => {
-        permissionChecks += 1;
+type Row = Record<string, unknown> & { _id: string };
+
+function makeContext(tables: Record<string, Row[]>) {
+  const patches: Array<[string, Record<string, unknown>]> = [];
+  const deleted: string[] = [];
+  const scheduled: Array<{
+    delay: number;
+    functionReference: unknown;
+    args: Record<string, unknown>;
+  }> = [];
+
+  return {
+    patches,
+    deleted,
+    scheduled,
+    db: {
+      get: async (id: string) => {
+        for (const rows of Object.values(tables)) {
+          const row = rows.find((candidate) => candidate._id === id);
+          if (row) return row;
+        }
         return null;
       },
-    };
-
-    await expect(
-      invoke(makeLive, ctx, { releaseId: release._id }),
-    ).rejects.not.toThrow("Release publication is not complete");
-    expect(permissionChecks).toBe(1);
-  });
-
-  test("promotes an existing complete release without waiting for extraction", async () => {
-    const release = {
-      _id: "release-1",
-      siteId: "site-1",
-      number: 3,
-      publicationStatus: "complete",
-    };
-    const site = {
-      _id: release.siteId,
-      organizationId: "organization-1",
-      draftRevision: 9,
-      draftBaseReleaseId: release._id,
-      liveReleaseId: undefined,
-    };
-    let queriedExtractions = false;
-    const ctx = {
-      auth: { getUserIdentity: async () => ({ subject: "user-1" }) },
-      runQuery: async () => ({
-        _id: "member-1",
-        organizationId: site.organizationId,
-        role: "owner",
-        userId: "user-1",
-      }),
-      db: {
-        get: async (id: string) => (id === site._id ? site : release),
-        query: (table: string) => {
-          if (table === "fileExtractions") queriedExtractions = true;
-          return {
-            withIndex: () => ({ first: async () => null }),
-          };
-        },
-        patch: async () => undefined,
-        insert: async () => "event-1",
+      patch: async (id: string, values: Record<string, unknown>) => {
+        for (const rows of Object.values(tables)) {
+          const row = rows.find((candidate) => candidate._id === id);
+          if (row) Object.assign(row, values);
+        }
+        patches.push([id, values]);
       },
-    };
-
-    expect(
-      await invoke(publish, ctx, {
-        siteId: site._id,
-        expectedDraftRevision: site.draftRevision,
-      }),
-    ).toEqual({ releaseId: release._id, number: release.number, reused: true });
-    expect(queriedExtractions).toBe(false);
-  });
-
-  test("rejects an in-flight publication with no workflow identity", async () => {
-    const release = {
-      _id: "release-1",
-      siteId: "site-1",
-      number: 3,
-      sourceDraftRevision: 9,
-      publicationStatus: "building",
-    };
-    const site = {
-      _id: release.siteId,
-      organizationId: "organization-1",
-      draftRevision: release.sourceDraftRevision,
-    };
-    let publicationQuery = 0;
-    const ctx = {
-      auth: { getUserIdentity: async () => ({ subject: "user-1" }) },
-      runQuery: async () => ({
-        _id: "member-1",
-        organizationId: site.organizationId,
-        role: "owner",
-        userId: "user-1",
-      }),
-      db: {
-        get: async () => site,
-        query: () => ({
-          withIndex: () => ({
-            first: async () => {
-              publicationQuery += 1;
-              return publicationQuery === 1 ? release : null;
-            },
+      delete: async (id: string) => {
+        for (const rows of Object.values(tables)) {
+          const index = rows.findIndex((candidate) => candidate._id === id);
+          if (index >= 0) rows.splice(index, 1);
+        }
+        deleted.push(id);
+      },
+      query: (table: string) => ({
+        withIndex: () => ({
+          collect: async () => tables[table] ?? [],
+          paginate: async () => ({
+            page: tables[table] ?? [],
+            isDone: true,
+            continueCursor: "",
           }),
         }),
-      },
-    };
-
-    await expect(
-      invoke(publish, ctx, {
-        siteId: site._id,
-        expectedDraftRevision: site.draftRevision,
       }),
-    ).rejects.toThrow("workflow state is missing");
-  });
-});
+    },
+    scheduler: {
+      runAfter: async (
+        delay: number,
+        functionReference: unknown,
+        args: Record<string, unknown>,
+      ) => {
+        scheduled.push({ delay, functionReference, args });
+      },
+    },
+  };
+}
 
-describe("published draft-change cleanup", () => {
-  test("deletes only the exact snapshotted draft generation", () => {
-    const snapshot = {
-      sourceDraftChangeId: "change-1" as never,
-      sourceDraftRevision: 7,
+describe("legacy publication workflow recovery", () => {
+  test("marks an interrupted building release unavailable", async () => {
+    const release: Row = {
+      _id: "release-1",
+      siteId: "site-1",
+      publicationStatus: "building",
     };
-    expect(
-      draftChangeMatchesPublication(
+    const state = makeContext({ siteReleases: [release] });
+
+    await invoke(recover, state, { releaseId: release._id });
+
+    expect(release).toMatchObject({
+      publicationStatus: "failed",
+      publicationFailure:
+        "The legacy publication was interrupted during the publishing refactor.",
+    });
+    expect(state.scheduled).toEqual([
+      {
+        delay: 0,
+        functionReference: internal.releasePublication.cleanupFailedRelease,
+        args: { releaseId: release._id, phase: "pages" },
+      },
+    ]);
+  });
+
+  test("cleans partial release snapshots in bounded phases", async () => {
+    const release: Row = {
+      _id: "release-1",
+      siteId: "site-1",
+      publicationStatus: "failed",
+    };
+    const tables = {
+      siteReleases: [release],
+      releasePages: [{ _id: "page-snapshot", releaseId: release._id }],
+      releaseLibraries: [{ _id: "library-snapshot", releaseId: release._id }],
+      releaseFolders: [{ _id: "folder-snapshot", releaseId: release._id }],
+      releaseFiles: [{ _id: "file-snapshot", releaseId: release._id }],
+      searchEntries: [
+        { _id: "search-snapshot", scopeId: `release:${release._id}` },
+      ],
+      releaseChanges: [{ _id: "change-snapshot", releaseId: release._id }],
+    } satisfies Record<string, Row[]>;
+    const state = makeContext(tables);
+
+    for (const phase of [
+      "pages",
+      "libraries",
+      "folders",
+      "files",
+      "search",
+      "changes",
+    ] as const) {
+      await invoke(cleanupFailedRelease, state, {
+        releaseId: release._id,
+        phase,
+      });
+    }
+
+    expect(tables.releasePages).toHaveLength(0);
+    expect(tables.releaseLibraries).toHaveLength(0);
+    expect(tables.releaseFolders).toHaveLength(0);
+    expect(tables.releaseFiles).toHaveLength(0);
+    expect(tables.searchEntries).toHaveLength(0);
+    expect(tables.releaseChanges).toHaveLength(0);
+  });
+
+  test("finishes cleanup only for the exact snapshotted draft generation", async () => {
+    const release: Row = {
+      _id: "release-1",
+      siteId: "site-1",
+      publicationStatus: "clearing",
+    };
+    const site: Row = {
+      _id: "site-1",
+      liveReleaseId: release._id,
+    };
+    const state = makeContext({
+      siteReleases: [release],
+      sites: [site],
+      releaseChanges: [
         {
-          _id: "change-1" as never,
-          draftRevision: 7,
-          updatedAt: 100,
+          _id: "snapshot-1",
+          releaseId: release._id,
+          sourceDraftChangeId: "change-1",
+          sourceDraftRevision: 7,
         },
-        snapshot,
-      ),
-    ).toBe(true);
-    expect(
-      draftChangeMatchesPublication(
         {
-          _id: "change-1" as never,
-          draftRevision: 8,
-          updatedAt: 100,
+          _id: "snapshot-2",
+          releaseId: release._id,
+          sourceDraftChangeId: "change-2",
+          sourceDraftRevision: 6,
         },
-        snapshot,
-      ),
-    ).toBe(false);
+      ],
+      draftChanges: [
+        { _id: "change-1", siteId: site._id, draftRevision: 7 },
+        { _id: "change-2", siteId: site._id, draftRevision: 8 },
+        { _id: "change-3", siteId: site._id, draftRevision: 7 },
+      ],
+    });
+
+    await invoke(recover, state, { releaseId: release._id });
+
+    expect(release.publicationStatus).toBe("complete");
+    expect(state.deleted).toEqual(["change-1"]);
+    expect(state.scheduled).toEqual([
+      {
+        delay: 0,
+        functionReference: internal.publication.projectLiveSearch,
+        args: { siteId: site._id, expectedLiveReleaseId: release._id },
+      },
+    ]);
   });
 });

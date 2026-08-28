@@ -25,6 +25,7 @@ import {
 } from "./search";
 import { recordStorageUsageEvent } from "./model/storageTelemetry";
 import { pendingSiteAssetLifecycle } from "./model/siteAssets";
+import { isReleaseAvailable } from "./model/releaseState";
 
 async function isFileReferencedByAccessiblePage(
   ctx: Parameters<typeof getPageAccessOrNull>[0],
@@ -178,10 +179,12 @@ export const getPublic = query({
     if (!file) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site?.liveReleaseId || !isPubliclyPublishedSite(site)) return null;
+    const release = await ctx.db.get(site.liveReleaseId);
+    if (!release || !isReleaseAvailable(release)) return null;
     const snapshot = await ctx.db
       .query("releaseFiles")
       .withIndex("by_release_file", (q) =>
-        q.eq("releaseId", site.liveReleaseId!).eq("fileId", file._id),
+        q.eq("releaseId", release._id).eq("fileId", file._id),
       )
       .unique();
     return snapshot
@@ -204,12 +207,16 @@ export const getAuthorized = query({
     if (!file) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
+    const liveRelease = site.liveReleaseId
+      ? await ctx.db.get(site.liveReleaseId)
+      : null;
     const released =
-      site.liveReleaseId &&
+      liveRelease &&
+      isReleaseAvailable(liveRelease) &&
       (await ctx.db
         .query("releaseFiles")
         .withIndex("by_release_file", (q) =>
-          q.eq("releaseId", site.liveReleaseId!).eq("fileId", file._id),
+          q.eq("releaseId", liveRelease._id).eq("fileId", file._id),
         )
         .unique());
     if (file.kind === "siteAsset") {
@@ -222,6 +229,9 @@ export const getAuthorized = query({
         ? false
         : await isFileReferencedByAccessiblePage(ctx, file);
       if (!canManage && !guestReference) return null;
+      if (site.visibility === "public" && !canManage && !released) {
+        return null;
+      }
       if (!released) assertDraftReadable(site);
       return released
         ? {
@@ -238,6 +248,7 @@ export const getAuthorized = query({
     if (!member && !(await isFileReferencedByAccessiblePage(ctx, file))) {
       return null;
     }
+    if (site.visibility === "public" && !member && !released) return null;
     if (!released) assertDraftReadable(site);
     return released
       ? {

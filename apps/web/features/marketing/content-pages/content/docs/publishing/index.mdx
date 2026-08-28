@@ -8,13 +8,11 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 ## Publication status
 
-A site is either **published** or **unpublished**. Publishing enables its live
-surface. Visibility then determines whether that surface is public or restricted
-to signed-in team members. Unpublishing disables the live surface completely.
-
-<Callout type="warn" title="Current publishing model">
-  Published sites currently read the latest saved page content. Editing a published site can therefore change what visitors see without a separate snapshot deployment. Historical snapshots and rollback are not currently available.
-</Callout>
+A site is either **published** or **unpublished**. Publishing creates an
+immutable version from the saved draft and switches the live surface to that
+version atomically. Visibility then determines whether that surface is public or
+restricted to signed-in team members. Unpublishing disables the live surface
+completely.
 
 ## Publishing
 
@@ -30,12 +28,19 @@ Create pages and edit content. Changes save automatically.
 
 ### Publish
 
-Click **Deploy** in the editor header. A Public site becomes available to
+Click **Publish** in the editor header. A Public site becomes available to
 everyone. A Private site becomes available only to authenticated team members
 at its generated BaseBlocks address.
 
 </Step>
 </Steps>
+
+## Version history
+
+Open **Version history** to review the changes in a published version. Choose
+**Set as live** to roll back visitors to an earlier version without changing the
+draft. Choose **Restore as draft** to copy that version into the editor; publish
+the restored draft when it is ready.
 
 ## Unpublishing
 

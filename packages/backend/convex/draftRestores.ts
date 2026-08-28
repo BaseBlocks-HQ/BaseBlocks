@@ -7,8 +7,10 @@ import {
 } from "@convex-dev/workflow";
 import { ConvexError, v } from "convex/values";
 import { components, internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { findActivePublication } from "./model/releaseOperations";
+import type { QueryCtx } from "./_generated/server";
+import { isReleaseAvailable } from "./model/releaseState";
 import {
   isOrganizationMember,
   requireOrganizationPermission,
@@ -27,8 +29,8 @@ export const restore = mutation({
       site.organizationId,
       { resource: "content", action: "edit" },
     );
-    if (release.publicationStatus !== "complete") {
-      throw new ConvexError("Release publication is not complete");
+    if (!isReleaseAvailable(release)) {
+      throw new ConvexError("Release is not available for restore");
     }
     if (site.activeDraftRestoreId) {
       const active = await ctx.db.get(site.activeDraftRestoreId);
@@ -42,11 +44,6 @@ export const restore = mutation({
       }
       throw new ConvexError("Another draft restore is already in progress");
     }
-    if (await findActivePublication(ctx, site._id)) {
-      throw new ConvexError(
-        "A publication is still finishing. Try restoring when it completes.",
-      );
-    }
     const now = Date.now();
     const restoreId = await ctx.db.insert("draftRestores", {
       siteId: site._id,
@@ -57,17 +54,69 @@ export const restore = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    const workflowId = await start(
-      ctx,
-      internal.draftRestore.run,
-      { restoreId },
-      { startAsync: true },
-    );
-    await ctx.db.patch(restoreId, { workflowId });
     await ctx.db.patch(site._id, { activeDraftRestoreId: restoreId });
+
+    try {
+      const workflowId = await start(
+        ctx,
+        internal.draftRestore.run,
+        { restoreId },
+        { startAsync: true },
+      );
+      await ctx.db.patch(restoreId, { workflowId });
+    } catch (error) {
+      // Do not leave a site locked when the workflow component cannot start.
+      // The restore row remains as an auditable failed attempt and a later
+      // request can create a fresh restore.
+      await ctx.db.patch(site._id, { activeDraftRestoreId: undefined });
+      await ctx.db.patch(restoreId, {
+        status: "failed",
+        failure: formatRestoreFailure(error),
+        completedAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      throw error;
+    }
     return { restoreId, reused: false };
   },
 });
+
+function formatRestoreFailure(error: unknown): string {
+  return (error instanceof Error ? error.message : String(error))
+    .replaceAll(/[\r\n\t]+/gu, " ")
+    .slice(0, 300);
+}
+
+export async function getEffectiveDraftRestoreStatus(
+  ctx: QueryCtx,
+  restore: Doc<"draftRestores">,
+) {
+  if (
+    restore.workflowId &&
+    (restore.status === "validating" || restore.status === "applying")
+  ) {
+    const workflowStatus = await getStatus(
+      ctx,
+      components.workflow,
+      restore.workflowId as WorkflowId,
+    );
+    if (workflowStatus.type === "failed") {
+      return {
+        status:
+          restore.status === "validating"
+            ? ("failed" as const)
+            : ("paused" as const),
+        failure: workflowStatus.error,
+        resultDraftRevision: restore.resultDraftRevision,
+      };
+    }
+  }
+  return {
+    status: restore.status,
+    failure: restore.failure,
+    resultDraftRevision: restore.resultDraftRevision,
+  };
+}
 
 export const status = query({
   args: { restoreId: v.id("draftRestores") },
@@ -93,31 +142,7 @@ export const status = query({
     if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
       return null;
     }
-    if (
-      restore.workflowId &&
-      (restore.status === "validating" || restore.status === "applying")
-    ) {
-      const workflowStatus = await getStatus(
-        ctx,
-        components.workflow,
-        restore.workflowId as WorkflowId,
-      );
-      if (workflowStatus.type === "failed") {
-        return {
-          status:
-            restore.status === "validating"
-              ? ("failed" as const)
-              : ("paused" as const),
-          failure: workflowStatus.error,
-          resultDraftRevision: restore.resultDraftRevision,
-        };
-      }
-    }
-    return {
-      status: restore.status,
-      failure: restore.failure,
-      resultDraftRevision: restore.resultDraftRevision,
-    };
+    return getEffectiveDraftRestoreStatus(ctx, restore);
   },
 });
 
@@ -138,7 +163,7 @@ export const resume = mutation({
       action: "edit",
     });
     if (
-      restore.status !== "paused" ||
+      (restore.status !== "paused" && restore.status !== "applying") ||
       !restore.workflowId ||
       site.activeDraftRestoreId !== restore._id
     ) {

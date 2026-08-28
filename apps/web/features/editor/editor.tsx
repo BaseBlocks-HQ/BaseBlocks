@@ -66,6 +66,7 @@ function SiteEditorScreen({
   );
   const searchParams = useSearchParams();
   const requestedAction = searchParams.get("action");
+  const selectedPageId = selectedPage?._id;
 
   const unpublishSite = useMutation(api.releases.unpublish);
 
@@ -121,6 +122,17 @@ function SiteEditorScreen({
       }),
     );
   }, [isPreviewing, siteId]);
+
+  useEffect(() => {
+    if (!restore?._id) return;
+    setActiveDialog(null);
+    setAiChatOpen(false);
+  }, [restore?._id]);
+
+  useEffect(() => {
+    if (!selectedPageId) return;
+    setSaveStatus("idle");
+  }, [selectedPageId]);
 
   if (status === "loading") {
     return <EditorRevealBoundary state="loading" />;
@@ -231,18 +243,17 @@ function SiteEditorScreen({
               </aside>
             ) : null}
           </div>
+          <EditorDialogs
+            activeDialog={activeDialog}
+            draftSummary={draftSummary}
+            onActiveDialogChange={setActiveDialog}
+            pageId={selectedPage?._id}
+            siteId={site._id}
+            siteSlug={site.slug}
+            teamSlug={team.slug}
+          />
         </>
       )}
-
-      <EditorDialogs
-        activeDialog={activeDialog}
-        draftSummary={draftSummary}
-        onActiveDialogChange={setActiveDialog}
-        pageId={selectedPage?._id}
-        siteId={site._id}
-        siteSlug={site.slug}
-        teamSlug={team.slug}
-      />
     </EditorRevealBoundary>
   );
 }
