@@ -33,4 +33,26 @@ describe("publish error messages", () => {
       "The draft changed while publishing. Review the latest changes and try again.",
     );
   });
+
+  test("prefers Convex error data over the client error envelope", () => {
+    const error = new ConvexError(
+      "[CONVEX M(releases:publish)] [Request ID: abc] Server Error\n  Called by client",
+    );
+    error.data =
+      "The draft changed while publishing. Review the latest changes and try again.";
+
+    expect(getPublishErrorMessage(error)).toBe(
+      "The draft changed while publishing. Review the latest changes and try again.",
+    );
+  });
+
+  test("uses the fallback for an empty Convex error envelope", () => {
+    expect(
+      getPublishErrorMessage(
+        new Error(
+          "[CONVEX M(releases:publish)] [Request ID: abc] Server Error\n  Called by client",
+        ),
+      ),
+    ).toBe("The site could not publish");
+  });
 });
