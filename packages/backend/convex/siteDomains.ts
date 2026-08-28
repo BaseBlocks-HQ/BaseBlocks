@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthOrganizationById } from "./authComponent/model";
-import { isReleaseAvailable } from "./model/releaseState";
 import { requireOrganizationPermission } from "./permissions";
 
 const domainStatus = v.union(
@@ -22,7 +21,7 @@ export const resolve = query({
     const site = await ctx.db.get(mapping.siteId);
     if (!site?.liveReleaseId) return null;
     const release = await ctx.db.get(site.liveReleaseId);
-    if (!release || !isReleaseAvailable(release)) return null;
+    if (!release) return null;
     const organization = await getAuthOrganizationById(
       ctx,
       site.organizationId,

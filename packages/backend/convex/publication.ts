@@ -5,14 +5,7 @@ import { internalMutation, type MutationCtx } from "./_generated/server";
 import { buildReleaseChangeDetail } from "./model/releaseChangeDetails";
 import { fileSourceVersion } from "./model/fileExtraction";
 import { readContentRevisionSearchText } from "./model/contentObjects";
-import {
-  extractionIsPublishable,
-  isReleaseAvailable,
-} from "./model/releaseState";
-import {
-  extractOpenEditorText,
-  parseOpenEditorDocument,
-} from "./pageContentFormat";
+import { extractionIsPublishable } from "./model/releaseState";
 import { upsertSearchEntry } from "./search";
 
 /**
@@ -44,17 +37,7 @@ async function readPublishablePageText(
   if (!revision || revision.siteId !== siteId) {
     throw new Error("Page content revision is missing");
   }
-  // New revisions already carry their denormalized text. Avoid loading the
-  // potentially large payload in the publish transaction just to derive the
-  // bounded description below.
-  if (revision.searchText !== undefined) return revision.searchText;
-  const payload = await ctx.db.get(revision.payloadId);
-  if (!payload || payload.siteId !== siteId) {
-    throw new Error("Page content payload is missing");
-  }
-  // Parse legacy revisions once so malformed content cannot become the live
-  // release.
-  return extractOpenEditorText(parseOpenEditorDocument(payload.content));
+  return revision.searchText;
 }
 
 export function truncateDescription(text: string): string {
@@ -241,15 +224,12 @@ export async function snapshotFiles(
       order: source.order,
       uploadedBy: source.uploadedBy,
       createdAt: source.createdAt,
-      ...(source.kind === "file"
-        ? {
-            extractedText:
-              extraction?.status === "ready" &&
-              extraction.sourceVersion === fileSourceVersion(source)
-                ? (extraction.extractedText ?? "")
-                : "",
-          }
-        : {}),
+      extractedText:
+        source.kind === "file" &&
+        extraction?.status === "ready" &&
+        extraction.sourceVersion === fileSourceVersion(source)
+          ? (extraction.extractedText ?? "")
+          : "",
     });
   }
 }
@@ -299,35 +279,8 @@ export async function clearPublishedDraftChanges(
   }
 }
 
-async function readReleasedFileText(
-  ctx: MutationCtx,
-  row: Doc<"releaseFiles">,
-): Promise<string> {
-  if (row.extractedText !== undefined) return row.extractedText;
-
-  // Releases created before `releaseFiles.extractedText` was added need a
-  // guarded compatibility fallback. Never use an extraction for a different
-  // file source; doing so would make historical releases search current draft
-  // content.
-  const file = await ctx.db.get(row.fileId);
-  if (
-    file?.kind !== "file" ||
-    file.deletedAt !== undefined ||
-    file.objectKey !== row.objectKey ||
-    file.size !== row.size ||
-    file.checksum !== row.checksum
-  ) {
-    return "";
-  }
-
-  const extraction = await ctx.db
-    .query("fileExtractions")
-    .withIndex("by_file", (q) => q.eq("fileId", row.fileId))
-    .unique();
-  return extraction?.status === "ready" &&
-    extraction.sourceVersion === fileSourceVersion(file)
-    ? (extraction.extractedText ?? "")
-    : "";
+async function readReleasedFileText(row: Doc<"releaseFiles">): Promise<string> {
+  return row.extractedText ?? "";
 }
 
 async function scheduleLiveSearchBatch(
@@ -426,11 +379,7 @@ export const projectLiveSearchBatch = internalMutation({
       }
       if (!expectedLiveReleaseId) return null;
       const release = await ctx.db.get(expectedLiveReleaseId);
-      if (
-        !release ||
-        release.siteId !== siteId ||
-        !isReleaseAvailable(release)
-      ) {
+      if (!release || release.siteId !== siteId) {
         return null;
       }
       await scheduleLiveSearchBatch(ctx, {
@@ -444,7 +393,7 @@ export const projectLiveSearchBatch = internalMutation({
 
     if (!expectedLiveReleaseId) return null;
     const release = await ctx.db.get(expectedLiveReleaseId);
-    if (!release || release.siteId !== siteId || !isReleaseAvailable(release)) {
+    if (!release || release.siteId !== siteId) {
       return null;
     }
 
@@ -487,7 +436,7 @@ export const projectLiveSearchBatch = internalMutation({
         kind: "file",
         sourceId: row.fileId,
         title: row.filename,
-        text: await readReleasedFileText(ctx, row),
+        text: await readReleasedFileText(row),
       });
     }
     if (!page.isDone) {

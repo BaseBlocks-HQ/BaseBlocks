@@ -10,7 +10,6 @@ import { components, internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import type { QueryCtx } from "./_generated/server";
-import { isReleaseAvailable } from "./model/releaseState";
 import {
   isOrganizationMember,
   requireOrganizationPermission,
@@ -29,9 +28,6 @@ export const restore = mutation({
       site.organizationId,
       { resource: "content", action: "edit" },
     );
-    if (!isReleaseAvailable(release)) {
-      throw new ConvexError("Release is not available for restore");
-    }
     if (site.activeDraftRestoreId) {
       const active = await ctx.db.get(site.activeDraftRestoreId);
       if (

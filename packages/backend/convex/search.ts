@@ -5,7 +5,6 @@ import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, query } from "./_generated/server";
 import { readContentRevisionSearchText } from "./model/contentObjects";
 import { assertDraftReadable } from "./model/draft";
-import { isReleaseAvailable } from "./model/releaseState";
 import { isOrganizationMember } from "./permissions";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 
@@ -33,11 +32,6 @@ export function draftSearchScope(siteId: Id<"sites">): string {
  */
 export function liveSearchScope(siteId: Id<"sites">): string {
   return `live:${siteId}`;
-}
-
-/** Compatibility scope used by releases created before live projection. */
-export function releaseSearchScope(releaseId: Id<"siteReleases">): string {
-  return `release:${releaseId}`;
 }
 
 export function isPublishedSearchEntryForRelease(
@@ -348,7 +342,7 @@ export const run = query({
       const access = await resolvePublishedSiteAccess(ctx, site);
       if (!canRenderPublishedSite(access) || !site.liveReleaseId) return [];
       const release = await ctx.db.get(site.liveReleaseId);
-      if (!release || !isReleaseAvailable(release)) return [];
+      if (!release) return [];
       releaseId = site.liveReleaseId;
       scopeId = liveSearchScope(siteId);
     }
@@ -359,22 +353,11 @@ export const run = query({
       searchTerm,
       normalizeSearchLimit(limit),
     );
-    let currentMatches = releaseId
+    const currentMatches = releaseId
       ? matches.filter(({ doc }) =>
           isPublishedSearchEntryForRelease(doc, releaseId),
         )
       : matches;
-    if (releaseId && currentMatches.length === 0) {
-      const legacyMatches = await searchScope(
-        ctx,
-        releaseSearchScope(releaseId),
-        searchTerm,
-        normalizeSearchLimit(limit),
-      );
-      if (legacyMatches.length > 0) {
-        currentMatches = legacyMatches;
-      }
-    }
     const hydrated = await Promise.all(
       currentMatches.map(({ doc, match }) =>
         releaseId

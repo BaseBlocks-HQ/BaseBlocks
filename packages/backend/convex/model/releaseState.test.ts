@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import {
   extractionBlocksPublication,
   extractionRetryInvalidatesDraft,
-  isReleaseAvailable,
   publicationActionForTarget,
 } from "./releaseState";
 
@@ -33,13 +32,5 @@ describe("release publication guards", () => {
     expect(extractionRetryInvalidatesDraft("failed")).toBe(true);
     expect(extractionRetryInvalidatesDraft(undefined)).toBe(true);
     expect(extractionRetryInvalidatesDraft("processing")).toBe(false);
-  });
-
-  test("keeps atomic and completed legacy releases readable", () => {
-    expect(isReleaseAvailable({})).toBe(true);
-    expect(isReleaseAvailable({ publicationStatus: "complete" })).toBe(true);
-    expect(isReleaseAvailable({ publicationStatus: "clearing" })).toBe(true);
-    expect(isReleaseAvailable({ publicationStatus: "building" })).toBe(false);
-    expect(isReleaseAvailable({ publicationStatus: "failed" })).toBe(false);
   });
 });

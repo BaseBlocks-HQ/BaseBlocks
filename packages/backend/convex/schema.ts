@@ -93,7 +93,7 @@ export default defineSchema({
      * Publication, search projection, and metadata reads consume this
      * instead of re-parsing the payload.
      */
-    searchText: v.optional(v.string()),
+    searchText: v.string(),
     libraryIds: v.array(v.id("documentLibraries")),
     fileIds: v.array(v.id("files")),
     pageIds: v.array(v.id("pages")),
@@ -113,39 +113,6 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"])
     .index("by_revision", ["revisionId"]),
-
-  /**
-   * Progress for the publication manifest backfill. The migration is kept
-   * separate from the legacy publication workflow so it can be dry-run and
-   * resumed without changing publication behavior.
-   */
-  publicationMigrationRuns: defineTable({
-    migrationKey: v.string(),
-    runId: v.string(),
-    mode: v.union(v.literal("dryRun"), v.literal("apply")),
-    phase: v.union(
-      v.literal("revisions"),
-      v.literal("pages"),
-      v.literal("files"),
-      v.literal("search"),
-      v.literal("sites"),
-    ),
-    cursor: v.optional(v.string()),
-    status: v.union(
-      v.literal("running"),
-      v.literal("completed"),
-      v.literal("failed"),
-    ),
-    scannedCount: v.number(),
-    migratedCount: v.number(),
-    skippedCount: v.number(),
-    scheduledCount: v.optional(v.number()),
-    errorCount: v.number(),
-    startedAt: v.number(),
-    updatedAt: v.number(),
-    completedAt: v.optional(v.number()),
-    failureSummary: v.optional(v.string()),
-  }).index("by_migration_run", ["migrationKey", "runId"]),
 
   draftChanges: defineTable({
     siteId: v.id("sites"),
@@ -404,21 +371,6 @@ export default defineSchema({
     createdAt: v.number(),
     pageCount: v.number(),
     changeCount: v.number(),
-    /**
-     * Legacy publication workflow fields remain optional so existing rows can
-     * still be read while new releases use atomic activation.
-     */
-    publicationStatus: v.optional(
-      v.union(
-        v.literal("building"),
-        v.literal("clearing"),
-        v.literal("complete"),
-        v.literal("failed"),
-      ),
-    ),
-    publicationFailure: v.optional(v.string()),
-    publicationWorkflowId: v.optional(v.string()),
-    publicationUpdatedAt: v.optional(v.number()),
   })
     .index("by_site", ["siteId"])
     .index("by_site_number", ["siteId", "number"]),
@@ -460,9 +412,7 @@ export default defineSchema({
      * revision's captured search text. The live projection owns its searchable
      * copy; the release row keeps only this metadata snippet.
      */
-    description: v.optional(v.string()),
-    /** Compatibility with releases created before the description rename. */
-    descriptionText: v.optional(v.string()),
+    description: v.string(),
     updatedAt: v.number(),
   })
     .index("by_content_revision", ["contentRevisionId"])

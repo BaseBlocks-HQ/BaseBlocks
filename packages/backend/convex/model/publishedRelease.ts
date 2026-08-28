@@ -1,6 +1,5 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { isReleaseAvailable } from "./releaseState";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "../sharing";
 
 export type ResolvedReleasePage = {
@@ -101,7 +100,7 @@ export async function getReadableLiveRelease(
   releaseId: Id<"siteReleases">,
 ) {
   const release = await ctx.db.get(releaseId);
-  if (!release || !isReleaseAvailable(release)) return null;
+  if (!release) return null;
   const site = await ctx.db.get(release.siteId);
   if (!site || site.liveReleaseId !== release._id) return null;
   const access = await resolvePublishedSiteAccess(ctx, site);
