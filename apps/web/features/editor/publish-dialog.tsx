@@ -55,10 +55,11 @@ function cleanPublishErrorMessage(message: string): string {
   if (markerIndex === -1) return message;
 
   const errorMessage = message.slice(markerIndex + convexErrorMarker.length);
-  return errorMessage
-    .split(/\s+at\s+[^\s(]+\s*\(/, 1)[0]
-    .replace(/\s+Called by client\s*$/, "")
-    .trim();
+  const [userMessage = errorMessage] = errorMessage.split(
+    /\s+at\s+[^\s(]+\s*\(/,
+    1,
+  );
+  return userMessage.replace(/\s+Called by client\s*$/, "").trim();
 }
 
 export type DraftSummary = {
