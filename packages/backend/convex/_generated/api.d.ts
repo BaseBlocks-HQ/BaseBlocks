@@ -66,6 +66,7 @@ import type * as pageGuests from "../pageGuests.js";
 import type * as pages from "../pages.js";
 import type * as permissions from "../permissions.js";
 import type * as publication from "../publication.js";
+import type * as publicationCleanup from "../publicationCleanup.js";
 import type * as publicationMigrations from "../publicationMigrations.js";
 import type * as published from "../published.js";
 import type * as releasePublication from "../releasePublication.js";
@@ -157,6 +158,7 @@ declare const fullApi: ApiFromModules<{
   pages: typeof pages;
   permissions: typeof permissions;
   publication: typeof publication;
+  publicationCleanup: typeof publicationCleanup;
   publicationMigrations: typeof publicationMigrations;
   published: typeof published;
   releasePublication: typeof releasePublication;
