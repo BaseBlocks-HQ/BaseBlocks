@@ -31,8 +31,12 @@ export function getPublishErrorMessage(
   error: unknown,
   fallback = "The site could not publish",
 ): string {
-  if (error instanceof Error && error.message.trim()) return error.message;
-  if (typeof error === "string" && error.trim()) return error;
+  if (error instanceof Error && error.message.trim()) {
+    return cleanPublishErrorMessage(error.message);
+  }
+  if (typeof error === "string" && error.trim()) {
+    return cleanPublishErrorMessage(error);
+  }
   if (
     error &&
     typeof error === "object" &&
@@ -40,9 +44,21 @@ export function getPublishErrorMessage(
     typeof error.message === "string" &&
     error.message.trim()
   ) {
-    return error.message;
+    return cleanPublishErrorMessage(error.message);
   }
   return fallback;
+}
+
+function cleanPublishErrorMessage(message: string): string {
+  const convexErrorMarker = "Uncaught ConvexError:";
+  const markerIndex = message.indexOf(convexErrorMarker);
+  if (markerIndex === -1) return message;
+
+  const errorMessage = message.slice(markerIndex + convexErrorMarker.length);
+  return errorMessage
+    .split(/\s+at\s+[^\s(]+\s*\(/, 1)[0]
+    .replace(/\s+Called by client\s*$/, "")
+    .trim();
 }
 
 export type DraftSummary = {

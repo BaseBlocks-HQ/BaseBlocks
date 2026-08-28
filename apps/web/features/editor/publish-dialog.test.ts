@@ -21,4 +21,16 @@ describe("publish error messages", () => {
       "Publication failed",
     );
   });
+
+  test("unwraps the Convex client error envelope", () => {
+    expect(
+      getPublishErrorMessage(
+        new Error(
+          "[CONVEX M(releases:publish)] [Request ID: abc] Server Error Uncaught ConvexError: The draft changed while publishing. Review the latest changes and try again. at handler (../convex/releases.ts:267:8) Called by client",
+        ),
+      ),
+    ).toBe(
+      "The draft changed while publishing. Review the latest changes and try again.",
+    );
+  });
 });
