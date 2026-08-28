@@ -11,6 +11,7 @@ import {
 } from "./pageContentFormat";
 
 import { fingerprintOpenEditorDocument } from "@openeditor/core";
+import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
 
 describe("hashOpenEditorContent", () => {
   test("writes a versioned SHA-256 digest", () => {
@@ -100,6 +101,47 @@ describe("parseOpenEditorDocument", () => {
 
     expect(document.content[0]?.type).toBe("customBlock");
     expect(document.content[0]?.attrs?.blockId).toBe("baseblocks.directory");
+  });
+
+  test("accepts version 1 directory blocks through the registered migration", () => {
+    const document = parseOpenEditorDocument({
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "customBlock",
+          attrs: {
+            "openeditor-id": "directory-legacy-1",
+            blockId: "baseblocks.directory",
+            version: 1,
+            data: {
+              directories: [
+                {
+                  id: "directory",
+                  label: "Directory",
+                  columnIds: ["name"],
+                  rows: [{ id: "row", cells: { name: "Ada" } }],
+                  pageSize: null,
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+
+    const resolved = baseBlocksBlockRegistry.resolve(document.content[0]!);
+    expect(resolved.status).toBe("ready");
+    if (resolved.status !== "ready") return;
+    expect(resolved.migrated).toBe(true);
+    expect(resolved.data).toMatchObject({
+      directories: [
+        {
+          columns: [{ id: "name", name: "Column 1" }],
+          rows: [{ id: "row", cells: { name: "Ada" } }],
+        },
+      ],
+    });
   });
 
   test("rejects unsupported block versions and malformed block data", () => {
