@@ -3,17 +3,13 @@ import type { DataModel, Id } from "../_generated/dataModel";
 import {
   extractOpenEditorReferences,
   extractOpenEditorText,
-  parseOpenEditorDocument,
   type OpenEditorDocument,
 } from "../pageContentFormat";
 import { recordStorageUsageEvent } from "./storageTelemetry";
 
 type MutationCtx = Pick<GenericMutationCtx<DataModel>, "db">;
 
-/**
- * Reads the denormalized text when present and rebuilds it for content
- * revisions written before `searchText` was added to the schema.
- */
+/** Reads the denormalized text captured on the content revision. */
 export async function readContentRevisionSearchText(
   ctx: MutationCtx,
   revisionId: Id<"contentRevisions"> | undefined,
@@ -21,16 +17,7 @@ export async function readContentRevisionSearchText(
   if (!revisionId) return "";
   const revision = await ctx.db.get(revisionId);
   if (!revision) return "";
-  if (revision.searchText !== undefined) return revision.searchText;
-  const payload = await ctx.db.get(revision.payloadId);
-  if (!payload) return "";
-  try {
-    return extractOpenEditorText(parseOpenEditorDocument(payload.content));
-  } catch {
-    // Search is a derived projection. Omit malformed historical content here;
-    // publication validates legacy payloads before activation.
-    return "";
-  }
+  return revision.searchText;
 }
 
 export async function getOrCreateContentObject(

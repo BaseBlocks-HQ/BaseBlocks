@@ -25,7 +25,6 @@ import {
 } from "./search";
 import { recordStorageUsageEvent } from "./model/storageTelemetry";
 import { pendingSiteAssetLifecycle } from "./model/siteAssets";
-import { isReleaseAvailable } from "./model/releaseState";
 
 async function isFileReferencedByAccessiblePage(
   ctx: Parameters<typeof getPageAccessOrNull>[0],
@@ -180,7 +179,7 @@ export const getPublic = query({
     const site = await ctx.db.get(file.siteId);
     if (!site?.liveReleaseId || !isPubliclyPublishedSite(site)) return null;
     const release = await ctx.db.get(site.liveReleaseId);
-    if (!release || !isReleaseAvailable(release)) return null;
+    if (!release) return null;
     const snapshot = await ctx.db
       .query("releaseFiles")
       .withIndex("by_release_file", (q) =>
@@ -212,7 +211,6 @@ export const getAuthorized = query({
       : null;
     const released =
       liveRelease &&
-      isReleaseAvailable(liveRelease) &&
       (await ctx.db
         .query("releaseFiles")
         .withIndex("by_release_file", (q) =>

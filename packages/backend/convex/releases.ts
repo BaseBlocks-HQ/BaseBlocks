@@ -1,14 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import type { GenericMutationCtx } from "convex/server";
-import { getStatus, type WorkflowId } from "@convex-dev/workflow";
-import { components, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import {
-  extractionBlocksPublication,
-  isPublicationInFlight,
-  isReleaseAvailable,
-} from "./model/releaseState";
+import { extractionBlocksPublication } from "./model/releaseState";
 import { buildDraftSummary } from "./model/draftSummary";
 import { promoteRelease } from "./model/releaseOperations";
 import { buildHistoricalReleaseContent } from "./model/releaseChangeDetails";
@@ -110,58 +105,6 @@ export const getDraftChanges = query({
   },
 });
 
-/**
- * Backward-compatible read for clients that still poll the retired workflow.
- * Atomic releases have no workflow status and are complete at creation time.
- */
-export const getPublicationStatus = query({
-  args: { releaseId: v.id("siteReleases") },
-  returns: v.union(
-    v.null(),
-    v.object({
-      status: v.union(
-        v.literal("building"),
-        v.literal("clearing"),
-        v.literal("complete"),
-        v.literal("failed"),
-      ),
-      failure: v.optional(v.string()),
-    }),
-  ),
-  handler: async (ctx, { releaseId }) => {
-    const release = await ctx.db.get(releaseId);
-    if (!release || !(await requireSiteForMember(ctx, release.siteId))) {
-      return null;
-    }
-    if (
-      isPublicationInFlight(release.publicationStatus) &&
-      !release.publicationWorkflowId
-    ) {
-      return {
-        status: "failed" as const,
-        failure: "Publication workflow state is missing",
-      };
-    }
-    if (
-      isPublicationInFlight(release.publicationStatus) &&
-      release.publicationWorkflowId
-    ) {
-      const workflowStatus = await getStatus(
-        ctx,
-        components.workflow,
-        release.publicationWorkflowId as WorkflowId,
-      );
-      if (workflowStatus.type === "failed") {
-        return { status: "failed" as const, failure: workflowStatus.error };
-      }
-    }
-    return {
-      status: release.publicationStatus ?? ("complete" as const),
-      failure: release.publicationFailure,
-    };
-  },
-});
-
 export const list = query({
   args: { siteId: v.id("sites") },
   returns: v.array(releaseSummaryValidator),
@@ -173,9 +116,9 @@ export const list = query({
       .withIndex("by_site_number", (q) => q.eq("siteId", siteId))
       .order("desc")
       .collect();
-    return releases
-      .filter(isReleaseAvailable)
-      .map((release) => releaseSummary(release, site.liveReleaseId));
+    return releases.map((release) =>
+      releaseSummary(release, site.liveReleaseId),
+    );
   },
 });
 
@@ -210,7 +153,7 @@ export const get = query({
   ),
   handler: async (ctx, { releaseId }) => {
     const release = await ctx.db.get(releaseId);
-    if (!release || !isReleaseAvailable(release)) return null;
+    if (!release) return null;
     const site = await requireSiteForMember(ctx, release.siteId);
     if (!site) return null;
     const changes = await ctx.db
@@ -272,11 +215,7 @@ export const publish = mutation({
     const matchingRelease = site.draftBaseReleaseId
       ? await ctx.db.get(site.draftBaseReleaseId)
       : null;
-    if (
-      matchingRelease &&
-      (matchingRelease.siteId !== siteId ||
-        !isReleaseAvailable(matchingRelease))
-    ) {
+    if (matchingRelease && matchingRelease.siteId !== siteId) {
       throw new ConvexError("The draft base version is unavailable");
     }
     const pendingChange = await ctx.db
@@ -452,9 +391,6 @@ export const makeLive = mutation({
       site.organizationId,
       { resource: "publication", action: "publish" },
     );
-    if (!isReleaseAvailable(release)) {
-      throw new ConvexError("Release publication is not complete");
-    }
     if (site.activeDraftRestoreId) {
       throw new ConvexError(
         "A historical version is currently being restored. Try again when it finishes.",

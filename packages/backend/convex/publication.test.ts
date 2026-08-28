@@ -367,7 +367,7 @@ describe("publish", () => {
     expect(state.inserted).toHaveLength(0);
   });
 
-  test("rejects malformed legacy page content before activation", async () => {
+  test("rejects a page with a missing captured revision", async () => {
     const site: Row = {
       _id: "site-1",
       organizationId: "organization-1",
@@ -394,27 +394,10 @@ describe("publish", () => {
       contentHash: "hash-1",
       updatedAt: 1,
     };
-    const revision: Row = {
-      _id: "revision-1",
-      siteId: site._id,
-      payloadId: "payload-1",
-    };
     const state = makeDb({
       sites: [site],
       pages: [page],
       pageDocuments: [document],
-      contentRevisions: [revision],
-      contentPayloads: [
-        {
-          _id: "payload-1",
-          siteId: site._id,
-          content: JSON.stringify({
-            type: "doc",
-            version: 1,
-            content: [{ type: "unknownHistoricalNode" }],
-          }),
-        },
-      ],
       draftChanges: [],
     });
 
@@ -507,7 +490,7 @@ describe("live search projection", () => {
     );
   });
 
-  test("does not leak current extraction into a legacy release", async () => {
+  test("uses empty text when a file snapshot has no captured text", async () => {
     const site: Row = {
       _id: "site-1",
       liveReleaseId: "release-1",

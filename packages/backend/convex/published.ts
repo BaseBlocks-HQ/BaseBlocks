@@ -8,7 +8,6 @@ import {
   getReadableLiveRelease,
   resolveReleasePage,
 } from "./model/publishedRelease";
-import { isReleaseAvailable } from "./model/releaseState";
 import { buildPageTree } from "./pages";
 import {
   emptyOpenEditorDocument,
@@ -90,7 +89,7 @@ async function getPublishedSiteBySlug(
     .unique();
   if (!site?.liveReleaseId) return null;
   const release = await ctx.db.get(site.liveReleaseId);
-  return release && isReleaseAvailable(release)
+  return release
     ? {
         organization: { ...organization, slug: organization.slug },
         site,
@@ -246,10 +245,7 @@ export const getPageMetadata = query({
     if (!resolved) return null;
     return {
       title: resolved.page.title,
-      descriptionText:
-        resolved.page.description ||
-        resolved.page.descriptionText ||
-        resolved.page.title,
+      descriptionText: resolved.page.description || resolved.page.title,
       canonicalPath: canonicalPagePath(context.release, resolved),
       updatedAt: resolved.page.updatedAt,
     };
@@ -364,7 +360,7 @@ export const sitemap = query({
         const release = site.liveReleaseId
           ? await ctx.db.get(site.liveReleaseId)
           : null;
-        if (!release || !isReleaseAvailable(release)) return null;
+        if (!release) return null;
         const pages = await ctx.db
           .query("releasePages")
           .withIndex("by_release", (q) => q.eq("releaseId", release._id))
@@ -417,7 +413,7 @@ export const getPageExport = query({
     const access = await resolvePublishedSiteAccess(ctx, site);
     if (!canRenderPublishedSite(access)) return null;
     const release = await ctx.db.get(site.liveReleaseId);
-    if (!release || !isReleaseAvailable(release)) return null;
+    if (!release) return null;
     const page = await ctx.db
       .query("releasePages")
       .withIndex("by_release_page", (q) =>
