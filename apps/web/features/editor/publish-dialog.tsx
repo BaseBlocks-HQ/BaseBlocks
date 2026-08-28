@@ -16,7 +16,7 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { Globe02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 type DraftChange = {
@@ -26,6 +26,41 @@ type DraftChange = {
   label: string;
   details: string[];
 };
+
+export function getPublishErrorMessage(
+  error: unknown,
+  fallback = "The site could not publish",
+): string {
+  if (error instanceof Error && error.message.trim()) {
+    return cleanPublishErrorMessage(error.message);
+  }
+  if (typeof error === "string" && error.trim()) {
+    return cleanPublishErrorMessage(error);
+  }
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string" &&
+    error.message.trim()
+  ) {
+    return cleanPublishErrorMessage(error.message);
+  }
+  return fallback;
+}
+
+function cleanPublishErrorMessage(message: string): string {
+  const convexErrorMarker = "Uncaught ConvexError:";
+  const markerIndex = message.indexOf(convexErrorMarker);
+  if (markerIndex === -1) return message;
+
+  const errorMessage = message.slice(markerIndex + convexErrorMarker.length);
+  const [userMessage = errorMessage] = errorMessage.split(
+    /\s+at\s+[^\s(]+\s*\(/,
+    1,
+  );
+  return userMessage.replace(/\s+Called by client\s*$/, "").trim();
+}
 
 export type DraftSummary = {
   draftRevision: number;
@@ -53,64 +88,30 @@ export function PublishDialog({
     | DraftChange[]
     | null
     | undefined;
-  const [requesting, setRequesting] = useState(false);
-  const [pendingPublication, setPendingPublication] = useState<{
-    releaseId: Id<"siteReleases">;
-    number: number;
-  } | null>(null);
-  const publicationStatus = useQuery(
-    api.releases.getPublicationStatus,
-    pendingPublication ? { releaseId: pendingPublication.releaseId } : "skip",
-  );
-  const publicationFinished =
-    publicationStatus === null ||
-    publicationStatus?.status === "complete" ||
-    publicationStatus?.status === "failed";
-  const publishing =
-    requesting || (pendingPublication !== null && !publicationFinished);
-
-  useEffect(() => {
-    if (!pendingPublication || publicationStatus === undefined) return;
-    if (publicationStatus?.status === "complete") {
-      toast.success(`Version ${pendingPublication.number} is live`, {
-        id: `publication:${pendingPublication.releaseId}:complete`,
-      });
-    } else if (publicationStatus?.status === "failed") {
-      toast.error(
-        publicationStatus.failure ?? "The site could not be published.",
-        { id: `publication:${pendingPublication.releaseId}:failed` },
-      );
-    } else if (publicationStatus === null) {
-      toast.error(
-        "The draft changed before publication completed. Review it and try again.",
-        { id: `publication:${pendingPublication.releaseId}:missing` },
-      );
-    }
-  }, [pendingPublication, publicationStatus]);
+  const [publishing, setPublishing] = useState(false);
+  const publishInFlight = useRef(false);
 
   const handlePublish = () => {
-    setRequesting(true);
+    if (publishInFlight.current) return;
+    publishInFlight.current = true;
+    setPublishing(true);
+    // Freeze the revision for this request only. If the request detects a
+    // concurrent edit, a later retry must use the newly rendered revision.
+    const expectedDraftRevision = draftSummary.draftRevision;
     void publish({
       siteId,
-      expectedDraftRevision: draftSummary.draftRevision,
+      expectedDraftRevision,
     }).then(
       (result) => {
-        setRequesting(false);
-        if (result.reused) {
-          toast.success(`Version ${result.number} is live again`);
-          onOpenChange(false);
-          return;
-        }
-        setPendingPublication({
-          releaseId: result.releaseId,
-          number: result.number,
-        });
+        publishInFlight.current = false;
+        setPublishing(false);
+        toast.success(`Version ${result.number} is live`);
+        onOpenChange(false);
       },
       (error: unknown) => {
-        setRequesting(false);
-        toast.error(
-          error instanceof Error ? error.message : "The site could not publish",
-        );
+        publishInFlight.current = false;
+        setPublishing(false);
+        toast.error(getPublishErrorMessage(error));
       },
     );
   };
@@ -121,15 +122,9 @@ export function PublishDialog({
   };
 
   return (
-    <Dialog
-      open={publicationStatus?.status !== "complete"}
-      onOpenChange={handleOpenChange}
-    >
+    <Dialog open={true} onOpenChange={handleOpenChange}>
       <DialogContent
         className="overflow-hidden rounded-2xl border-0 bg-background/80 p-0 text-foreground shadow-2xl backdrop-blur-xl backdrop-saturate-150 sm:max-w-lg"
-        onCloseAutoFocus={() => {
-          if (publicationStatus?.status === "complete") onOpenChange(false);
-        }}
         returnFocusTo={returnFocusTo}
         showCloseButton={false}
       >
@@ -165,7 +160,7 @@ export function PublishDialog({
             </Button>
             <Button
               disabled={publishing || changes === undefined || changes === null}
-              onClick={() => void handlePublish()}
+              onClick={handlePublish}
               size="sm"
             >
               {publishing ? (
@@ -198,7 +193,7 @@ function ChangeList({ changes }: { changes: DraftChange[] }) {
     <div className="grid min-w-0 max-h-72 gap-2 overflow-y-auto">
       {changes.map((change) => (
         <div
-          className="flex items-start gap-3 rounded-xl bg-muted/50 px-3 py-2.5"
+          className="flex items-start gap-2 rounded-xl bg-muted/50 px-3 py-2"
           key={`${change.entityType}:${change.entityId}`}
         >
           <ChangeBadge changeType={change.changeType} />
@@ -208,9 +203,6 @@ function ChangeList({ changes }: { changes: DraftChange[] }) {
               {change.details.join(" · ")}
             </p>
           </div>
-          <span className="text-xs capitalize text-muted-foreground">
-            {change.entityType}
-          </span>
         </div>
       ))}
     </div>

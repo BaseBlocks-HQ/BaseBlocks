@@ -8,6 +8,7 @@ import {
   getReadableLiveRelease,
   resolveReleasePage,
 } from "./model/publishedRelease";
+import { isReleaseAvailable } from "./model/releaseState";
 import { buildPageTree } from "./pages";
 import {
   emptyOpenEditorDocument,
@@ -89,7 +90,7 @@ async function getPublishedSiteBySlug(
     .unique();
   if (!site?.liveReleaseId) return null;
   const release = await ctx.db.get(site.liveReleaseId);
-  return release
+  return release && isReleaseAvailable(release)
     ? {
         organization: { ...organization, slug: organization.slug },
         site,
@@ -245,7 +246,10 @@ export const getPageMetadata = query({
     if (!resolved) return null;
     return {
       title: resolved.page.title,
-      descriptionText: resolved.page.descriptionText || resolved.page.title,
+      descriptionText:
+        resolved.page.description ||
+        resolved.page.descriptionText ||
+        resolved.page.title,
       canonicalPath: canonicalPagePath(context.release, resolved),
       updatedAt: resolved.page.updatedAt,
     };
@@ -360,7 +364,7 @@ export const sitemap = query({
         const release = site.liveReleaseId
           ? await ctx.db.get(site.liveReleaseId)
           : null;
-        if (!release) return null;
+        if (!release || !isReleaseAvailable(release)) return null;
         const pages = await ctx.db
           .query("releasePages")
           .withIndex("by_release", (q) => q.eq("releaseId", release._id))
@@ -412,10 +416,12 @@ export const getPageExport = query({
     if (!site?.liveReleaseId) return null;
     const access = await resolvePublishedSiteAccess(ctx, site);
     if (!canRenderPublishedSite(access)) return null;
+    const release = await ctx.db.get(site.liveReleaseId);
+    if (!release || !isReleaseAvailable(release)) return null;
     const page = await ctx.db
       .query("releasePages")
       .withIndex("by_release_page", (q) =>
-        q.eq("releaseId", site.liveReleaseId!).eq("pageId", pageId),
+        q.eq("releaseId", release._id).eq("pageId", pageId),
       )
       .unique();
     if (!page) return null;
@@ -433,7 +439,7 @@ export const getPageExport = query({
     }
     const assets = await readReleaseImageAssets(
       ctx,
-      site.liveReleaseId,
+      release._id,
       revision?.fileIds ?? [],
       imageReferenceIds,
     );

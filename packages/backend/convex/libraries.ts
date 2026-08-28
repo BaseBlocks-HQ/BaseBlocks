@@ -14,6 +14,7 @@ import {
   requireLibraryManagement,
 } from "./model/libraryAccess";
 import { assertDraftReadable, touchSiteDraft } from "./model/draft";
+import { isReleaseAvailable } from "./model/releaseState";
 
 const librarySummary = v.object({
   _id: v.id("documentLibraries"),
@@ -250,7 +251,7 @@ export const getPublishedExplorer = query({
     const access = await resolvePublishedSiteAccess(ctx, site);
     if (!canRenderPublishedSite(access)) return null;
     const release = await ctx.db.get(site.liveReleaseId);
-    if (!release) return null;
+    if (!release || !isReleaseAvailable(release)) return null;
     const releasedLibrary = await ctx.db
       .query("releaseLibraries")
       .withIndex("by_release_library", (q) =>

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   extractSearchExcerpt,
+  isPublishedSearchEntryForRelease,
   mergeSearchMatches,
   normalizeSearchLimit,
 } from "./search";
@@ -65,5 +66,25 @@ describe("search result limits", () => {
     expect(normalizeSearchLimit(-5)).toBe(1);
     expect(normalizeSearchLimit(4.8)).toBe(4);
     expect(normalizeSearchLimit(500)).toBe(50);
+  });
+});
+
+describe("published search release fencing", () => {
+  test("ignores entries that were not projected for the current release", () => {
+    expect(
+      isPublishedSearchEntryForRelease(
+        { releaseId: "release-2" as never },
+        "release-2" as never,
+      ),
+    ).toBe(true);
+    expect(
+      isPublishedSearchEntryForRelease(
+        { releaseId: "release-1" as never },
+        "release-2" as never,
+      ),
+    ).toBe(false);
+    expect(isPublishedSearchEntryForRelease({}, "release-2" as never)).toBe(
+      false,
+    );
   });
 });

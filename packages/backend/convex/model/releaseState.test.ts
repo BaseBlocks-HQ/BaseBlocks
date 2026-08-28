@@ -1,9 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
   extractionBlocksPublication,
-  extractionIsPublishable,
   extractionRetryInvalidatesDraft,
-  isPublicationInFlight,
+  isReleaseAvailable,
   publicationActionForTarget,
 } from "./releaseState";
 
@@ -21,14 +20,7 @@ describe("release promotion", () => {
   });
 });
 
-describe("release publication state machine", () => {
-  test("treats snapshot building and draft cleanup as nonterminal", () => {
-    expect(isPublicationInFlight("building")).toBe(true);
-    expect(isPublicationInFlight("clearing")).toBe(true);
-    expect(isPublicationInFlight("complete")).toBe(false);
-    expect(isPublicationInFlight("failed")).toBe(false);
-  });
-
+describe("release publication guards", () => {
   test("blocks only while document extraction is incomplete", () => {
     expect(extractionBlocksPublication("queued")).toBe(true);
     expect(extractionBlocksPublication("processing")).toBe(true);
@@ -43,22 +35,11 @@ describe("release publication state machine", () => {
     expect(extractionRetryInvalidatesDraft("processing")).toBe(false);
   });
 
-  test("publishes only terminal extraction state for the current source", () => {
-    expect(extractionIsPublishable(null, "v1")).toBe(false);
-    expect(
-      extractionIsPublishable({ sourceVersion: "v0", status: "ready" }, "v1"),
-    ).toBe(false);
-    expect(
-      extractionIsPublishable(
-        { sourceVersion: "v1", status: "processing" },
-        "v1",
-      ),
-    ).toBe(false);
-    expect(
-      extractionIsPublishable({ sourceVersion: "v1", status: "ready" }, "v1"),
-    ).toBe(true);
-    expect(
-      extractionIsPublishable({ sourceVersion: "v1", status: "failed" }, "v1"),
-    ).toBe(true);
+  test("keeps atomic and completed legacy releases readable", () => {
+    expect(isReleaseAvailable({})).toBe(true);
+    expect(isReleaseAvailable({ publicationStatus: "complete" })).toBe(true);
+    expect(isReleaseAvailable({ publicationStatus: "clearing" })).toBe(true);
+    expect(isReleaseAvailable({ publicationStatus: "building" })).toBe(false);
+    expect(isReleaseAvailable({ publicationStatus: "failed" })).toBe(false);
   });
 });

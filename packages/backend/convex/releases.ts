@@ -1,23 +1,25 @@
 import { ConvexError, v } from "convex/values";
-import {
-  getStatus,
-  restart,
-  start,
-  type WorkflowId,
-} from "@convex-dev/workflow";
+import type { GenericMutationCtx } from "convex/server";
+import { getStatus, type WorkflowId } from "@convex-dev/workflow";
 import { components, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import {
   extractionBlocksPublication,
   isPublicationInFlight,
+  isReleaseAvailable,
 } from "./model/releaseState";
 import { buildDraftSummary } from "./model/draftSummary";
-import {
-  findActivePublication,
-  promoteRelease,
-} from "./model/releaseOperations";
+import { promoteRelease } from "./model/releaseOperations";
 import { buildHistoricalReleaseContent } from "./model/releaseChangeDetails";
+import {
+  snapshotChanges,
+  snapshotFiles,
+  snapshotFolders,
+  snapshotLibraries,
+  snapshotPages,
+  clearPublishedDraftChanges,
+} from "./publication";
 import {
   isOrganizationMember,
   requireOrganizationPermission,
@@ -108,6 +110,10 @@ export const getDraftChanges = query({
   },
 });
 
+/**
+ * Backward-compatible read for clients that still poll the retired workflow.
+ * Atomic releases have no workflow status and are complete at creation time.
+ */
 export const getPublicationStatus = query({
   args: { releaseId: v.id("siteReleases") },
   returns: v.union(
@@ -150,7 +156,7 @@ export const getPublicationStatus = query({
       }
     }
     return {
-      status: release.publicationStatus,
+      status: release.publicationStatus ?? ("complete" as const),
       failure: release.publicationFailure,
     };
   },
@@ -164,14 +170,12 @@ export const list = query({
     if (!site) return [];
     const releases = await ctx.db
       .query("siteReleases")
-      .withIndex("by_site_publication_status", (q) =>
-        q.eq("siteId", siteId).eq("publicationStatus", "complete"),
-      )
+      .withIndex("by_site_number", (q) => q.eq("siteId", siteId))
       .order("desc")
       .collect();
-    return releases.map((release) =>
-      releaseSummary(release, site.liveReleaseId),
-    );
+    return releases
+      .filter(isReleaseAvailable)
+      .map((release) => releaseSummary(release, site.liveReleaseId));
   },
 });
 
@@ -206,9 +210,7 @@ export const get = query({
   ),
   handler: async (ctx, { releaseId }) => {
     const release = await ctx.db.get(releaseId);
-    if (release?.publicationStatus !== "complete") {
-      return null;
-    }
+    if (!release || !isReleaseAvailable(release)) return null;
     const site = await requireSiteForMember(ctx, release.siteId);
     if (!site) return null;
     const changes = await ctx.db
@@ -232,6 +234,11 @@ export const get = query({
   },
 });
 
+/**
+ * Publishing is atomic: the release manifest is built and activated in a
+ * single transaction. The user-visible site switches when this mutation
+ * commits; search projection runs as a derived background job.
+ */
 export const publish = mutation({
   args: {
     siteId: v.id("sites"),
@@ -262,60 +269,36 @@ export const publish = mutation({
       );
     }
 
-    const activePublication = await findActivePublication(ctx, siteId);
-    if (
-      activePublication &&
-      isPublicationInFlight(activePublication.publicationStatus)
-    ) {
-      if (!activePublication.publicationWorkflowId) {
-        throw new ConvexError("Publication workflow state is missing");
-      }
-      const workflowStatus = await getStatus(
-        ctx,
-        components.workflow,
-        activePublication.publicationWorkflowId as WorkflowId,
-      );
-      if (workflowStatus.type === "failed") {
-        await restart(
-          ctx,
-          components.workflow,
-          activePublication.publicationWorkflowId as WorkflowId,
-          { startAsync: true },
-        );
-        if (activePublication.sourceDraftRevision !== draftRevision) {
-          throw new ConvexError(
-            "A previous publication recovery was restarted. Try publishing the latest draft again shortly.",
-          );
-        }
-      }
-      if (activePublication.sourceDraftRevision === draftRevision) {
-        return {
-          releaseId: activePublication._id,
-          number: activePublication.number,
-          reused: false,
-        };
-      }
-      throw new ConvexError(
-        "A previous publication is still finishing. Try again shortly.",
-      );
-    }
-
     const matchingRelease = site.draftBaseReleaseId
       ? await ctx.db.get(site.draftBaseReleaseId)
       : null;
+    if (
+      matchingRelease &&
+      (matchingRelease.siteId !== siteId ||
+        !isReleaseAvailable(matchingRelease))
+    ) {
+      throw new ConvexError("The draft base version is unavailable");
+    }
     const pendingChange = await ctx.db
       .query("draftChanges")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .first();
-    if (
-      matchingRelease &&
-      matchingRelease.publicationStatus === "complete" &&
-      !pendingChange
-    ) {
+    if (matchingRelease && !pendingChange) {
       if (site.liveReleaseId === matchingRelease._id) {
         throw new ConvexError("This draft is already live");
       }
-      await promoteRelease(ctx, site, matchingRelease, auth.userId);
+      const liveSearchProjectionGeneration = await promoteRelease(
+        ctx,
+        site,
+        matchingRelease,
+        auth.userId,
+      );
+      await scheduleLiveSearchProjection(
+        ctx,
+        siteId,
+        matchingRelease._id,
+        liveSearchProjectionGeneration,
+      );
       return {
         releaseId: matchingRelease._id,
         number: matchingRelease.number,
@@ -379,23 +362,80 @@ export const publish = mutation({
       createdAt: now,
       pageCount: 0,
       changeCount: 0,
-      publicationStatus: "building",
-      publicationUpdatedAt: now,
     });
+
+    // Change details diff the draft against the previous base release, so
+    // they must be captured before activation moves the base pointer.
+    const changeCount = await snapshotChanges(ctx, site, releaseId);
+    const pageCount = await snapshotPages(ctx, releaseId, siteId);
+    if (pageCount === 0) {
+      throw new ConvexError("The site must contain at least one page");
+    }
+    await snapshotLibraries(ctx, releaseId, siteId);
+    await snapshotFolders(ctx, releaseId, siteId);
+    await snapshotFiles(ctx, releaseId, siteId, site);
+
+    await ctx.db.patch(releaseId, { pageCount, changeCount });
+    const liveSearchProjectionGeneration = await activateRelease(
+      ctx,
+      site,
+      releaseId,
+      auth.userId,
+    );
+    await clearPublishedDraftChanges(ctx, siteId);
+
     await ctx.db.patch(siteId, {
       nextReleaseNumber: number + 1,
       updatedAt: now,
     });
-    const publicationWorkflowId = await start(
+    await scheduleLiveSearchProjection(
       ctx,
-      internal.releasePublication.run,
-      { releaseId },
-      { startAsync: true },
+      siteId,
+      releaseId,
+      liveSearchProjectionGeneration,
     );
-    await ctx.db.patch(releaseId, { publicationWorkflowId });
     return { releaseId, number, reused: false };
   },
 });
+
+async function activateRelease(
+  ctx: GenericMutationCtx<DataModel>,
+  site: NonNullable<Awaited<ReturnType<typeof requireSiteForMember>>>,
+  releaseId: Id<"siteReleases">,
+  actorId: string,
+) {
+  const now = Date.now();
+  const liveSearchProjectionGeneration =
+    (site.liveSearchProjectionGeneration ?? 0) + 1;
+  await ctx.db.patch(site._id, {
+    liveReleaseId: releaseId,
+    draftBaseReleaseId: releaseId,
+    updatedAt: now,
+    liveSearchProjectionGeneration,
+  });
+  await ctx.db.insert("publicationEvents", {
+    siteId: site._id,
+    action: site.liveReleaseId ? "update" : "publish",
+    fromReleaseId: site.liveReleaseId,
+    toReleaseId: releaseId,
+    actorId,
+    createdAt: now,
+  });
+  return liveSearchProjectionGeneration;
+}
+
+async function scheduleLiveSearchProjection(
+  ctx: Pick<GenericMutationCtx<DataModel>, "scheduler">,
+  siteId: Id<"sites">,
+  liveReleaseId: Id<"siteReleases"> | undefined,
+  liveSearchProjectionGeneration: number,
+) {
+  await ctx.scheduler.runAfter(0, internal.publication.projectLiveSearch, {
+    siteId,
+    expectedLiveReleaseId: liveReleaseId,
+    expectedLiveSearchProjectionGeneration: liveSearchProjectionGeneration,
+  });
+}
 
 export const makeLive = mutation({
   args: {
@@ -412,7 +452,7 @@ export const makeLive = mutation({
       site.organizationId,
       { resource: "publication", action: "publish" },
     );
-    if (release.publicationStatus !== "complete") {
+    if (!isReleaseAvailable(release)) {
       throw new ConvexError("Release publication is not complete");
     }
     if (site.activeDraftRestoreId) {
@@ -421,7 +461,18 @@ export const makeLive = mutation({
       );
     }
     if (site.liveReleaseId === releaseId) return null;
-    await promoteRelease(ctx, site, release, auth.userId);
+    const liveSearchProjectionGeneration = await promoteRelease(
+      ctx,
+      site,
+      release,
+      auth.userId,
+    );
+    await scheduleLiveSearchProjection(
+      ctx,
+      site._id,
+      releaseId,
+      liveSearchProjectionGeneration,
+    );
     return null;
   },
 });
@@ -444,9 +495,12 @@ export const unpublish = mutation({
     }
     if (!site.liveReleaseId) return null;
     const now = Date.now();
+    const liveSearchProjectionGeneration =
+      (site.liveSearchProjectionGeneration ?? 0) + 1;
     await ctx.db.patch(siteId, {
       liveReleaseId: undefined,
       updatedAt: now,
+      liveSearchProjectionGeneration,
     });
     await ctx.db.insert("publicationEvents", {
       siteId,
@@ -455,6 +509,12 @@ export const unpublish = mutation({
       actorId: auth.userId,
       createdAt: now,
     });
+    await scheduleLiveSearchProjection(
+      ctx,
+      siteId,
+      undefined,
+      liveSearchProjectionGeneration,
+    );
     return null;
   },
 });

@@ -64,11 +64,18 @@ export async function buildReleaseChangeDetail(
         ])
       : [null, null, null];
     const active = current?.deletedAt === undefined ? current : null;
-    const [before, after] = await Promise.all([
-      revisionContent(ctx, base?.contentRevisionId),
-      revisionContent(ctx, active ? currentDocument?.revisionId : undefined),
-    ]);
-    const contentChanged = currentDocument?.contentHash !== base?.contentHash;
+    const contentChanged =
+      currentDocument?.contentHash !== base?.contentHash ||
+      (active === null && base?.contentRevisionId !== undefined);
+    const [before, after] = contentChanged
+      ? await Promise.all([
+          revisionContent(ctx, base?.contentRevisionId),
+          revisionContent(
+            ctx,
+            active ? currentDocument?.revisionId : undefined,
+          ),
+        ])
+      : [undefined, undefined];
     return {
       fields: compact([
         changedField("Title", base?.title, active?.title),

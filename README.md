@@ -23,9 +23,10 @@ Teams create structured sites with a block editor, organize pages and document l
 
 ## Publishing model
 
-A site can be published or unpublished. Publishing makes the current saved content available at its generated URL and any verified custom domain. Unpublishing removes public access without deleting the site.
-
-Published sites currently read the latest saved page content. Historical deployment snapshots and rollback are not implemented yet.
+A site can be published or unpublished. Each publish creates an immutable version
+from the saved draft and switches the live site to that version atomically.
+Unpublishing removes public access without deleting the site. Version history can
+make an earlier version live or restore it to the draft before republishing.
 
 ## Tech stack
 
@@ -182,7 +183,6 @@ Document text extraction can be connected through `EXTRACTION_API_URL` and `EXTR
 Active areas of work include:
 
 - Continued editor polish and accessibility
-- Historical publishing snapshots and rollback
 - Broader custom-block APIs
 - Templates and starter sites
 - Analytics and insights

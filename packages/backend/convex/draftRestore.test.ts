@@ -5,6 +5,7 @@ import { publish } from "./releases";
 import { restore, resume } from "./draftRestores";
 import { list as listPages } from "./pages";
 import { draftRestoreView } from "./editorWorkspace";
+import { getEffectiveDraftRestoreStatus } from "./draftRestores";
 
 type RegisteredFunction = {
   _handler: (ctx: unknown, args: unknown) => Promise<unknown>;
@@ -36,7 +37,6 @@ describe("draft restore ownership", () => {
     const release = {
       _id: activeRestore.releaseId,
       siteId: activeRestore.siteId,
-      publicationStatus: "complete",
     };
     const site = {
       _id: activeRestore.siteId,
@@ -163,6 +163,31 @@ describe("draft restore read gating", () => {
       failure: expect.stringContaining("remains locked"),
     });
   });
+
+  test("projects a failed applying workflow as a resumable paused restore", async () => {
+    const restore = {
+      ...activeRestore,
+      status: "applying" as const,
+      workflowId: "workflow-1",
+    };
+    const result = await getEffectiveDraftRestoreStatus(
+      {
+        runQuery: async () => ({
+          workflow: {
+            runResult: { kind: "failed", error: "transient failure" },
+          },
+          inProgress: [],
+          logLevel: "INFO",
+        }),
+      } as never,
+      restore as never,
+    );
+    expect(result).toEqual({
+      status: "paused",
+      failure: "transient failure",
+      resultDraftRevision: undefined,
+    });
+  });
 });
 
 describe("draft restore workflow", () => {
@@ -214,6 +239,72 @@ describe("draft restore workflow", () => {
         phase: restore.phase,
       }),
     ).rejects.toThrow("content payload is missing");
+  });
+
+  test("preflight rejects malformed historical page content before applying it", async () => {
+    const restore = {
+      ...activeRestore,
+      status: "validating" as const,
+      phase: "validatePages" as const,
+    };
+    const site = {
+      _id: restore.siteId,
+      activeDraftRestoreId: restore._id,
+      draftRevision: restore.baseDraftRevision,
+    };
+    const snapshot = {
+      pageId: "page-1",
+      contentRevisionId: "revision-1",
+    };
+    const revision = {
+      _id: snapshot.contentRevisionId,
+      siteId: restore.siteId,
+      payloadId: "payload-1",
+    };
+    const ctx = {
+      db: {
+        get: async (id: string) => {
+          if (id === restore._id) return restore;
+          if (id === site._id) return site;
+          if (id === snapshot.pageId)
+            return { _id: id, siteId: restore.siteId };
+          if (id === revision._id) return revision;
+          if (id === revision.payloadId) {
+            return {
+              _id: id,
+              siteId: restore.siteId,
+              content: {
+                type: "doc",
+                version: 1,
+                content: [
+                  {
+                    type: "unknownHistoricalNode",
+                    attrs: { "openeditor-id": "bad-1" },
+                  },
+                ],
+              },
+            };
+          }
+          return null;
+        },
+        query: () => ({
+          withIndex: () => ({
+            paginate: async () => ({
+              page: [snapshot],
+              isDone: true,
+              continueCursor: "",
+            }),
+          }),
+        }),
+      },
+    };
+
+    await expect(
+      invoke(applyBatch, ctx, {
+        restoreId: restore._id,
+        phase: restore.phase,
+      }),
+    ).rejects.toThrow("Unknown node type");
   });
 
   test("activation changes the draft pointer but never the live release", async () => {
@@ -300,6 +391,62 @@ describe("draft restore workflow", () => {
     const restore = {
       ...activeRestore,
       status: "paused" as const,
+      workflowId: "workflow-1",
+    };
+    const site = {
+      _id: restore.siteId,
+      organizationId: "organization-1",
+      activeDraftRestoreId: restore._id,
+    };
+    const patches: Array<Record<string, unknown>> = [];
+    const mutations: Array<Record<string, unknown>> = [];
+    let queryCount = 0;
+    const ctx = {
+      auth: {
+        getUserIdentity: async () => ({ subject: restore.requestedBy }),
+      },
+      runQuery: async () => {
+        queryCount += 1;
+        if (queryCount === 1) {
+          return {
+            _id: "member-1",
+            organizationId: site.organizationId,
+            role: "owner",
+            userId: restore.requestedBy,
+          };
+        }
+        return {
+          workflow: {
+            runResult: { kind: "failed", error: "transient failure" },
+          },
+          inProgress: [],
+          logLevel: "INFO",
+        };
+      },
+      runMutation: async (_fn: unknown, args: Record<string, unknown>) => {
+        mutations.push(args);
+      },
+      db: {
+        get: async (id: string) => (id === restore._id ? restore : site),
+        patch: async (_id: string, value: Record<string, unknown>) => {
+          patches.push(value);
+        },
+      },
+    };
+
+    await invoke(resume, ctx, { restoreId: restore._id });
+    expect(patches).toContainEqual(
+      expect.objectContaining({ status: "applying", failure: undefined }),
+    );
+    expect(mutations).toEqual([
+      expect.objectContaining({ workflowId: restore.workflowId }),
+    ]);
+  });
+
+  test("resume accepts an applying restore whose workflow failure is projected as paused", async () => {
+    const restore = {
+      ...activeRestore,
+      status: "applying" as const,
       workflowId: "workflow-1",
     };
     const site = {

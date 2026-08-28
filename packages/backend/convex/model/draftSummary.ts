@@ -1,10 +1,16 @@
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isReleaseAvailable } from "./releaseState";
 
 export async function buildDraftSummary(ctx: QueryCtx, site: Doc<"sites">) {
-  const liveRelease = site.liveReleaseId
+  const liveReleaseCandidate = site.liveReleaseId
     ? await ctx.db.get(site.liveReleaseId)
     : null;
+  const liveRelease =
+    liveReleaseCandidate?.siteId === site._id &&
+    isReleaseAvailable(liveReleaseCandidate)
+      ? liveReleaseCandidate
+      : null;
   const hasDraftChanges =
     (await ctx.db
       .query("draftChanges")

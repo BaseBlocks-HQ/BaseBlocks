@@ -1,3 +1,5 @@
+import type { Doc } from "../_generated/dataModel";
+
 export function publicationActionForTarget(
   currentNumber: number | undefined,
   targetNumber: number,
@@ -9,6 +11,7 @@ export function publicationActionForTarget(
 
 export type PublicationStatus = "building" | "clearing" | "complete" | "failed";
 
+/** Compatibility state helpers for releases created by the retired workflow. */
 export function isPublicationInFlight(
   status: PublicationStatus | undefined,
 ): boolean {
@@ -40,5 +43,19 @@ export function extractionIsPublishable(
   return (
     extraction?.sourceVersion === expectedSourceVersion &&
     (extraction.status === "ready" || extraction.status === "failed")
+  );
+}
+
+/**
+ * Old releases may still carry a publication workflow status. New releases
+ * activate atomically and have no status, so an absent status is readable.
+ */
+export function isReleaseAvailable(
+  release: Pick<Doc<"siteReleases">, "publicationStatus">,
+): boolean {
+  return (
+    release.publicationStatus === undefined ||
+    release.publicationStatus === "complete" ||
+    release.publicationStatus === "clearing"
   );
 }
