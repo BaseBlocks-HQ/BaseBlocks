@@ -31,11 +31,14 @@ export function getPublishErrorMessage(
   error: unknown,
   fallback = "The site could not publish",
 ): string {
+  const dataMessage = getPublishErrorDataMessage(error);
+  if (dataMessage) return dataMessage;
+
   if (error instanceof Error && error.message.trim()) {
-    return cleanPublishErrorMessage(error.message);
+    return cleanPublishErrorMessage(error.message) || fallback;
   }
   if (typeof error === "string" && error.trim()) {
-    return cleanPublishErrorMessage(error);
+    return cleanPublishErrorMessage(error) || fallback;
   }
   if (
     error &&
@@ -44,17 +47,50 @@ export function getPublishErrorMessage(
     typeof error.message === "string" &&
     error.message.trim()
   ) {
-    return cleanPublishErrorMessage(error.message);
+    return cleanPublishErrorMessage(error.message) || fallback;
   }
   return fallback;
 }
 
-function cleanPublishErrorMessage(message: string): string {
-  const convexErrorMarker = "Uncaught ConvexError:";
-  const markerIndex = message.indexOf(convexErrorMarker);
-  if (markerIndex === -1) return message;
+function getPublishErrorDataMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object" || !("data" in error)) {
+    return null;
+  }
 
-  const errorMessage = message.slice(markerIndex + convexErrorMarker.length);
+  const data = error.data;
+  if (typeof data === "string" && data.trim()) {
+    return cleanPublishErrorMessage(data) || null;
+  }
+  if (
+    data &&
+    typeof data === "object" &&
+    "message" in data &&
+    typeof data.message === "string" &&
+    data.message.trim()
+  ) {
+    return cleanPublishErrorMessage(data.message) || null;
+  }
+  return null;
+}
+
+function cleanPublishErrorMessage(message: string): string {
+  const trimmedMessage = message.trim();
+  const convexErrorMarker = "Uncaught ConvexError:";
+  const markerIndex = trimmedMessage.indexOf(convexErrorMarker);
+  if (markerIndex === -1) {
+    if (
+      /^\[CONVEX [^\]]+\([^)]*\)\](?: \[Request ID: [^\]]+\])? Server Error(?:\s+Called by client)?$/s.test(
+        trimmedMessage,
+      )
+    ) {
+      return "";
+    }
+    return trimmedMessage;
+  }
+
+  const errorMessage = trimmedMessage.slice(
+    markerIndex + convexErrorMarker.length,
+  );
   const [userMessage = errorMessage] = errorMessage.split(
     /\s+at\s+[^\s(]+\s*\(/,
     1,
