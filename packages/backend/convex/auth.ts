@@ -1,5 +1,6 @@
 import { type GenericCtx, createClient } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
+import { createAuthMiddleware } from "better-auth/api";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { oAuthProxy, organization } from "better-auth/plugins";
 import { internal } from "./_generated/api";
@@ -193,6 +194,38 @@ export const authComponent = createClient<DataModel, never>(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   const { baseURL, trustedOrigins, crossSubdomainCookieDomain } =
     getAuthUrlConfig();
+  const convexPlugin = convex({ authConfig });
+  const convexTokenEndpoint = convexPlugin.endpoints?.getToken;
+
+  if (!convexTokenEndpoint) {
+    throw new Error("Convex Better Auth plugin is missing its token endpoint");
+  }
+
+  // @convex-dev/better-auth does not include the OAuth proxy callback in the
+  // matcher that writes the Convex JWT cookie. The proxy does create
+  // `newSession`, so generate the SSR token from that session here.
+  convexPlugin.hooks?.after?.push({
+    matcher: (hookContext) => hookContext.path === "/oauth-proxy-callback",
+    handler: createAuthMiddleware(async (hookContext) => {
+      const newSession = hookContext.context.newSession;
+      if (!newSession) return;
+
+      const originalSession = hookContext.context.session;
+      hookContext.context.session = newSession;
+      try {
+        await convexTokenEndpoint({
+          ...hookContext,
+          headers: new Headers(),
+          method: "GET",
+          asResponse: false,
+          returnHeaders: false,
+          returnStatus: false,
+        } as never);
+      } finally {
+        hookContext.context.session = originalSession;
+      }
+    }),
+  });
 
   return {
     baseURL,
@@ -299,7 +332,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           },
         },
       }),
-      convex({ authConfig }),
+      convexPlugin,
     ],
   } satisfies BetterAuthOptions;
 };
