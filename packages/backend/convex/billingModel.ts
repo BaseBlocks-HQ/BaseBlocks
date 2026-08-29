@@ -6,6 +6,7 @@ import {
   checkoutAttemptShouldReplay,
   newCheckoutIntentDocument,
 } from "./billing/checkoutIntent";
+import { getBillingDeletionState } from "./model/billingRetention";
 import { internalMutation, internalQuery } from "./_generated/server";
 
 export const configureCatalogItem = internalMutation({
@@ -105,6 +106,12 @@ export const getActiveSubscription = internalQuery({
         .sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null
     );
   },
+});
+
+export const getDeletionState = internalQuery({
+  args: { organizationId: v.string() },
+  handler: async (ctx, { organizationId }) =>
+    await getBillingDeletionState(ctx, organizationId),
 });
 
 export const terminateSubscriptionForWorkspaceDeletion = internalMutation({

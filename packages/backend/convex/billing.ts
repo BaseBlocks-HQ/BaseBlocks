@@ -50,6 +50,11 @@ const getActiveSubscription = makeFunctionReference<
   { organizationId: string; providerEnvironment: ProviderEnvironment },
   Doc<"billingSubscriptions"> | null
 >("billingModel:getActiveSubscription");
+const getBillingDeletionState = makeFunctionReference<
+  "query",
+  { organizationId: string },
+  { canDelete: boolean }
+>("billingModel:getDeletionState");
 const getCustomer = makeFunctionReference<
   "query",
   { organizationId: string; providerEnvironment: ProviderEnvironment },
@@ -787,11 +792,21 @@ export const terminateWorkspaceBilling = action({
       resource: "organization",
       action: "delete",
     });
+    const deletionState = await ctx.runQuery(getBillingDeletionState, {
+      organizationId: args.organizationId,
+    });
+    if (deletionState.canDelete) return { state: "notSubscribed" as const };
+
     const subscription = await ctx.runQuery(getActiveSubscription, {
       organizationId: args.organizationId,
       providerEnvironment: billingEnvironment(),
     });
-    if (!subscription) return { state: "notSubscribed" as const };
+    if (!subscription) {
+      throw new ConvexError({
+        code: "BILLING_ENVIRONMENT_MISMATCH",
+        message: "Active billing exists outside the configured environment",
+      });
+    }
 
     const revoked = await provider().revokeSubscription(
       subscription.providerSubscriptionId,
