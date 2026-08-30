@@ -12,9 +12,7 @@ export type AiPageFingerprintPrecondition = {
   nextFingerprint?: string;
 };
 
-export async function fingerprintAiProjectTrustRoot(
-  project: Snapshot,
-) {
+export async function fingerprintAiProjectTrustRoot(project: Snapshot) {
   return {
     projectFingerprint: await fingerprintSnapshot(project),
     siteFingerprint: await fingerprintSnapshotManifest(project),
