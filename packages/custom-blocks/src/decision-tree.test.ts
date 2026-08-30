@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { OpenEditorDocument } from "@openeditor/custom-block";
+import type { OpenEditorDocument } from "@openeditor/core";
 import {
   addDecisionNode,
   addDecisionTree,
