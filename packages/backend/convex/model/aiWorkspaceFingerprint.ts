@@ -1,9 +1,8 @@
 import {
-  fingerprintProjectPage,
-  fingerprintProjectSnapshot,
-  fingerprintSiteManifest,
-  type OpenEditorProjectSnapshot,
-  type WorkspaceSiteManifest,
+  fingerprintSnapshot,
+  fingerprintSnapshotManifest,
+  fingerprintSnapshotPage,
+  type Snapshot,
 } from "@openeditor/workspace";
 import { AiWorkspaceValidationError } from "./aiWorkspaceBounds";
 
@@ -13,35 +12,10 @@ export type AiPageFingerprintPrecondition = {
   nextFingerprint?: string;
 };
 
-const siteManifest = (
-  project: OpenEditorProjectSnapshot,
-): WorkspaceSiteManifest => ({
-  format: "openeditor.site",
-  version: 1,
-  project: {
-    id: project.id,
-    revision: project.revision,
-    title: project.title,
-    ...(project.metadata !== undefined ? { metadata: project.metadata } : {}),
-  },
-  pages: project.pages.map((page) => ({
-    id: page.id,
-    file: `pages/${page.id}.json`,
-    title: page.title,
-    ...(page.slug !== undefined ? { slug: page.slug } : {}),
-    ...(page.route !== undefined ? { route: page.route } : {}),
-    ...(page.parentId !== undefined ? { parentId: page.parentId } : {}),
-    ...(page.order !== undefined ? { order: page.order } : {}),
-    ...(page.metadata !== undefined ? { metadata: page.metadata } : {}),
-  })),
-});
-
-export async function fingerprintAiProjectTrustRoot(
-  project: OpenEditorProjectSnapshot,
-) {
+export async function fingerprintAiProjectTrustRoot(project: Snapshot) {
   return {
-    projectFingerprint: await fingerprintProjectSnapshot(project),
-    siteFingerprint: await fingerprintSiteManifest(siteManifest(project)),
+    projectFingerprint: await fingerprintSnapshot(project),
+    siteFingerprint: await fingerprintSnapshotManifest(project),
   };
 }
 
@@ -51,8 +25,8 @@ function fail(message: string): never {
 
 /** Verify the complete OpenEditor trust root inside the write transaction. */
 export async function assertAiWorkspaceFingerprints(input: {
-  currentProject: OpenEditorProjectSnapshot;
-  nextProject: OpenEditorProjectSnapshot;
+  currentProject: Snapshot;
+  nextProject: Snapshot;
   expectedProjectFingerprint: string;
   expectedSiteFingerprint: string;
   nextSiteFingerprint: string;
@@ -90,7 +64,7 @@ export async function assertAiWorkspaceFingerprints(input: {
       if (current) fail(`Created page ${precondition.pageId} already exists`);
     } else if (
       !current ||
-      (await fingerprintProjectPage(current)) !==
+      (await fingerprintSnapshotPage(current)) !==
         precondition.expectedFingerprint
     ) {
       fail(`Page ${precondition.pageId} fingerprint no longer matches`);
@@ -100,7 +74,7 @@ export async function assertAiWorkspaceFingerprints(input: {
       const next = nextPages.get(precondition.pageId);
       if (
         !next ||
-        (await fingerprintProjectPage(next)) !== precondition.nextFingerprint
+        (await fingerprintSnapshotPage(next)) !== precondition.nextFingerprint
       ) {
         fail(`Page ${precondition.pageId} next fingerprint is invalid`);
       }

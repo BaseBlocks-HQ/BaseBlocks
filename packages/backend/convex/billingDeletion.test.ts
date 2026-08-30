@@ -20,11 +20,7 @@ describe("workspace billing deletion", () => {
             getUserIdentity: async () => ({ subject: "user-1" }),
           },
           runQuery: async (_reference: unknown, args: unknown) => {
-            if (
-              typeof args === "object" &&
-              args !== null &&
-              "model" in args
-            ) {
+            if (typeof args === "object" && args !== null && "model" in args) {
               return {
                 _id: "member-1",
                 organizationId: "organization-1",
