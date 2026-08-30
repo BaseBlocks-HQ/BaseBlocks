@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import {
-  fingerprintProjectPage,
-  type OpenEditorProjectSnapshot,
+  fingerprintSnapshotPage,
+  type Snapshot,
 } from "@openeditor/workspace";
 import type { JsonObject } from "@openeditor/core";
 import { query } from "./_generated/server";
@@ -159,7 +159,7 @@ export const exportDraft = query({
         document: document ?? emptyOpenEditorDocument(),
       };
     });
-    const project: OpenEditorProjectSnapshot = {
+    const project: Snapshot = {
       id: String(site._id),
       revision: String(site.draftRevision),
       title: site.name,
@@ -184,7 +184,7 @@ export const exportDraft = query({
       Promise.all(
         project.pages.map(async (page) => ({
           pageId: page.id,
-          fingerprint: await fingerprintProjectPage(page),
+          fingerprint: await fingerprintSnapshotPage(page),
         })),
       ),
     ]);

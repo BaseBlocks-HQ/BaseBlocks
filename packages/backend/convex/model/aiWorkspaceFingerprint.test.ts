@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import {
-  fingerprintProjectPage,
-  fingerprintProjectSnapshot,
-  fingerprintSiteManifest,
-  type OpenEditorProjectSnapshot,
+  fingerprintSnapshot,
+  fingerprintSnapshotManifest,
+  fingerprintSnapshotPage,
+  type Snapshot,
 } from "@openeditor/workspace";
 import { assertAiWorkspaceFingerprints } from "./aiWorkspaceFingerprint";
 
 const document = { type: "doc" as const, version: 1 as const, content: [] };
-const current: OpenEditorProjectSnapshot = {
+const current: Snapshot = {
   id: "site-1",
   revision: "4",
   title: "Site",
@@ -26,28 +26,6 @@ const current: OpenEditorProjectSnapshot = {
   ],
 };
 
-function manifest(project: OpenEditorProjectSnapshot) {
-  return {
-    format: "openeditor.site" as const,
-    version: 1 as const,
-    project: {
-      id: project.id,
-      revision: project.revision,
-      title: project.title,
-      metadata: project.metadata,
-    },
-    pages: project.pages.map((page) => ({
-      id: page.id,
-      file: `pages/${page.id}.json`,
-      title: page.title,
-      slug: page.slug,
-      parentId: page.parentId,
-      order: page.order,
-      metadata: page.metadata,
-    })),
-  };
-}
-
 describe("OpenEditor atomic fingerprint checks", () => {
   test("accepts the complete unchanged-to-updated trust chain", async () => {
     const next = structuredClone(current);
@@ -56,24 +34,22 @@ describe("OpenEditor atomic fingerprint checks", () => {
       assertAiWorkspaceFingerprints({
         currentProject: current,
         nextProject: next,
-        expectedProjectFingerprint: await fingerprintProjectSnapshot(current),
-        expectedSiteFingerprint: await fingerprintSiteManifest(
-          manifest(current),
-        ),
-        nextSiteFingerprint: await fingerprintSiteManifest(manifest(next)),
+        expectedProjectFingerprint: await fingerprintSnapshot(current),
+        expectedSiteFingerprint: await fingerprintSnapshotManifest(current),
+        nextSiteFingerprint: await fingerprintSnapshotManifest(next),
         pageFingerprints: [
           {
             pageId: "home",
-            expectedFingerprint: await fingerprintProjectPage(
+            expectedFingerprint: await fingerprintSnapshotPage(
               current.pages[0]!,
             ),
-            nextFingerprint: await fingerprintProjectPage(next.pages[0]!),
+            nextFingerprint: await fingerprintSnapshotPage(next.pages[0]!),
           },
         ],
       }),
     ).resolves.toMatchObject({
-      expectedProjectFingerprint: await fingerprintProjectSnapshot(current),
-      resultProjectFingerprint: await fingerprintProjectSnapshot(next),
+      expectedProjectFingerprint: await fingerprintSnapshot(current),
+      resultProjectFingerprint: await fingerprintSnapshot(next),
     });
   });
 
@@ -83,10 +59,8 @@ describe("OpenEditor atomic fingerprint checks", () => {
         currentProject: current,
         nextProject: current,
         expectedProjectFingerprint: "stale",
-        expectedSiteFingerprint: await fingerprintSiteManifest(
-          manifest(current),
-        ),
-        nextSiteFingerprint: await fingerprintSiteManifest(manifest(current)),
+        expectedSiteFingerprint: await fingerprintSnapshotManifest(current),
+        nextSiteFingerprint: await fingerprintSnapshotManifest(current),
         pageFingerprints: [],
       }),
     ).rejects.toThrow("project fingerprint no longer matches");
