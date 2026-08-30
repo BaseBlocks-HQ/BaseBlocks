@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createOpenEditorCustomBlockNode } from "@openeditor/custom-block";
+import { createOpenEditorCustomBlockNode } from "@openeditor/core";
 import { baseBlocksBlockRegistry } from "./block-registry";
 import {
   assertBaseBlocksDocument,

@@ -1,5 +1,4 @@
-import type { OpenEditorDocument } from "@openeditor/custom-block";
-import { validateDocument } from "@openeditor/core";
+import { validateDocument, type OpenEditorDocument } from "@openeditor/core";
 
 export type DecisionNode = {
   id: string;

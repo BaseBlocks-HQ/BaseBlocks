@@ -9,7 +9,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { OpenEditorContent, useOpenEditorController } from "@openeditor/react";
 import { baseBlocksCustomBlockEditors } from "@baseblocks/custom-blocks/editor";
-import { extractOpenEditorCustomBlockAssetReferences } from "@openeditor/custom-block";
+import { extractOpenEditorCustomBlockAssetReferences } from "@openeditor/core";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
