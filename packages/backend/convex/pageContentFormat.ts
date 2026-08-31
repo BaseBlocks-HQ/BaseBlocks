@@ -6,11 +6,13 @@ import {
 import {
   assertBaseBlocksDocument,
   baseBlocksDocumentContract,
-  projectChildPages,
   validateBaseBlocksNestedDocument,
-  type ChildPageProjection,
 } from "@baseblocks/openeditor-contracts";
 import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
+import {
+  projectChildPages,
+  type ChildPageProjection,
+} from "@baseblocks/openeditor-contracts/page-projection";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 

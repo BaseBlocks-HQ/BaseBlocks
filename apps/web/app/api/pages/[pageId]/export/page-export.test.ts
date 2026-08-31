@@ -3,7 +3,7 @@ import {
   createOpenEditorImageAssetResolver,
   exportOpenEditorDocument,
 } from "@openeditor/export/export";
-import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts";
+import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts/portable-export";
 import {
   assertStoredChecksum,
   detectRasterMediaType,
