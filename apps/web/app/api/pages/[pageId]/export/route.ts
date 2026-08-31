@@ -12,7 +12,7 @@ import {
   readSource,
 } from "@baseblocks/anydoc-contracts/sources";
 import { api } from "@baseblocks/backend";
-import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts";
+import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts/portable-export";
 import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
 import { isOpenEditorDocument } from "@openeditor/document";
 import {

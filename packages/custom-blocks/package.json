@@ -23,8 +23,8 @@
     "@dnd-kit/react": "^0.5.0",
     "@hugeicons/core-free-icons": "^4.2.3",
     "@hugeicons/react": "^1.1.9",
-    "@openeditor/custom-block": "0.0.53",
-    "@openeditor/document": "0.0.53",
+    "@openeditor/custom-block": "0.0.55",
+    "@openeditor/document": "0.0.55",
     "react": "19.2.7"
   },
   "devDependencies": {

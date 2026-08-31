@@ -4,7 +4,6 @@ import {
   validateDocument,
   type BlockSpec,
   type OpenEditorValueSchema,
-  type ProseMirrorNode,
 } from "@openeditor/document";
 import { validateOpenEditorEngineDocument } from "@openeditor/engine";
 import {
@@ -13,9 +12,6 @@ import {
   defaultMarkContractSpecs,
   defaultNodeSpecs,
 } from "@openeditor/document";
-
-export * from "./page-projection";
-export * from "./portable-export";
 
 const text = (maxLength: number): OpenEditorValueSchema => ({
   type: "string",
@@ -72,7 +68,13 @@ export const pageTabsBlockSpec: BlockSpec = {
       },
     },
   }),
-  support: { web: "supported", native: "unsupported" },
+  support: {
+    web: "supported",
+    native: "unsupported",
+    viewer: "unsupported",
+    html: "unsupported",
+    plainText: "unsupported",
+  },
   schema: {
     attributes: {
       properties: {
@@ -214,8 +216,4 @@ export const assertBaseBlocksDocument = (document: unknown): void => {
         .map((diagnostic) => `${diagnostic.path}: ${diagnostic.message}`)
         .join("\n"),
     );
-};
-
-export type BaseBlocksCustomNode = ProseMirrorNode & {
-  type: "customBlock" | "baseblocksPageTabs";
 };

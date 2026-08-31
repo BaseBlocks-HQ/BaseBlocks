@@ -7,7 +7,7 @@ import {
   hasSameChildPageProjection,
   hasSameNonPageContent,
   reconcileChildPageProjection,
-} from "@baseblocks/openeditor-contracts";
+} from "@baseblocks/openeditor-contracts/page-projection";
 import type { SaveStatus } from "@baseblocks/domain";
 import type { OpenEditorDocument } from "@openeditor/document";
 import { useCallback, useEffect, useRef, useState } from "react";
