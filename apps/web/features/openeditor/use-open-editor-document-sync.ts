@@ -1,6 +1,6 @@
 "use client";
 
-import type { OpenEditorDocument } from "@openeditor/core";
+import type { OpenEditorDocument } from "@openeditor/document";
 import type { OpenEditorController } from "@openeditor/react";
 import { useEffect, useRef } from "react";
 import {

@@ -1,4 +1,4 @@
-import { defineOpenEditorCustomBlock } from "@openeditor/core";
+import { defineOpenEditorCustomBlock } from "@openeditor/document";
 
 export type SearchBlockData = {
   placeholder: string;

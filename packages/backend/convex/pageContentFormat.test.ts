@@ -10,7 +10,7 @@ import {
   synchronizeOpenEditorChildPages,
 } from "./pageContentFormat";
 
-import { fingerprintOpenEditorDocument } from "@openeditor/core";
+import { fingerprintOpenEditorDocument } from "@openeditor/document";
 
 describe("hashOpenEditorContent", () => {
   test("writes a versioned SHA-256 digest", () => {

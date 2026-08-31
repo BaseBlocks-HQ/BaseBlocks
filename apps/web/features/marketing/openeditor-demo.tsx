@@ -5,7 +5,7 @@ import {
   createDocument,
   textBlock,
   type OpenEditorBlock,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import { OpenEditorContent, useOpenEditorController } from "@openeditor/react";
 import {
   OpenEditorBlockMenu,

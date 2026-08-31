@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { OpenEditorDocument } from "@openeditor/core";
+import type { OpenEditorDocument } from "@openeditor/document";
 import {
   hasSameChildPageProjection,
   hasSameNonPageContent,

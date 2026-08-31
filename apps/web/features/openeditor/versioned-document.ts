@@ -1,4 +1,4 @@
-import type { OpenEditorDocument } from "@openeditor/core";
+import type { OpenEditorDocument } from "@openeditor/document";
 
 export interface VersionedDocument {
   document: OpenEditorDocument;

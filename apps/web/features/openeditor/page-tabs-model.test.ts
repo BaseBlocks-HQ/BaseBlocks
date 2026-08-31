@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createDocument, textBlock } from "@openeditor/core";
+import { createDocument, textBlock } from "@openeditor/document";
 import { assertBaseBlocksDocument } from "@baseblocks/openeditor-contracts";
 import {
   createOpenEditorPageTabs,

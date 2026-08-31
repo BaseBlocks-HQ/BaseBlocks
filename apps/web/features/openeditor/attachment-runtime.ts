@@ -10,7 +10,7 @@ import type {
   OpenEditorAttachmentRuntime,
   OpenEditorAttachmentSnapshot,
   OpenEditorAttachmentUploadInput,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import { useConvex, useMutation } from "convex/react";
 
 const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024;

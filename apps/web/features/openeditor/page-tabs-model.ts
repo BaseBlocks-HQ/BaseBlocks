@@ -1,4 +1,4 @@
-import type { OpenEditorBlock, OpenEditorDocument } from "@openeditor/core";
+import type { OpenEditorBlock, OpenEditorDocument } from "@openeditor/document";
 
 type OpenEditorTextRange = {
   from: number;

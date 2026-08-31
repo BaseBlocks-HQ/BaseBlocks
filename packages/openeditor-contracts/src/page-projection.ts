@@ -1,4 +1,4 @@
-import type { OpenEditorDocument, ProseMirrorNode } from "@openeditor/core";
+import type { OpenEditorDocument, ProseMirrorNode } from "@openeditor/document";
 
 export type ChildPageProjection = {
   pageId: string;

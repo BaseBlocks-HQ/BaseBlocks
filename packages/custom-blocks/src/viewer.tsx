@@ -3,7 +3,7 @@
 /* oxlint-disable react-doctor/nextjs-no-img-element -- Managed assets are host-resolved private or blob URLs. This framework-neutral package must not depend on the Next.js image pipeline. */
 
 import { defineOpenEditorCustomBlockViewer } from "@openeditor/custom-block/viewer";
-import { getDocumentText } from "@openeditor/core";
+import { getDocumentText } from "@openeditor/document";
 import {
   ArrowLeft01Icon,
   ArrowRight01Icon,

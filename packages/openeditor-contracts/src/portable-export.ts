@@ -1,4 +1,4 @@
-import type { OpenEditorDocument, ProseMirrorNode } from "@openeditor/core";
+import type { OpenEditorDocument, ProseMirrorNode } from "@openeditor/document";
 import { baseBlocksBlockRegistry } from "./block-registry";
 
 type PageTab = {

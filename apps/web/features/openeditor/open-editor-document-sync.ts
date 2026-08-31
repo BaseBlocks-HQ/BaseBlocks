@@ -1,4 +1,4 @@
-import type { OpenEditorDocument } from "@openeditor/core";
+import type { OpenEditorDocument } from "@openeditor/document";
 
 function areOpenEditorValuesEqual(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) return true;

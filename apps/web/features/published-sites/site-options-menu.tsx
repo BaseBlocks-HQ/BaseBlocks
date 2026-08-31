@@ -21,7 +21,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import type { OpenEditorExportFormat } from "@openeditor/exporters/export";
+import type { OpenEditorExportFormat } from "@openeditor/export/export";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 

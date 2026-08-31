@@ -17,11 +17,8 @@
   },
   "dependencies": {
     "@baseblocks/custom-blocks": "workspace:*",
-    "@baseblocks/domain": "workspace:*",
-    "@openeditor/core": "0.0.52",
-    "@openeditor/embedded-runtime": "0.0.52",
-    "@openeditor/extensions": "0.0.52",
-    "@openeditor/tiptap": "0.0.52"
+    "@openeditor/document": "0.0.53",
+    "@openeditor/engine": "0.0.53"
   },
   "devDependencies": {
     "@baseblocks/tsconfig": "workspace:*",

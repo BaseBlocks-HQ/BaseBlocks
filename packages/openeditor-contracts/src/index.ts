@@ -5,14 +5,14 @@ import {
   type BlockSpec,
   type OpenEditorValueSchema,
   type ProseMirrorNode,
-} from "@openeditor/core";
-import { validateOpenEditorEngineDocument } from "@openeditor/embedded-runtime";
+} from "@openeditor/document";
+import { validateOpenEditorEngineDocument } from "@openeditor/engine";
 import {
   defaultBlockSpecs,
   defaultDocumentContract,
   defaultMarkContractSpecs,
   defaultNodeSpecs,
-} from "@openeditor/extensions";
+} from "@openeditor/document";
 
 export * from "./page-projection";
 export * from "./portable-export";

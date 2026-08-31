@@ -50,8 +50,7 @@ describe("Convex ingestion failure codec", () => {
     expect(decodeConvexIngestionFailure("plain error text")).toBeUndefined();
     expect(decodeConvexIngestionFailure(undefined)).toBeUndefined();
     expect(decodeConvexIngestionFailure({ kind: "canceled" })).toBeUndefined();
-    const forged =
-      "ANYDOC_FAILURE_V1:" + encodeURIComponent(JSON.stringify({ version: 9 }));
+    const forged = `ANYDOC_FAILURE_V1:${encodeURIComponent(JSON.stringify({ version: 9 }))}`;
     expect(decodeConvexIngestionFailure(forged)).toBeUndefined();
     expect(
       decodeConvexIngestionFailure("ANYDOC_FAILURE_V1:%7Bnot-json"),
