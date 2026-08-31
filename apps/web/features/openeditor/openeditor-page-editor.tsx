@@ -17,7 +17,7 @@ import type {
   OpenEditorDocument,
   OpenEditorImageRuntime,
   OpenEditorPageRuntime,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import {
   OpenEditorContent,
   OpenEditorPageHeader,

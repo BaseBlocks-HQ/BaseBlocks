@@ -1,4 +1,4 @@
-import { createOpenEditorEmojiDataResponse } from "@openeditor/emoji/data";
+import { createOpenEditorEmojiDataResponse } from "@openeditor/document/emoji";
 
 export const dynamic = "force-static";
 

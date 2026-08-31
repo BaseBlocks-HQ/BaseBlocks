@@ -1,7 +1,7 @@
 import {
   defineOpenEditorCustomBlock,
   type OpenEditorCustomBlockSafeHtml,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import {
   createDirectoryContent,
   directoryToText,

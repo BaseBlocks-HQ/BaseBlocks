@@ -10,7 +10,7 @@ import type {
   OpenEditorImageRuntime,
   OpenEditorImageSnapshot,
   OpenEditorImageUploadInput,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import { useConvex, useMutation } from "convex/react";
 import { useMemo } from "react";
 

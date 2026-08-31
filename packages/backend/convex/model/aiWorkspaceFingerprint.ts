@@ -3,7 +3,7 @@ import {
   fingerprintSnapshotManifest,
   fingerprintSnapshotPage,
   type Snapshot,
-} from "@openeditor/workspace";
+} from "@openeditor/mutations";
 import { AiWorkspaceValidationError } from "./aiWorkspaceBounds";
 
 export type AiPageFingerprintPrecondition = {

@@ -46,7 +46,7 @@ import {
   getDocumentText,
   textBlock,
   type OpenEditorDocument,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import { Fragment, type RefObject, useMemo, useRef, useState } from "react";
 import {
   addDecisionNode,

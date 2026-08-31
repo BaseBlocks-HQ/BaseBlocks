@@ -14,13 +14,13 @@ import {
 import { api } from "@baseblocks/backend";
 import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts";
 import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-registry";
-import { isOpenEditorDocument } from "@openeditor/core";
+import { isOpenEditorDocument } from "@openeditor/document";
 import {
   createOpenEditorImageAssetResolver,
   exportOpenEditorDocument,
   openEditorExportFormats,
-} from "@openeditor/exporters/export";
-import type { ProseMirrorNode } from "@openeditor/core";
+} from "@openeditor/export/export";
+import type { ProseMirrorNode } from "@openeditor/document";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";

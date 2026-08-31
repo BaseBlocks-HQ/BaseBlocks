@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Id } from "@baseblocks/backend";
-import type { OpenEditorDocument } from "@openeditor/core";
+import type { OpenEditorDocument } from "@openeditor/document";
 import { renderToStaticMarkup } from "react-dom/server";
 import { useVersionedPageDocument } from "./use-versioned-page-document";
 

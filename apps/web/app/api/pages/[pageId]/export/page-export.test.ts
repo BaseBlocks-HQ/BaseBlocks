@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   createOpenEditorImageAssetResolver,
   exportOpenEditorDocument,
-} from "@openeditor/exporters/export";
+} from "@openeditor/export/export";
 import { projectBaseBlocksDocumentForPortableExport } from "@baseblocks/openeditor-contracts";
 import {
   assertStoredChecksum,

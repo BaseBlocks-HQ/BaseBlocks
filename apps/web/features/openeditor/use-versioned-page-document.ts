@@ -9,7 +9,7 @@ import {
   reconcileChildPageProjection,
 } from "@baseblocks/openeditor-contracts";
 import type { SaveStatus } from "@baseblocks/domain";
-import type { OpenEditorDocument } from "@openeditor/core";
+import type { OpenEditorDocument } from "@openeditor/document";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { areOpenEditorDocumentsEqual } from "./open-editor-document-sync";
 import type { VersionedDocument } from "./versioned-document";

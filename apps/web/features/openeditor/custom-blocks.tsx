@@ -9,13 +9,13 @@ import {
 } from "@hugeicons/core-free-icons";
 import { OpenEditorContent, useOpenEditorController } from "@openeditor/react";
 import { baseBlocksCustomBlockEditors } from "@baseblocks/custom-blocks/editor";
-import { extractOpenEditorCustomBlockAssetReferences } from "@openeditor/core";
+import { extractOpenEditorCustomBlockAssetReferences } from "@openeditor/document";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
   OpenEditorImageRuntime,
   OpenEditorPageRuntime,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import { useRef, type ComponentProps } from "react";
 import { libraryEditor } from "./extensions/library";
 import { searchEditor } from "./extensions/search";

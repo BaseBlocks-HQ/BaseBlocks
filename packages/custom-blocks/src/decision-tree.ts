@@ -1,4 +1,7 @@
-import { validateDocument, type OpenEditorDocument } from "@openeditor/core";
+import {
+  validateDocument,
+  type OpenEditorDocument,
+} from "@openeditor/document";
 
 export type DecisionNode = {
   id: string;

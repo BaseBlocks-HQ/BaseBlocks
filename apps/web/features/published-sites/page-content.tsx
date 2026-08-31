@@ -13,7 +13,7 @@ import { Button } from "@baseblocks/ui/button";
 import type {
   OpenEditorDocument,
   OpenEditorPageRuntime,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import { OpenEditorViewer } from "@openeditor/react";
 import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";

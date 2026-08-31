@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { fingerprintSnapshotPage, type Snapshot } from "@openeditor/workspace";
-import type { JsonObject } from "@openeditor/core";
+import { fingerprintSnapshotPage, type Snapshot } from "@openeditor/mutations";
+import type { JsonObject } from "@openeditor/document";
 import { query } from "./_generated/server";
 import {
   MAX_AI_SITE_PAGES,

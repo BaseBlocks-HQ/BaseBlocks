@@ -6,7 +6,7 @@ import type {
   OpenEditorDocument,
   OpenEditorImageRuntime,
   OpenEditorPageRuntime,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import { OpenEditorViewer } from "@openeditor/react/viewer";
 import { libraryViewer } from "./extensions/library";
 import { searchViewer } from "./extensions/search";

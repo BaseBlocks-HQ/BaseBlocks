@@ -3,7 +3,7 @@ import {
   createDocument,
   textBlock,
   type OpenEditorDocument,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import {
   areOpenEditorDocumentsEqual,
   shouldSyncOpenEditorDocument,

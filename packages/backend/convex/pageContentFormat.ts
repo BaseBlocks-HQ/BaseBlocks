@@ -2,7 +2,7 @@ import {
   parseOpenEditorDocument as parseOpenEditorDocumentStrict,
   type OpenEditorDocument,
   type ProseMirrorNode,
-} from "@openeditor/core";
+} from "@openeditor/document";
 import {
   assertBaseBlocksDocument,
   baseBlocksDocumentContract,
@@ -14,7 +14,7 @@ import { baseBlocksBlockRegistry } from "@baseblocks/openeditor-contracts/block-
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
-export type { OpenEditorDocument } from "@openeditor/core";
+export type { OpenEditorDocument } from "@openeditor/document";
 
 export type OpenEditorNode = ProseMirrorNode;
 

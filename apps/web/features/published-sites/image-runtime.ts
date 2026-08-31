@@ -1,4 +1,4 @@
-import type { OpenEditorImageRuntime } from "@openeditor/core";
+import type { OpenEditorImageRuntime } from "@openeditor/document";
 
 export function createPublishedImageRuntime(
   imageIds: readonly string[],
